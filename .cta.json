@@ -1,0 +1,22 @@
+{
+  "initialized": true,
+  "mode": "file-router",
+  "projectName": "thyme",
+  "typescript": true,
+  "tailwind": true,
+  "git": true,
+  "addOnOptions": {},
+  "packageManager": "bun",
+  "version": 1,
+  "framework": "react-cra",
+  "chosenAddOns": [
+    "netlify",
+    "convex",
+    "compiler",
+    "form",
+    "shadcn",
+    "start",
+    "tanstack-query",
+    "biome"
+  ]
+}

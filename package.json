@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "start": "node .output/server/index.mjs",
     "serve": "vite preview",
     "test": "vitest run",
     "format": "biome format",
@@ -13,7 +14,7 @@
   },
   "dependencies": {
     "@convex-dev/react-query": "0.0.0-alpha.11",
-    "@netlify/vite-plugin-tanstack-start": "^1.0.2",
+ 
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slider": "^1.3.6",
@@ -33,6 +34,7 @@
     "clsx": "^2.1.1",
     "convex": "^1.27.3",
     "lucide-react": "^0.544.0",
+    "nitro": "^3.0.1-alpha.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.0.2",

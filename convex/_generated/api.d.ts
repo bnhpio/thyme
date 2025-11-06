@@ -17,6 +17,7 @@ import type * as http from "../http.js";
 import type * as mutation_profile from "../mutation/profile.js";
 import type * as mutation_task from "../mutation/task.js";
 import type * as query_profile from "../query/profile.js";
+import type * as query_user from "../query/user.js";
 import type * as schemas_organization_index from "../schemas/organization/index.js";
 import type * as schemas_organization_organization from "../schemas/organization/organization.js";
 import type * as schemas_organization_organizationInvite from "../schemas/organization/organizationInvite.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "mutation/profile": typeof mutation_profile;
   "mutation/task": typeof mutation_task;
   "query/profile": typeof query_profile;
+  "query/user": typeof query_user;
   "schemas/organization/index": typeof schemas_organization_index;
   "schemas/organization/organization": typeof schemas_organization_organization;
   "schemas/organization/organizationInvite": typeof schemas_organization_organizationInvite;

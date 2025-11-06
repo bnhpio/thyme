@@ -54,7 +54,8 @@
       },
       "correctness": {
         "useExhaustiveDependencies": "off",
-        "useHookAtTopLevel": "off"
+        "useHookAtTopLevel": "off",
+        "noNestedComponentDefinitions": "off"
       },
       "recommended": true,
       "security": {

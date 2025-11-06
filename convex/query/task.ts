@@ -1,6 +1,6 @@
 import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
-import { query } from '../_generated/server';
+import { internalQuery, query } from '../_generated/server';
 
 export const getTasksByOrganization = query({
   args: {
@@ -54,5 +54,24 @@ export const getTasksByOrganization = query({
     );
 
     return tasksWithCreator;
+  },
+});
+
+export const getTaskById = internalQuery({
+  args: {
+    taskId: v.id('tasks'),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      return null;
+    }
+    return {
+      _id: task._id,
+      hash: task.hash,
+      checkSum: task.checkSum,
+      organizationId: task.organizationId,
+      creator: task.creator,
+    };
   },
 });

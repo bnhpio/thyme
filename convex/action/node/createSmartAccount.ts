@@ -19,7 +19,6 @@ export default internalAction({
     const chain = await ctx.runQuery(internal.query.chain.getChainById, {
       chainId: args.chain,
     });
-    console.log(toHex(args.salt), 'salt');
     const { account } = await createAlchemyClient(
       privateKey,
       {

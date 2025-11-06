@@ -23,9 +23,15 @@ interface Task {
 
 interface FunctionListProps {
   tasks: Task[];
+  organizationId: Id<'organizations'>;
+  onExecutableCreated?: () => void;
 }
 
-export function FunctionList({ tasks }: FunctionListProps) {
+export function FunctionList({
+  tasks,
+  organizationId,
+  onExecutableCreated,
+}: FunctionListProps) {
   if (tasks.length === 0) {
     return (
       <Card>
@@ -58,7 +64,12 @@ export function FunctionList({ tasks }: FunctionListProps) {
       <CardContent>
         <div className="space-y-4">
           {tasks.map((task) => (
-            <FunctionItem key={task._id} task={task} />
+            <FunctionItem
+              key={task._id}
+              task={task}
+              organizationId={organizationId}
+              onExecutableCreated={onExecutableCreated}
+            />
           ))}
         </div>
       </CardContent>

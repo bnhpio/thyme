@@ -32,7 +32,13 @@ export function Web3Functions() {
         </p>
       </div>
 
-      <FunctionList tasks={tasks || []} />
+      <FunctionList
+        tasks={tasks || []}
+        organizationId={currentOrgId}
+        onExecutableCreated={() => {
+          // Could refresh or show notification
+        }}
+      />
     </div>
   );
 }

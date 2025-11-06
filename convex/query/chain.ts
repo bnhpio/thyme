@@ -8,6 +8,7 @@ export const getChainById = internalQuery({
   returns: {
     chainId: v.number(),
     rpcUrls: v.array(v.string()),
+    baseUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const chain = await ctx.db.get(args.chainId);
@@ -17,6 +18,7 @@ export const getChainById = internalQuery({
     return {
       chainId: chain.chainId,
       rpcUrls: chain.rpcUrls,
+      baseUrl: chain.baseUrl,
     };
   },
 });

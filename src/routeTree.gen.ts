@@ -17,8 +17,11 @@ import { Route as AuthedOrganizationRouteImport } from './routes/_authed/_organi
 import { Route as AuthedOrganizationIndexRouteImport } from './routes/_authed/_organization/index'
 import { Route as AuthedOrganizationWeb3FunctionsRouteImport } from './routes/_authed/_organization/web3-functions'
 import { Route as AuthedOrganizationProfilesRouteImport } from './routes/_authed/_organization/profiles'
+import { Route as AuthedOrganizationExecutablesRouteImport } from './routes/_authed/_organization/executables'
+import { Route as AuthedOrganizationExecutablesIndexRouteImport } from './routes/_authed/_organization/executables.index'
 import { Route as AuthedSettingsSettingsSettingsRouteImport } from './routes/_authed/_settings/settings/settings'
 import { Route as AuthedSettingsSettingsApiKeysRouteImport } from './routes/_authed/_settings/settings/api-keys'
+import { Route as AuthedOrganizationExecutablesExecutableIdRouteImport } from './routes/_authed/_organization/executables.$executableId'
 
 const OrganizationSetupRoute = OrganizationSetupRouteImport.update({
   id: '/organization-setup',
@@ -59,6 +62,18 @@ const AuthedOrganizationProfilesRoute =
     path: '/profiles',
     getParentRoute: () => AuthedOrganizationRoute,
   } as any)
+const AuthedOrganizationExecutablesRoute =
+  AuthedOrganizationExecutablesRouteImport.update({
+    id: '/executables',
+    path: '/executables',
+    getParentRoute: () => AuthedOrganizationRoute,
+  } as any)
+const AuthedOrganizationExecutablesIndexRoute =
+  AuthedOrganizationExecutablesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedOrganizationExecutablesRoute,
+  } as any)
 const AuthedSettingsSettingsSettingsRoute =
   AuthedSettingsSettingsSettingsRouteImport.update({
     id: '/settings/settings',
@@ -71,15 +86,24 @@ const AuthedSettingsSettingsApiKeysRoute =
     path: '/settings/api-keys',
     getParentRoute: () => AuthedSettingsRoute,
   } as any)
+const AuthedOrganizationExecutablesExecutableIdRoute =
+  AuthedOrganizationExecutablesExecutableIdRouteImport.update({
+    id: '/$executableId',
+    path: '/$executableId',
+    getParentRoute: () => AuthedOrganizationExecutablesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/': typeof AuthedOrganizationIndexRoute
+  '/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
+  '/executables/': typeof AuthedOrganizationExecutablesIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -87,8 +111,10 @@ export interface FileRoutesByTo {
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/': typeof AuthedOrganizationIndexRoute
+  '/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
+  '/executables': typeof AuthedOrganizationExecutablesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,22 +123,28 @@ export interface FileRoutesById {
   '/organization-setup': typeof OrganizationSetupRoute
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
   '/_authed/_settings': typeof AuthedSettingsRouteWithChildren
+  '/_authed/_organization/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/_authed/_organization/profiles': typeof AuthedOrganizationProfilesRoute
   '/_authed/_organization/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/_authed/_organization/': typeof AuthedOrganizationIndexRoute
+  '/_authed/_organization/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/_authed/_settings/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/_authed/_settings/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
+  '/_authed/_organization/executables/': typeof AuthedOrganizationExecutablesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/login'
     | '/organization-setup'
+    | '/executables'
     | '/profiles'
     | '/web3-functions'
     | '/'
+    | '/executables/$executableId'
     | '/settings/api-keys'
     | '/settings/settings'
+    | '/executables/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -120,8 +152,10 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/web3-functions'
     | '/'
+    | '/executables/$executableId'
     | '/settings/api-keys'
     | '/settings/settings'
+    | '/executables'
   id:
     | '__root__'
     | '/_authed'
@@ -129,11 +163,14 @@ export interface FileRouteTypes {
     | '/organization-setup'
     | '/_authed/_organization'
     | '/_authed/_settings'
+    | '/_authed/_organization/executables'
     | '/_authed/_organization/profiles'
     | '/_authed/_organization/web3-functions'
     | '/_authed/_organization/'
+    | '/_authed/_organization/executables/$executableId'
     | '/_authed/_settings/settings/api-keys'
     | '/_authed/_settings/settings/settings'
+    | '/_authed/_organization/executables/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,6 +237,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOrganizationProfilesRouteImport
       parentRoute: typeof AuthedOrganizationRoute
     }
+    '/_authed/_organization/executables': {
+      id: '/_authed/_organization/executables'
+      path: '/executables'
+      fullPath: '/executables'
+      preLoaderRoute: typeof AuthedOrganizationExecutablesRouteImport
+      parentRoute: typeof AuthedOrganizationRoute
+    }
+    '/_authed/_organization/executables/': {
+      id: '/_authed/_organization/executables/'
+      path: '/'
+      fullPath: '/executables/'
+      preLoaderRoute: typeof AuthedOrganizationExecutablesIndexRouteImport
+      parentRoute: typeof AuthedOrganizationExecutablesRoute
+    }
     '/_authed/_settings/settings/settings': {
       id: '/_authed/_settings/settings/settings'
       path: '/settings/settings'
@@ -214,16 +265,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsSettingsApiKeysRouteImport
       parentRoute: typeof AuthedSettingsRoute
     }
+    '/_authed/_organization/executables/$executableId': {
+      id: '/_authed/_organization/executables/$executableId'
+      path: '/$executableId'
+      fullPath: '/executables/$executableId'
+      preLoaderRoute: typeof AuthedOrganizationExecutablesExecutableIdRouteImport
+      parentRoute: typeof AuthedOrganizationExecutablesRoute
+    }
   }
 }
 
+interface AuthedOrganizationExecutablesRouteChildren {
+  AuthedOrganizationExecutablesExecutableIdRoute: typeof AuthedOrganizationExecutablesExecutableIdRoute
+  AuthedOrganizationExecutablesIndexRoute: typeof AuthedOrganizationExecutablesIndexRoute
+}
+
+const AuthedOrganizationExecutablesRouteChildren: AuthedOrganizationExecutablesRouteChildren =
+  {
+    AuthedOrganizationExecutablesExecutableIdRoute:
+      AuthedOrganizationExecutablesExecutableIdRoute,
+    AuthedOrganizationExecutablesIndexRoute:
+      AuthedOrganizationExecutablesIndexRoute,
+  }
+
+const AuthedOrganizationExecutablesRouteWithChildren =
+  AuthedOrganizationExecutablesRoute._addFileChildren(
+    AuthedOrganizationExecutablesRouteChildren,
+  )
+
 interface AuthedOrganizationRouteChildren {
+  AuthedOrganizationExecutablesRoute: typeof AuthedOrganizationExecutablesRouteWithChildren
   AuthedOrganizationProfilesRoute: typeof AuthedOrganizationProfilesRoute
   AuthedOrganizationWeb3FunctionsRoute: typeof AuthedOrganizationWeb3FunctionsRoute
   AuthedOrganizationIndexRoute: typeof AuthedOrganizationIndexRoute
 }
 
 const AuthedOrganizationRouteChildren: AuthedOrganizationRouteChildren = {
+  AuthedOrganizationExecutablesRoute:
+    AuthedOrganizationExecutablesRouteWithChildren,
   AuthedOrganizationProfilesRoute: AuthedOrganizationProfilesRoute,
   AuthedOrganizationWeb3FunctionsRoute: AuthedOrganizationWeb3FunctionsRoute,
   AuthedOrganizationIndexRoute: AuthedOrganizationIndexRoute,

@@ -62,3 +62,24 @@ export const getProfilesByOrganization = query({
     return profilesWithChains;
   },
 });
+
+export const getProfileById = internalQuery({
+  args: {
+    profileId: v.id('profiles'),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db.get(args.profileId);
+    if (!profile) {
+      return null;
+    }
+    return {
+      _id: profile._id,
+      organizationId: profile.organizationId,
+      alias: profile.alias,
+      address: profile.address,
+      chain: profile.chain,
+      salt: profile.salt,
+      createdBy: profile.createdBy,
+    };
+  },
+});

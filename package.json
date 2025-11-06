@@ -10,7 +10,7 @@
     "test": "vitest run",
     "format": "biome format --write",
     "lint": "biome lint",
-    "check": "biome check"
+    "check": "biome check --write"
   },
   "dependencies": {
     "@convex-dev/react-query": "0.0.0-alpha.11",

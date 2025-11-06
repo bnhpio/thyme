@@ -1,6 +1,6 @@
 import organizationTable from './organization';
-import organizationMemberTable from './organizationMember';
 import organizationInviteTable from './organizationInvite';
+import organizationMemberTable from './organizationMember';
 
 export const organizationSchema = {
   organizations: organizationTable,

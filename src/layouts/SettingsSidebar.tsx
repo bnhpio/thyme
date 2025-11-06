@@ -42,7 +42,7 @@ export function SettingsSidebar() {
                   asChild
                   isActive={location.pathname === '/settings'}
                 >
-                  <Link to="/settings">
+                  <Link to="/settings/settings">
                     <User className="h-4 w-4" />
                     <span>Profile</span>
                   </Link>

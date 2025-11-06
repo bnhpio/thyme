@@ -15,16 +15,12 @@ export const getOrganizationNames = (
 ): string => {
   if (!organizations) return '';
   return orgIds
-    .map(
-      (id) => organizations.find((org) => org._id === id)?.name,
-    )
+    .map((id) => organizations.find((org) => org._id === id)?.name)
     .filter(Boolean)
     .join(', ');
 };
 
-export const calculateExpirationDate = (
-  expiration: string,
-): number => {
+export const calculateExpirationDate = (expiration: string): number => {
   const now = Date.now();
   if (expiration === '7weeks') {
     return now + 7 * 7 * 24 * 60 * 60 * 1000;
@@ -35,4 +31,3 @@ export const calculateExpirationDate = (
   }
   return now;
 };
-

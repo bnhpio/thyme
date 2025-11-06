@@ -11,4 +11,3 @@ export type Organization = {
   _id: Id<'organizations'>;
   name: string;
 };
-

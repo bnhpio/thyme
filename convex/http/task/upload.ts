@@ -3,6 +3,35 @@ import type { Id } from '../../_generated/dataModel';
 import { httpAction } from '../../_generated/server';
 
 export const uploadTask = httpAction(async (ctx, request) => {
+  const authorizationToken = request.headers.get('Authorization');
+  console.log(authorizationToken);
+  const token = authorizationToken?.split(' ')[1];
+  if (!token) {
+    return new Response(
+      JSON.stringify({ error: 'Missing authorization token' }),
+      { status: 401 },
+    );
+  }
+  let userId: Id<'users'> | undefined;
+  try {
+    userId = await ctx.runQuery(
+      internal.query.customToken._getUserByCustomToken,
+      {
+        tokenHash: token,
+      },
+    );
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authorization token' }),
+        { status: 401 },
+      );
+    }
+  } catch {
+    return new Response(
+      JSON.stringify({ error: 'Failed to get user by custom token' }),
+      { status: 401 },
+    );
+  }
   // Step 1: Parse FormData
   const formData = await request.formData();
 
@@ -44,15 +73,22 @@ export const uploadTask = httpAction(async (ctx, request) => {
   const storageId = await ctx.storage.store(blobField, {
     sha256: checkSum,
   });
-
+  try {
+    await ctx.runMutation(internal.mutation.task.createTask, {
+      storageId,
+      checkSum,
+      userId,
+      organizationId: organizationId
+        ? (organizationId as Id<'organizations'>)
+        : undefined,
+    });
+  } catch (error) {
+    console.error(error);
+    return new Response(JSON.stringify({ error: 'Failed to save task' }), {
+      status: 401,
+    });
+  }
   // Step 5: Save the storage ID and organizationId to the database via a mutation
-  await ctx.runMutation(internal.mutation.task.createTask, {
-    storageId,
-    checkSum,
-    organizationId: organizationId
-      ? (organizationId as Id<'organizations'>)
-      : undefined,
-  });
 
   // Step 6: Return a response with the correct CORS headers
   return new Response(JSON.stringify({ success: true, hash: storageId }), {

@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SettingsLayout } from '@/layouts/SettingsLayout';
 
 export const Route = createFileRoute('/_authed/_settings/settings/settings')({
   component: RouteComponent,

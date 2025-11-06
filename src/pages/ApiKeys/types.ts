@@ -1,14 +1,10 @@
 import type { Id } from '@/../convex/_generated/dataModel';
 
 export type ApiKey = {
-  id: string;
+  id: Id<'userCustomTokens'>;
   name: string;
-  keyHash: string;
-  organizationIds: Id<'organizations'>[];
-  expiresAt: number | null;
-  createdAt: number;
-  lastUsedAt: number | null;
-  isActive: boolean;
+  expiresAt: number;
+  organzations: Id<'organizations'>[]; // Note: typo in schema
 };
 
 export type Organization = {

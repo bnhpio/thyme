@@ -1,5 +1,4 @@
-import { Calendar, Copy, Key, MoreVertical, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Calendar, Key, MoreVertical, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,7 +12,7 @@ import { formatDate, getOrganizationNames } from './utils';
 interface ApiKeyItemProps {
   apiKey: ApiKey;
   organizations: Organization[] | undefined;
-  onDelete: (keyId: string) => void;
+  onDelete: (keyId: ApiKey['id']) => void;
 }
 
 export function ApiKeyItem({
@@ -21,34 +20,25 @@ export function ApiKeyItem({
   organizations,
   onDelete,
 }: ApiKeyItemProps) {
-  const handleCopyHash = (hash: string) => {
-    navigator.clipboard.writeText(hash);
-    toast.success('Key hash copied to clipboard');
-  };
+  const isExpired = apiKey.expiresAt < Date.now();
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
           <h3 className="font-medium">{apiKey.name}</h3>
-          {!apiKey.isActive && (
+          {isExpired && (
             <span className="text-xs px-2 py-0.5 bg-muted rounded-full">
-              Revoked
+              Expired
             </span>
           )}
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Key className="h-3 w-3" />
-            <code className="text-xs font-mono">{apiKey.keyHash}</code>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => handleCopyHash(apiKey.keyHash)}
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
+            <code className="text-xs font-mono">
+              {apiKey.id.slice(0, 8)}...{apiKey.id.slice(-8)}
+            </code>
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
@@ -57,13 +47,8 @@ export function ApiKeyItem({
         </div>
         <div className="text-xs text-muted-foreground">
           Organizations:{' '}
-          {getOrganizationNames(apiKey.organizationIds, organizations)}
+          {getOrganizationNames(apiKey.organzations, organizations)}
         </div>
-        {apiKey.lastUsedAt && (
-          <div className="text-xs text-muted-foreground">
-            Last used: {new Date(apiKey.lastUsedAt).toLocaleString()}
-          </div>
-        )}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

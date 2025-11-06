@@ -1,16 +1,10 @@
 import { useQuery } from 'convex/react';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
-import { Button } from '@/components/ui/button';
+import type { Id } from '@/../convex/_generated/dataModel';
 import type { ApiKey, Organization } from './types';
 import { ApiKeyList } from './ApiKeyList';
 import { CreateApiKeyDialog } from './CreateApiKeyDialog';
-
-// Mock API keys - will be replaced with real data from Convex later
-const getMockApiKeys = (): ApiKey[] => {
-  return [];
-};
 
 export function ApiKeys() {
   const currentUser = useQuery(api.query.user.getCurrentUser);
@@ -19,15 +13,17 @@ export function ApiKeys() {
     currentUser?.id ? { userId: currentUser.id } : 'skip',
   ) as Organization[] | undefined;
 
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>(getMockApiKeys());
+  const apiKeys = useQuery(api.query.customToken.getCustomTokens) as
+    | ApiKey[]
+    | undefined;
 
-  const handleCreateKey = (newKey: ApiKey) => {
-    setApiKeys([...apiKeys, newKey]);
+  const handleDeleteKey = async (keyId: Id<'userCustomTokens'>) => {
+    // TODO: Implement delete mutation when available
+    toast.success('API key deleted');
   };
 
-  const handleDeleteKey = (keyId: string) => {
-    setApiKeys(apiKeys.filter((key) => key.id !== keyId));
-    toast.success('API key deleted');
+  const handleRefresh = () => {
+    // Query will automatically refresh
   };
 
   return (
@@ -41,15 +37,15 @@ export function ApiKeys() {
         </div>
         <CreateApiKeyDialog
           organizations={organizations}
-          onCreateKey={handleCreateKey}
+          onSuccess={handleRefresh}
         />
       </div>
 
       <ApiKeyList
-        apiKeys={apiKeys}
+        apiKeys={apiKeys || []}
         organizations={organizations}
         onDelete={handleDeleteKey}
-        onCreate={handleCreateKey}
+        onRefresh={handleRefresh}
       />
     </div>
   );

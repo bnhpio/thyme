@@ -14,15 +14,15 @@ import type { ApiKey, Organization } from './types';
 interface ApiKeyListProps {
   apiKeys: ApiKey[];
   organizations: Organization[] | undefined;
-  onDelete: (keyId: string) => void;
-  onCreate: (key: ApiKey) => void;
+  onDelete: (keyId: ApiKey['id']) => void;
+  onRefresh?: () => void;
 }
 
 export function ApiKeyList({
   apiKeys,
   organizations,
   onDelete,
-  onCreate,
+  onRefresh,
 }: ApiKeyListProps) {
   return (
     <Card>
@@ -42,7 +42,7 @@ export function ApiKeyList({
             </p>
             <CreateApiKeyDialog
               organizations={organizations}
-              onCreateKey={onCreate}
+              onSuccess={onRefresh || (() => {})}
               trigger={
                 <Button variant="outline">
                   <Plus className="h-4 w-4 mr-2" />

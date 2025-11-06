@@ -8,7 +8,7 @@
  * @module
  */
 
-import type * as auth_auth from "../auth/auth.js";
+import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as schemas_organization_index from "../schemas/organization/index.js";
 import type * as schemas_organization_organization from "../schemas/organization/organization.js";
@@ -31,7 +31,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "auth/auth": typeof auth_auth;
+  auth: typeof auth;
   http: typeof http;
   "schemas/organization/index": typeof schemas_organization_index;
   "schemas/organization/organization": typeof schemas_organization_organization;

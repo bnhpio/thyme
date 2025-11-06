@@ -1,10 +1,8 @@
 import { httpRouter } from "convex/server";
 
-import { auth } from "./auth/auth";
+import { auth } from "./auth";
 
 const http = httpRouter();
-
-
 
 auth.addHttpRoutes(http);
 

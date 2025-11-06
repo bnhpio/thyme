@@ -7,6 +7,7 @@ export const createProfile = action({
   args: {
     organizationId: v.id('organizations'),
     alias: v.string(),
+    chain: v.id('chains'),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -17,6 +18,7 @@ export const createProfile = action({
       userId: userId,
       organizationId: args.organizationId,
       alias: args.alias,
+      chain: args.chain,
     });
   },
 });
@@ -26,6 +28,7 @@ export const _createProfile = internalAction({
     organizationId: v.id('organizations'),
     alias: v.string(),
     userId: v.id('users'),
+    chain: v.id('chains'),
   },
   handler: async (ctx, args) => {
     const existingProfileWithSameAlias = await ctx.runQuery(
@@ -38,12 +41,19 @@ export const _createProfile = internalAction({
     if (existingProfileWithSameAlias) {
       throw new Error('Profile with same alias already exists');
     }
-    const { encryptedPrivateKey, address } = await ctx.runAction(
-      internal.action.node.createPrivateKey.default,
+    const salt = btoa(args.alias).concat(args.organizationId.toString());
+
+    const { address } = await ctx.runAction(
+      internal.action.node.createSmartAccount.default,
+      {
+        chain: args.chain,
+        salt,
+      },
     );
     await ctx.runMutation(internal.mutation.profile.createProfile, {
       organizationId: args.organizationId,
-      encryptedPrivateKey,
+      salt: salt,
+      chain: args.chain,
       alias: args.alias,
       address: address,
       createdBy: args.userId,

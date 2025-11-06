@@ -116,7 +116,7 @@ export const sendWelcomeEmailAction = action({
     userName: v.string(),
     role: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     try {
       await sendWelcomeEmail({
         to: args.to,

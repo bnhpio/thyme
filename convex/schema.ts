@@ -1,5 +1,6 @@
 import { authTables } from '@convex-dev/auth/server';
 import { defineSchema } from 'convex/server';
+import { chainSchema } from './schemas/chain';
 import { organizationSchema } from './schemas/organization';
 import { profileSchema } from './schemas/profile';
 import { taskSchema } from './schemas/task';
@@ -13,4 +14,5 @@ export default defineSchema({
   ...organizationSchema,
   ...taskSchema,
   ...profileSchema,
+  ...chainSchema,
 });

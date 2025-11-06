@@ -3,7 +3,7 @@ import { internal } from '../../_generated/api';
 import type { DataModel, Id } from '../../_generated/dataModel';
 import { httpAction } from '../../_generated/server';
 
-function createJsonResponse(data: object, status: number = 200) {
+function createJsonResponse(data: object, status = 200) {
   return new Response(JSON.stringify(data), { status });
 }
 
@@ -12,11 +12,12 @@ async function extractUserIdFromRequest(
   request: Request,
 ): Promise<{ userId: Id<'users'> } | { error: Response }> {
   const authorizationHeader = request.headers.get('Authorization');
+  console.log(authorizationHeader, 'authorizationHeader');
   const token = authorizationHeader?.split(' ')[1];
   if (!token) {
     return {
       error: createJsonResponse({ error: 'Missing authorization token' }, 401),
-    } as { error: Response };
+    };
   }
   try {
     const tokenHash = await ctx.runAction(

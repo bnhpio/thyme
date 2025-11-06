@@ -1,15 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { Web3Functions } from '@/pages/Web3Functions/Web3Functions';
+import { Profiles } from '@/pages/Profiles/Profiles';
 
-export const Route = createFileRoute('/_authed/_organization/web3-functions')({
+export const Route = createFileRoute('/_authed/_organization/profiles')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   return (
     <DashboardLayout>
-      <Web3Functions />
+      <Profiles />
     </DashboardLayout>
   );
 }

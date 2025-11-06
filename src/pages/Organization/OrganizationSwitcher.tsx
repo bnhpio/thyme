@@ -97,7 +97,7 @@ export function OrganizationSwitcher() {
             <div key={org._id} className="flex items-center">
               <DropdownMenuItem
                 onClick={() =>
-                  org && org._id && handleSetCurrentOrganization(org._id)
+                  org?._id && handleSetCurrentOrganization(org._id)
                 }
                 className="flex items-center justify-between flex-1"
               >

@@ -17,7 +17,7 @@ export function ApiKeys() {
     | ApiKey[]
     | undefined;
 
-  const handleDeleteKey = async (keyId: Id<'userCustomTokens'>) => {
+  const handleDeleteKey = async (_: Id<'userCustomTokens'>) => {
     // TODO: Implement delete mutation when available
     toast.success('API key deleted');
   };

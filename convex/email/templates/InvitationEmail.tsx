@@ -1,17 +1,14 @@
 import {
   Body,
   Button,
-  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
-  Row,
   Section,
   Text,
 } from '@react-email/components';
-import React from 'react';
 
 interface InvitationEmailProps {
   organizationName: string;

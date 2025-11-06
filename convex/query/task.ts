@@ -1,23 +1,8 @@
 import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
-import { internalQuery, query } from '../_generated/server';
+import { query } from '../_generated/server';
 
-export const getProfileByOrganizationAndAlias = internalQuery({
-  args: {
-    organizationId: v.id('organizations'),
-    alias: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('profiles')
-      .withIndex('by_organization_and_alias', (q) =>
-        q.eq('organizationId', args.organizationId).eq('alias', args.alias),
-      )
-      .first();
-  },
-});
-
-export const getProfilesByOrganization = query({
+export const getTasksByOrganization = query({
   args: {
     organizationId: v.id('organizations'),
   },
@@ -43,22 +28,31 @@ export const getProfilesByOrganization = query({
       throw new Error('User is not a member of this organization');
     }
 
-    const profiles = await ctx.db
-      .query('profiles')
+    const tasks = await ctx.db
+      .query('tasks')
       .filter((q) => q.eq(q.field('organizationId'), args.organizationId))
       .collect();
 
-    // Enrich profiles with chain information
-    const profilesWithChains = await Promise.all(
-      profiles.map(async (profile) => {
-        const chain = await ctx.db.get(profile.chain);
+    // Enrich tasks with creator information
+    const tasksWithCreator = await Promise.all(
+      tasks.map(async (task) => {
+        const creator = task.creator ? await ctx.db.get(task.creator) : null;
         return {
-          ...profile,
-          chainId: chain?.chainId,
+          _id: task._id,
+          hash: task.hash,
+          checkSum: task.checkSum,
+          creator: creator
+            ? {
+                id: creator._id,
+                name: creator.name ?? null,
+                email: creator.email ?? null,
+              }
+            : null,
+          _creationTime: task._creationTime,
         };
       }),
     );
 
-    return profilesWithChains;
+    return tasksWithCreator;
   },
 });

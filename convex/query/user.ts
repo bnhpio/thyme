@@ -18,9 +18,6 @@ export const getCurrentUser = query({
       return null;
     }
 
-    // Debug: Log the user data
-    console.log('Convex user data:', JSON.stringify(user, null, 2));
-
     return {
       id: userId, // This is a proper Convex user ID
       name: user.name,

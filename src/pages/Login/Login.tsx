@@ -1,6 +1,8 @@
 import { useAuthActions } from '@convex-dev/auth/react';
+import { useRouter } from '@tanstack/react-router';
 import { useConvexAuth } from 'convex/react';
 import { Github } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,11 +14,27 @@ import {
 
 export function Login() {
   const { signIn } = useAuthActions();
-  const { isLoading } = useConvexAuth();
-
+  const { isLoading, isAuthenticated } = useConvexAuth();
+  const { navigate } = useRouter();
   const handleGitHubSignIn = () => {
     signIn('github');
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate({
+        to: '/',
+      });
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAuthenticated) {
+    return <div>Redirecting to home...</div>;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 p-4">

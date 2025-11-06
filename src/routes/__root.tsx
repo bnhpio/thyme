@@ -6,8 +6,9 @@ import {
   Scripts,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { api } from 'convex/_generated/api';
 import { NotFound } from '@/components/base/NotFound/NotFound';
-import ConvexProvider from '../integrations/convex/provider';
+import ConvexProvider, { convex } from '../integrations/convex/provider';
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools';
 import appCss from '../styles.css?url';
 
@@ -16,6 +17,14 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async () => {
+    const isAuthenticated = await convex.query(api.auth.isAuthenticated);
+    console.log('isAuthenticated', isAuthenticated);
+
+    return {
+      isAuthenticated,
+    };
+  },
   head: () => ({
     meta: [
       {

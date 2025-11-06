@@ -8,7 +8,11 @@
  * @module
  */
 
-import type * as todos from "../todos.js";
+import type * as schemas_organization_index from "../schemas/organization/index.js";
+import type * as schemas_organization_organization from "../schemas/organization/organization.js";
+import type * as schemas_organization_organizationInvite from "../schemas/organization/organizationInvite.js";
+import type * as schemas_organization_organizationMember from "../schemas/organization/organizationMember.js";
+import type * as schemas_user_userSettings from "../schemas/user/userSettings.js";
 
 import type {
   ApiFromModules,
@@ -25,7 +29,11 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  todos: typeof todos;
+  "schemas/organization/index": typeof schemas_organization_index;
+  "schemas/organization/organization": typeof schemas_organization_organization;
+  "schemas/organization/organizationInvite": typeof schemas_organization_organizationInvite;
+  "schemas/organization/organizationMember": typeof schemas_organization_organizationMember;
+  "schemas/user/userSettings": typeof schemas_user_userSettings;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

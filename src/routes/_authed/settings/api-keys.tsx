@@ -1,7 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Key, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { SettingsLayout } from '@/layouts/SettingsLayout';
 
 export const Route = createFileRoute('/_authed/settings/api-keys')({
@@ -29,7 +35,8 @@ function RouteComponent() {
           <CardHeader>
             <CardTitle>API Keys</CardTitle>
             <CardDescription>
-              Your API keys are used to authenticate requests to the API. Keep them secure and never share them publicly.
+              Your API keys are used to authenticate requests to the API. Keep
+              them secure and never share them publicly.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -49,4 +56,3 @@ function RouteComponent() {
     </SettingsLayout>
   );
 }
-

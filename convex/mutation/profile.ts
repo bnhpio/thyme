@@ -6,7 +6,7 @@ export const createProfile = internalMutation({
     organizationId: v.id('organizations'),
     encryptedPrivateKey: v.string(),
     alias: v.string(),
-    createdBy: v.optional(v.id('users')),
+    createdBy: v.id('users'),
     address: v.string(),
   },
   handler: async (ctx, args) => {

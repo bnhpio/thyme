@@ -6,9 +6,9 @@ import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import {
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-  SidebarInset,
 } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -85,4 +85,3 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     </SidebarProvider>
   );
 }
-

@@ -142,7 +142,6 @@ export const acceptInvite = mutation({
       userId: userId,
       email: invite.email,
       name: user.name,
-      avatar: user.image,
       role: invite.role,
       status: 'active',
       joinedAt: Date.now(),

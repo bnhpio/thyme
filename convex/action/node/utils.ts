@@ -2,6 +2,7 @@
 import {
   createCipheriv,
   createDecipheriv,
+  createHash,
   randomBytes,
   scrypt,
 } from 'node:crypto';
@@ -74,4 +75,12 @@ export async function decryptPrivateKey(
       `Failed to decrypt private key: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+export function generateToken(): string {
+  return randomBytes(32).toString('hex');
+}
+
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }

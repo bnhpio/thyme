@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { OrganizationSwitcher } from '@/pages/Organization/OrganizationSwitcher';
 //import { OrganizationSwitcher } from './OrganizationSwitcher';
 
 export function AppSidebar() {
@@ -27,7 +28,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader>{/* <OrganizationSwitcher /> */}</SidebarHeader>
+      <SidebarHeader>
+        <OrganizationSwitcher />
+      </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>

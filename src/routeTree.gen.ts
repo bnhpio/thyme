@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OrganizationSetupRouteImport } from './routes/organization-setup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedOrganizationRouteImport } from './routes/_authed/_organization'
 import { Route as AuthedOrganizationIndexRouteImport } from './routes/_authed/_organization/index'
 import { Route as AuthedOrganizationWeb3FunctionsRouteImport } from './routes/_authed/_organization/web3-functions'
 
+const OrganizationSetupRoute = OrganizationSetupRouteImport.update({
+  id: '/organization-setup',
+  path: '/organization-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -42,11 +48,13 @@ const AuthedOrganizationWeb3FunctionsRoute =
 
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
+  '/organization-setup': typeof OrganizationSetupRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/': typeof AuthedOrganizationIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/organization-setup': typeof OrganizationSetupRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/': typeof AuthedOrganizationIndexRoute
 }
@@ -54,19 +62,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
+  '/organization-setup': typeof OrganizationSetupRoute
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
   '/_authed/_organization/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/_authed/_organization/': typeof AuthedOrganizationIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/web3-functions' | '/'
+  fullPaths: '/login' | '/organization-setup' | '/web3-functions' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/web3-functions' | '/'
+  to: '/login' | '/organization-setup' | '/web3-functions' | '/'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
+    | '/organization-setup'
     | '/_authed/_organization'
     | '/_authed/_organization/web3-functions'
     | '/_authed/_organization/'
@@ -75,10 +85,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OrganizationSetupRoute: typeof OrganizationSetupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/organization-setup': {
+      id: '/organization-setup'
+      path: '/organization-setup'
+      fullPath: '/organization-setup'
+      preLoaderRoute: typeof OrganizationSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -144,6 +162,7 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
+  OrganizationSetupRoute: OrganizationSetupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

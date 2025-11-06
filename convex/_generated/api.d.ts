@@ -8,12 +8,16 @@
  * @module
  */
 
+import type * as action_email from "../action/email.js";
 import type * as action_node_createPrivateKey from "../action/node/createPrivateKey.js";
 import type * as action_node_utils from "../action/node/utils.js";
 import type * as action_profile from "../action/profile.js";
 import type * as auth from "../auth.js";
+import type * as email_templates_InvitationEmail from "../email/templates/InvitationEmail.js";
+import type * as email_templates_WelcomeEmail from "../email/templates/WelcomeEmail.js";
 import type * as http_task_upload from "../http/task/upload.js";
 import type * as http from "../http.js";
+import type * as mutation_organizations from "../mutation/organizations.js";
 import type * as mutation_profile from "../mutation/profile.js";
 import type * as mutation_task from "../mutation/task.js";
 import type * as query_profile from "../query/profile.js";
@@ -43,12 +47,16 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "action/email": typeof action_email;
   "action/node/createPrivateKey": typeof action_node_createPrivateKey;
   "action/node/utils": typeof action_node_utils;
   "action/profile": typeof action_profile;
   auth: typeof auth;
+  "email/templates/InvitationEmail": typeof email_templates_InvitationEmail;
+  "email/templates/WelcomeEmail": typeof email_templates_WelcomeEmail;
   "http/task/upload": typeof http_task_upload;
   http: typeof http;
+  "mutation/organizations": typeof mutation_organizations;
   "mutation/profile": typeof mutation_profile;
   "mutation/task": typeof mutation_task;
   "query/profile": typeof query_profile;

@@ -54,3 +54,51 @@ export const getUserOrganizations = query({
     return organizations;
   },
 });
+
+// Check if user has pending invites
+export const getUserPendingInvites = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const invites = await ctx.db
+      .query('organizationInvites')
+      .withIndex('by_email', (q) => q.eq('email', args.email))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('status'), 'pending'),
+          q.gt(q.field('expiresAt'), Date.now()),
+        ),
+      )
+      .collect();
+
+    const invitesWithOrg = await Promise.all(
+      invites.map(async (invite) => {
+        const org = await ctx.db.get(invite.organizationId);
+        return {
+          ...invite,
+          organization: org,
+        };
+      }),
+    );
+
+    return invitesWithOrg;
+  },
+});
+
+// Get user's current organization ID from settings
+export const getCurrentUserOrganizationId = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+
+    if (!userId) {
+      return null;
+    }
+
+    const settings = await ctx.db
+      .query('userSettings')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .first();
+
+    return settings?.currentOrganizationId || null;
+  },
+});

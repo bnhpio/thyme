@@ -1,0 +1,137 @@
+'use node';
+import { render } from '@react-email/render';
+import { v } from 'convex/values';
+import nodemailer from 'nodemailer';
+import { action } from '../_generated/server';
+import WelcomeEmail from '../email/templates/WelcomeEmail';
+
+// Email configuration - you'll need to set these environment variables
+const SMTP_SERVER = process.env.SMTP_SERVER || 'smtp-relay.brevo.com';
+const SMTP_PORT = process.env.SMTP_PORT || '587';
+const BREVO_EMAIL = process.env.BREVO_EMAIL;
+const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@yourdomain.com';
+
+// Create transporter instance
+const createTransporter = () => {
+  if (!BREVO_EMAIL || !BREVO_SMTP_KEY) {
+    throw new Error(
+      'Email configuration missing: BREVO_EMAIL and BREVO_SMTP_KEY are required',
+    );
+  }
+
+  return nodemailer.createTransport({
+    host: SMTP_SERVER,
+    port: Number(SMTP_PORT),
+    auth: {
+      user: BREVO_EMAIL,
+      pass: BREVO_SMTP_KEY,
+    },
+    debug: process.env.NODE_ENV === 'development',
+  });
+};
+
+// Generic email sending function
+export async function sendEmail({
+  to,
+  subject,
+  text,
+  html,
+}: {
+  to: string | string[];
+  subject: string;
+  text?: string;
+  html?: string;
+}) {
+  try {
+    console.log('Sending email to', to);
+    const transporter = createTransporter();
+
+    const result = await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: Array.isArray(to) ? to.join(',') : to,
+      subject,
+      text,
+      html,
+    });
+
+    console.log('Email sent successfully:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
+}
+
+// Welcome email after joining
+async function sendWelcomeEmail({
+  to,
+  organizationName,
+  userName,
+  role,
+}: {
+  to: string;
+  organizationName: string;
+  userName: string;
+  role: string;
+}) {
+  const htmlContent = await render(
+    WelcomeEmail({
+      organizationName,
+      userName,
+      role,
+    }),
+  );
+
+  const textContent = `
+Welcome to ${organizationName}!
+
+🎉 You've successfully joined ${organizationName} as a ${role}!
+
+Hi ${userName},
+
+Welcome to the team! You now have access to all the organization's resources and can start collaborating with your new teammates.
+
+What's next?
+- Explore the organization dashboard
+- Connect with your team members  
+- Check out available projects and resources
+
+Welcome to ${organizationName}!
+`;
+
+  return sendEmail({
+    to,
+    subject: `Welcome to ${organizationName}!`,
+    text: textContent,
+    html: htmlContent,
+  });
+}
+
+// Send welcome email after joining
+export const sendWelcomeEmailAction = action({
+  args: {
+    to: v.string(),
+    organizationName: v.string(),
+    userName: v.string(),
+    role: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      await sendWelcomeEmail({
+        to: args.to,
+        organizationName: args.organizationName,
+        userName: args.userName,
+        role: args.role,
+      });
+
+      console.log(
+        `Welcome email sent to ${args.to} for ${args.organizationName}`,
+      );
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      throw new Error('Failed to send welcome email');
+    }
+  },
+});

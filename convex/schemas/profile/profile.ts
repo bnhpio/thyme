@@ -6,5 +6,5 @@ export default defineTable({
   encryptedPrivateKey: v.string(),
   alias: v.string(),
   address: v.string(),
-  createdBy: v.optional(v.id('users')),
+  createdBy: v.id('users'),
 }).index('by_organization_and_alias', ['organizationId', 'alias']);

@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as OrganizationSetupRouteImport } from './routes/organization-setup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedOrganizationRouteImport } from './routes/_authed/_organization'
 import { Route as AuthedOrganizationIndexRouteImport } from './routes/_authed/_organization/index'
+import { Route as AuthedSettingsApiKeysRouteImport } from './routes/_authed/settings/api-keys'
 import { Route as AuthedOrganizationWeb3FunctionsRouteImport } from './routes/_authed/_organization/web3-functions'
 
 const OrganizationSetupRoute = OrganizationSetupRouteImport.update({
@@ -30,6 +32,11 @@ const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedOrganizationRoute = AuthedOrganizationRouteImport.update({
   id: '/_organization',
   getParentRoute: () => AuthedRoute,
@@ -38,6 +45,11 @@ const AuthedOrganizationIndexRoute = AuthedOrganizationIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedOrganizationRoute,
+} as any)
+const AuthedSettingsApiKeysRoute = AuthedSettingsApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => AuthedSettingsRoute,
 } as any)
 const AuthedOrganizationWeb3FunctionsRoute =
   AuthedOrganizationWeb3FunctionsRouteImport.update({
@@ -49,13 +61,17 @@ const AuthedOrganizationWeb3FunctionsRoute =
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/settings': typeof AuthedSettingsRouteWithChildren
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
+  '/settings/api-keys': typeof AuthedSettingsApiKeysRoute
   '/': typeof AuthedOrganizationIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/settings': typeof AuthedSettingsRouteWithChildren
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
+  '/settings/api-keys': typeof AuthedSettingsApiKeysRoute
   '/': typeof AuthedOrganizationIndexRoute
 }
 export interface FileRoutesById {
@@ -64,21 +80,37 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
+  '/_authed/settings': typeof AuthedSettingsRouteWithChildren
   '/_authed/_organization/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
+  '/_authed/settings/api-keys': typeof AuthedSettingsApiKeysRoute
   '/_authed/_organization/': typeof AuthedOrganizationIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/organization-setup' | '/web3-functions' | '/'
+  fullPaths:
+    | '/login'
+    | '/organization-setup'
+    | '/settings'
+    | '/web3-functions'
+    | '/settings/api-keys'
+    | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/organization-setup' | '/web3-functions' | '/'
+  to:
+    | '/login'
+    | '/organization-setup'
+    | '/settings'
+    | '/web3-functions'
+    | '/settings/api-keys'
+    | '/'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/organization-setup'
     | '/_authed/_organization'
+    | '/_authed/settings'
     | '/_authed/_organization/web3-functions'
+    | '/_authed/settings/api-keys'
     | '/_authed/_organization/'
   fileRoutesById: FileRoutesById
 }
@@ -111,6 +143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/_organization': {
       id: '/_authed/_organization'
       path: ''
@@ -124,6 +163,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthedOrganizationIndexRouteImport
       parentRoute: typeof AuthedOrganizationRoute
+    }
+    '/_authed/settings/api-keys': {
+      id: '/_authed/settings/api-keys'
+      path: '/api-keys'
+      fullPath: '/settings/api-keys'
+      preLoaderRoute: typeof AuthedSettingsApiKeysRouteImport
+      parentRoute: typeof AuthedSettingsRoute
     }
     '/_authed/_organization/web3-functions': {
       id: '/_authed/_organization/web3-functions'
@@ -148,12 +194,26 @@ const AuthedOrganizationRouteChildren: AuthedOrganizationRouteChildren = {
 const AuthedOrganizationRouteWithChildren =
   AuthedOrganizationRoute._addFileChildren(AuthedOrganizationRouteChildren)
 
+interface AuthedSettingsRouteChildren {
+  AuthedSettingsApiKeysRoute: typeof AuthedSettingsApiKeysRoute
+}
+
+const AuthedSettingsRouteChildren: AuthedSettingsRouteChildren = {
+  AuthedSettingsApiKeysRoute: AuthedSettingsApiKeysRoute,
+}
+
+const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
+  AuthedSettingsRouteChildren,
+)
+
 interface AuthedRouteChildren {
   AuthedOrganizationRoute: typeof AuthedOrganizationRouteWithChildren
+  AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedOrganizationRoute: AuthedOrganizationRouteWithChildren,
+  AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
 }
 
 const AuthedRouteWithChildren =

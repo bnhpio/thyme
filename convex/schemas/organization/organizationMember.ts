@@ -6,7 +6,6 @@ export default defineTable({
   userId: v.string(), // Temporarily back to string for migration
   email: v.optional(v.string()),
   name: v.optional(v.string()),
-  avatar: v.optional(v.string()),
   role: v.string(), // "admin", "member", "viewer"
   status: v.string(), // "active", "pending", "suspended"
   joinedAt: v.number(),

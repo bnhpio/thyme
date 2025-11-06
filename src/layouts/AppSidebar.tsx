@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { Building2, Home } from 'lucide-react';
+import { Building2, Home, Settings } from 'lucide-react';
 import { api } from '@/../convex/_generated/api';
 import {
   Sidebar,
@@ -84,6 +84,13 @@ export function AppSidebar() {
                 {currentUser?.email || ''}
               </span>
             </div>
+            <Link
+              to="/settings"
+              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent transition-colors"
+              title="Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </SidebarFooter>

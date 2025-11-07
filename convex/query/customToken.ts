@@ -1,6 +1,5 @@
 import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
-import { internal } from '../_generated/api';
 import { internalQuery, query } from '../_generated/server';
 
 export const _isTokenExists = internalQuery({
@@ -38,6 +37,23 @@ export const _getCustomTokensByUserId = internalQuery({
       organzations: token.organzations,
       name: token.name,
     }));
+  },
+});
+
+export const _getUserByCustomToken = internalQuery({
+  args: {
+    tokenHash: v.string(),
+  },
+  returns: v.id('users'),
+  handler: async (ctx, args) => {
+    const customToken = await ctx.db
+      .query('userCustomTokens')
+      .withIndex('by_token_hash', (q) => q.eq('tokenHash', args.tokenHash))
+      .first();
+    if (!customToken) {
+      throw new Error('Invalid token');
+    }
+    return customToken.userId;
   },
 });
 

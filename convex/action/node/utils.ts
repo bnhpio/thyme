@@ -33,8 +33,7 @@ export async function encryptPrivateKey(
     encrypted += cipher.final('hex');
 
     // Combine salt + iv + encrypted data
-    const combined =
-      salt.toString('hex') + ':' + iv.toString('hex') + ':' + encrypted;
+    const combined = `${salt.toString('hex')}:${iv.toString('hex')}:${encrypted}`;
 
     return combined;
   } catch (error) {

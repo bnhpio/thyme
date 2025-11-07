@@ -73,7 +73,7 @@ export function OrganizationSwitcher() {
             className="w-full justify-between px-3 py-2 h-auto"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <div className="h-8 w-8 rounded bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
                 <Building2 className="h-4 w-4 text-white" />
               </div>
               <div className="flex-1 min-w-0 text-left">
@@ -85,7 +85,7 @@ export function OrganizationSwitcher() {
                 </div>
               </div>
             </div>
-            <ChevronDown className="h-4 w-4 flex-shrink-0" />
+            <ChevronDown className="h-4 w-4 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
 
@@ -97,12 +97,12 @@ export function OrganizationSwitcher() {
             <div key={org._id} className="flex items-center">
               <DropdownMenuItem
                 onClick={() =>
-                  org && org._id && handleSetCurrentOrganization(org._id)
+                  org?._id && handleSetCurrentOrganization(org._id)
                 }
                 className="flex items-center justify-between flex-1"
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <div className="h-6 w-6 rounded bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
                     <Building2 className="h-3 w-3 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -113,7 +113,7 @@ export function OrganizationSwitcher() {
                   </div>
                 </div>
                 {currentOrganizationId === org._id && (
-                  <Check className="h-4 w-4 flex-shrink-0" />
+                  <Check className="h-4 w-4 shrink-0" />
                 )}
               </DropdownMenuItem>
               {/* <Link

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { Web3Functions } from '@/pages/Web3Functions/Web3Functions';
 
 export const Route = createFileRoute('/_authed/_organization/web3-functions')({
   component: RouteComponent,
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/_authed/_organization/web3-functions')({
 function RouteComponent() {
   return (
     <DashboardLayout>
-      <div>Hello "/_authed/_organization/web3-functions"!</div>
+      <Web3Functions />
     </DashboardLayout>
   );
 }

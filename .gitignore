@@ -14,3 +14,5 @@ todos.json
 
 # Local Netlify folder
 .netlify
+
+convex/_generated

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { Building2, Home, Settings } from 'lucide-react';
+import { Building2, Home, Play, Settings, User } from 'lucide-react';
 import { api } from '@/../convex/_generated/api';
 import {
   Sidebar,
@@ -59,6 +59,22 @@ export function AppSidebar() {
                     <Link to="/web3-functions">
                       <Building2 className="h-4 w-4" />
                       <span>Functions</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/executables">
+                      <Play className="h-4 w-4" />
+                      <span>Executables</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/profiles">
+                      <User className="h-4 w-4" />
+                      <span>Profiles</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

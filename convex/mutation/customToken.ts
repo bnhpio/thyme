@@ -1,5 +1,6 @@
+import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
-import { internalMutation } from '../_generated/server';
+import { internalMutation, mutation } from '../_generated/server';
 
 export const _saveCustomToken = internalMutation({
   args: {
@@ -17,5 +18,22 @@ export const _saveCustomToken = internalMutation({
       organzations: args.organzations,
       name: args.name,
     });
+  },
+});
+
+export const deleteCustomToken = mutation({
+  args: {
+    id: v.id('userCustomTokens'),
+  },
+  handler: async (ctx, args) => {
+    const token = await ctx.db.get(args.id);
+    if (!token) {
+      throw new Error('Token not found');
+    }
+    const userId = await getAuthUserId(ctx);
+    if (token.userId !== userId) {
+      throw new Error('Unauthorized');
+    }
+    await ctx.db.delete(args.id);
   },
 });

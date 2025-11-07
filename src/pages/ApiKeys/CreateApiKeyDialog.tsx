@@ -47,6 +47,7 @@ export function CreateApiKeyDialog({
   const [expiration, setExpiration] = useState<string>('7weeks');
   const [selectedOrgs, setSelectedOrgs] = useState<Id<'organizations'>[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isTokenCreated, setIsTokenCreated] = useState(false);
 
   const handleToggleOrg = (orgId: Id<'organizations'>) => {
     if (selectedOrgs.includes(orgId)) {
@@ -77,6 +78,7 @@ export function CreateApiKeyDialog({
       });
 
       // Show the token in a modal
+      setIsTokenCreated(true);
       setCreatedToken(token);
       setIsOpen(false);
       // Use setTimeout to ensure the create dialog closes before opening token modal
@@ -95,19 +97,18 @@ export function CreateApiKeyDialog({
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      // Reset form when closing (but keep token modal open if token was created)
-      if (!isTokenModalOpen) {
-        setName('');
-        setExpiration('7weeks');
-        setSelectedOrgs([]);
-      }
+    if (!open && !isTokenCreated) {
+      // Reset form when closing (but only if token wasn't just created)
+      setName('');
+      setExpiration('7weeks');
+      setSelectedOrgs([]);
     }
   };
 
   const handleTokenModalClose = () => {
     setIsTokenModalOpen(false);
     setCreatedToken(null);
+    setIsTokenCreated(false);
     // Reset form after token modal is closed
     setName('');
     setExpiration('7weeks');

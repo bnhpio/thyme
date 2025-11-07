@@ -1,10 +1,10 @@
-import { useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
-import type { ApiKey, Organization } from './types';
 import { ApiKeyList } from './ApiKeyList';
 import { CreateApiKeyDialog } from './CreateApiKeyDialog';
+import type { ApiKey, Organization } from './types';
 
 export function ApiKeys() {
   const currentUser = useQuery(api.query.user.getCurrentUser);
@@ -17,9 +17,17 @@ export function ApiKeys() {
     | ApiKey[]
     | undefined;
 
+  const deleteToken = useMutation(api.mutation.customToken.deleteCustomToken);
+
   const handleDeleteKey = async (keyId: Id<'userCustomTokens'>) => {
-    // TODO: Implement delete mutation when available
-    toast.success('API key deleted');
+    try {
+      await deleteToken({ id: keyId });
+      toast.success('API key deleted');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete API key',
+      );
+    }
   };
 
   const handleRefresh = () => {
@@ -50,4 +58,3 @@ export function ApiKeys() {
     </div>
   );
 }
-

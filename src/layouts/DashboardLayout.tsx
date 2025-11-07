@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { LogOut, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
+import { Logo } from '@/components/base/Logo/Logo';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
@@ -42,11 +43,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
                 <div className="flex items-center space-x-2">
-                  <div className="h-6 w-6 rounded bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <Zap className="h-3 w-3 text-white" />
+                  <div className="h-6 w-6 rounded fill-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <Logo className="h-6 w-6 text-white" />
                   </div>
                   <span className="font-semibold text-foreground hidden sm:block">
-                    Convex Gelato
+                    Thyme
                   </span>
                 </div>
               </div>

@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { PricingTable } from 'autumn-js/react';
 import {
   Activity,
   ArrowRight,
@@ -13,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Logo } from '@/components/base/Logo/Logo';
+import PricingTable from '@/components/autumn/pricing-table';
 import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 

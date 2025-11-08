@@ -1,6 +1,7 @@
-import { Check, Copy } from 'lucide-react';
+import { AlertTriangle, Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -64,18 +65,19 @@ export function TokenDisplayModal({
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border p-4 bg-warning/10 border-warning">
-            <p className="text-sm font-medium mb-2 text-warning-foreground">
-              ⚠️ Important Security Notice
-            </p>
-            <ul className="text-sm space-y-1 list-disc list-inside text-warning-foreground">
-              <li>
-                This is the only time you'll be able to see the full token
-              </li>
-              <li>Store it securely and never share it publicly</li>
-              <li>If you lose it, you'll need to create a new key</li>
-            </ul>
-          </div>
+          <Alert variant="warning">
+            <AlertTriangle />
+            <AlertTitle>Important Security Notice</AlertTitle>
+            <AlertDescription>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>
+                  This is the only time you'll be able to see the full token
+                </li>
+                <li>Store it securely and never share it publicly</li>
+                <li>If you lose it, you'll need to create a new key</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
         </div>
         <div className="flex justify-end">
           <Button onClick={onClose}>I've Saved My Token</Button>

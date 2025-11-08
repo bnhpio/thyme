@@ -5,6 +5,7 @@ import { LogOut, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Logo } from '@/components/base/Logo/Logo';
+import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 import {
   SidebarInset,
@@ -47,12 +48,9 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
                 <div className="flex items-center space-x-2">
-                  <div className="h-6 w-6 rounded flex items-center justify-center">
-                    <Logo className="h-6 w-6 fill-primary" />
+                  <div className=" w-20 rounded flex items-center justify-center text-linear-to-b from-primary/50 to-primary">
+                    <LogoSigned className=" fill-primary" />
                   </div>
-                  <span className="font-semibold text-foreground hidden sm:block">
-                    Thyme
-                  </span>
                 </div>
               </div>
 

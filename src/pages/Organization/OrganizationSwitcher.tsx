@@ -73,8 +73,8 @@ export function OrganizationSwitcher() {
             className="w-full justify-between px-3 py-2 h-auto"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="h-8 w-8 rounded flex items-center justify-center shrink-0 bg-linear-to-b from-primary/50 to-primary">
-                <Building2 className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded flex items-center justify-center shrink-0 bg-muted">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <div className="font-medium truncate">

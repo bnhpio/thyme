@@ -5,6 +5,7 @@ import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Logo } from '@/components/base/Logo/Logo';
+import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
@@ -43,12 +44,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
                 <div className="flex items-center space-x-2">
-                  <div className="h-6 w-6 rounded flex items-center justify-center bg-linear-to-b from-primary/50 to-primary">
-                    <Logo className="h-6 w-6 text-foreground" />
+                  <div className=" w-20 rounded flex items-center justify-center text-linear-to-b from-primary/50 to-primary">
+                    <LogoSigned className=" fill-primary" />
                   </div>
-                  <span className="font-semibold text-foreground hidden sm:block">
-                    Thyme
-                  </span>
                 </div>
               </div>
 

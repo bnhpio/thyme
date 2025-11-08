@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useMutation, useQuery } from 'convex/react';
-import { Building2, Check, ChevronDown, Plus } from 'lucide-react';
+import { Building2, Check, ChevronDown, Plus, Settings } from 'lucide-react';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -94,7 +94,7 @@ export function OrganizationSwitcher() {
           <DropdownMenuSeparator />
 
           {organizations?.map((org, index) => (
-            <div key={org._id} className="flex items-center">
+            <div key={org._id} className="flex items-center group">
               <DropdownMenuItem
                 onClick={() =>
                   org?._id && handleSetCurrentOrganization(org._id)
@@ -116,14 +116,14 @@ export function OrganizationSwitcher() {
                   <Check className="h-4 w-4 shrink-0" />
                 )}
               </DropdownMenuItem>
-              {/* <Link
-                                to="/$slug/settings"
-                                params={{ slug: org.slug || '' }}
-                                className="flex items-center justify-center p-2 hover:bg-accent rounded-sm mx-1"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                            </Link> */}
+              <Link
+                to="/organization/$slug/settings"
+                params={{ slug: org.slug || '' }}
+                className="flex items-center justify-center p-2 hover:bg-accent rounded-sm mx-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              </Link>
             </div>
           ))}
 

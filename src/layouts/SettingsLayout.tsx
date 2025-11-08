@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react';
 import { LogOut, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
+import { Logo } from '@/components/base/Logo/Logo';
 import { Button } from '@/components/ui/button';
 import {
   SidebarInset,
@@ -46,11 +47,11 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
                 <div className="flex items-center space-x-2">
-                  <div className="h-6 w-6 rounded bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <Zap className="h-3 w-3 text-white" />
+                  <div className="h-6 w-6 rounded flex items-center justify-center">
+                    <Logo className="h-6 w-6 fill-primary" />
                   </div>
                   <span className="font-semibold text-foreground hidden sm:block">
-                    Convex Gelato
+                    Thyme
                   </span>
                 </div>
               </div>
@@ -76,8 +77,9 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 bg-background p-6">
-            <div className="max-w-7xl mx-auto">{children}</div>
+          <main className="flex-1 bg-background p-6 relative">
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-linear-to-b from-primary/50 to-primary" />
+            <div className="max-w-7xl mx-auto relative z-10">{children}</div>
           </main>
         </SidebarInset>
       </div>

@@ -1,7 +1,7 @@
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { LogOut, Zap } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Logo } from '@/components/base/Logo/Logo';
@@ -43,8 +43,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
                 <div className="flex items-center space-x-2">
-                  <div className="h-6 w-6 rounded fill-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <Logo className="h-6 w-6 text-white" />
+                  <div className="h-6 w-6 rounded flex items-center justify-center bg-linear-to-b from-primary/50 to-primary">
+                    <Logo className="h-6 w-6 text-foreground" />
                   </div>
                   <span className="font-semibold text-foreground hidden sm:block">
                     Thyme
@@ -73,8 +73,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 bg-background p-6">
-            <div className="max-w-7xl mx-auto">{children}</div>
+          <main className="flex-1 bg-background p-6 relative">
+            <div
+              className="absolute inset-0 opacity-[0.02] pointer-events-none"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)',
+                backgroundSize: '24px 24px',
+              }}
+            />
+            <div className="max-w-7xl mx-auto relative z-10">{children}</div>
           </main>
         </div>
       </div>

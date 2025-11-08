@@ -102,7 +102,7 @@ export function AppSidebar() {
             </div>
             <Link
               to="/settings/settings"
-              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
               title="Settings"
             >
               <Settings className="h-4 w-4" />

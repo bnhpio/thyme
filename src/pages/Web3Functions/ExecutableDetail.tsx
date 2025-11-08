@@ -17,18 +17,30 @@ function getChainName(chainId: number): string {
   return chain?.name || `Chain ${chainId}`;
 }
 
-function getStatusColor(status: string): string {
+function getStatusColor(status: string): {
+  className: string;
+} {
   switch (status) {
     case 'active':
-      return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950';
+      return {
+        className: 'px-3 py-1 rounded text-sm font-medium bg-success/10 text-success-foreground',
+      };
     case 'paused':
-      return 'text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-950';
+      return {
+        className: 'px-3 py-1 rounded text-sm font-medium bg-warning/10 text-warning-foreground',
+      };
     case 'finished':
-      return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-950';
+      return {
+        className: 'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
+      };
     case 'failed':
-      return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950';
+      return {
+        className: 'px-3 py-1 rounded text-sm font-medium bg-destructive/10 text-destructive-foreground',
+      };
     default:
-      return 'text-muted-foreground bg-muted';
+      return {
+        className: 'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
+      };
   }
 }
 
@@ -163,7 +175,8 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
         </div>
         <div className="flex flex-col items-end gap-2">
           <span
-            className={`px-3 py-1 rounded text-sm font-medium ${getStatusColor(executable.status)}`}
+            className={getStatusColor(executable.status).className}
+            style={getStatusColor(executable.status).style}
           >
             {executable.status}
           </span>
@@ -258,7 +271,7 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
             )}
             {executable.trigger.withRetry && (
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                <span className="text-xs px-2 py-0.5 rounded bg-info/10 text-info">
                   Retry enabled (max 5 attempts)
                 </span>
               </div>

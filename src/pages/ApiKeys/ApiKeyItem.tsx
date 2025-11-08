@@ -23,7 +23,7 @@ export function ApiKeyItem({
   const isExpired = apiKey.expiresAt < Date.now();
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+    <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted transition-colors">
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
           <h3 className="font-medium">{apiKey.name}</h3>
@@ -45,7 +45,7 @@ export function ApiKeyItem({
             <span>Expires: {formatDate(apiKey.expiresAt)}</span>
           </div>
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs  text-muted-foreground">
           Organizations:{' '}
           {getOrganizationNames(apiKey.organzations, organizations)}
         </div>

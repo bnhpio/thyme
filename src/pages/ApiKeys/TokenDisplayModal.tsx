@@ -35,7 +35,7 @@ export function TokenDisplayModal({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Check className="h-5 w-5 text-green-500" />
+            <Check className="h-5 w-5 text-success" />
             API Key Created Successfully
           </DialogTitle>
           <DialogDescription>
@@ -57,18 +57,18 @@ export function TokenDisplayModal({
                 className="shrink-0"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-success" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
               </Button>
             </div>
           </div>
-          <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200 font-medium mb-2">
+          <div className="rounded-lg border p-4 bg-warning/10 border-warning">
+            <p className="text-sm font-medium mb-2 text-warning-foreground">
               ⚠️ Important Security Notice
             </p>
-            <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside">
+            <ul className="text-sm space-y-1 list-disc list-inside text-warning-foreground">
               <li>
                 This is the only time you'll be able to see the full token
               </li>

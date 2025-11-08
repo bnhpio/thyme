@@ -75,18 +75,35 @@ function formatDate(timestamp: number): string {
   });
 }
 
-function getStatusColor(status: string): string {
+function getStatusColor(status: string): {
+  className: string;
+} {
   switch (status) {
     case 'active':
-      return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950';
+      return {
+        className:
+          'px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success-foreground',
+      };
     case 'paused':
-      return 'text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-950';
+      return {
+        className:
+          'px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning-foreground',
+      };
     case 'finished':
-      return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-950';
+      return {
+        className:
+          'px-2 py-0.5 rounded text-xs font-medium text-muted-foreground bg-muted',
+      };
     case 'failed':
-      return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950';
+      return {
+        className:
+          'px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive-foreground',
+      };
     default:
-      return 'text-muted-foreground bg-muted';
+      return {
+        className:
+          'px-2 py-0.5 rounded text-xs font-medium text-muted-foreground bg-muted',
+      };
   }
 }
 
@@ -116,14 +133,15 @@ export function ExecutableItem({ executable }: ExecutableItemProps) {
             className="h-4 w-4 shrink-0 p-0"
           >
             {copied ? (
-              <Copy className="h-2.5 w-2.5 text-green-500" />
+              <Copy
+                className="h-2.5 w-2.5"
+                style={{ color: 'var(--success)' }}
+              />
             ) : (
               <Copy className="h-2.5 w-2.5" />
             )}
           </Button>
-          <span
-            className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(executable.status)}`}
-          >
+          <span className={getStatusColor(executable.status).className}>
             {executable.status}
           </span>
         </div>
@@ -163,7 +181,7 @@ export function ExecutableItem({ executable }: ExecutableItemProps) {
             </div>
           )}
           {executable.trigger.withRetry && (
-            <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+            <span className="text-xs px-2 py-0.5 rounded bg-info/10 text-info">
               Retry enabled
             </span>
           )}

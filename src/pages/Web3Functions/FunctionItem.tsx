@@ -65,7 +65,7 @@ export function FunctionItem({
               className="h-4 w-4 shrink-0 p-0"
             >
               {copied ? (
-                <Check className="h-2.5 w-2.5 text-green-500" />
+                <Check className="h-2.5 w-2.5 text-success" />
               ) : (
                 <Copy className="h-2.5 w-2.5" />
               )}

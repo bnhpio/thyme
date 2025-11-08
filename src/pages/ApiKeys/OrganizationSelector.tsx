@@ -30,9 +30,9 @@ export function OrganizationSelector({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 ">
       <Label>Organizations</Label>
-      <div className="flex flex-wrap gap-2 border rounded-lg p-3.5 min-h-12 max-h-48 overflow-y-auto bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-shadow">
+      <div className="flex flex-wrap gap-2 border rounded-lg p-3.5 min-h-12 max-h-48 overflow-y-auto  ">
         {organizations.map((org) => {
           const isSelected = selectedOrgs.includes(org._id);
           return (

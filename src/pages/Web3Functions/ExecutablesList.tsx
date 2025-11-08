@@ -67,7 +67,9 @@ function formatDate(timestamp: number): string {
 
 function getNetworkColor(chainId: number): string {
   // Red dot for mainnet, yellow dot for testnet
-  return isMainnet(chainId) ? 'bg-red-500' : 'bg-yellow-500';
+  return isMainnet(chainId)
+    ? 'bg-destructive'
+    : 'bg-warning';
 }
 
 export function ExecutablesList({ organizationId }: ExecutablesListProps) {

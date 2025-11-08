@@ -99,3 +99,15 @@ export const getCurrentUserOrganizationId = query({
     return settings?.currentOrganizationId || null;
   },
 });
+
+export const getUserSettings = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const settings = await ctx.db
+      .query('userSettings')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .first();
+
+    return settings;
+  },
+});

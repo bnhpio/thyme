@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@account-kit/infra": "^4.78.0",
-    "@bnhpio/thyme-sdk": "link:@bnhpio/thyme-sdk",
+    "@bnhpio/thyme-sdk": "^0.0.3",
     "@convex-dev/crons": "^0.1.9",
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@icons-pack/react-simple-icons": "^13.8.0",

@@ -13,6 +13,7 @@ import { Route as OrganizationSetupRouteImport } from './routes/organization-set
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/_settings'
 import { Route as AuthedOrganizationRouteImport } from './routes/_authed/_organization'
 import { Route as AuthedOrganizationIndexRouteImport } from './routes/_authed/_organization/index'
@@ -41,6 +42,11 @@ const HomeRoute = HomeRouteImport.update({
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/docs/',
+  path: '/docs/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/docs': typeof DocsIndexRoute
   '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/docs': typeof DocsIndexRoute
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
   '/': typeof AuthedOrganizationIndexRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/organization-setup': typeof OrganizationSetupRoute
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
   '/_authed/_settings': typeof AuthedSettingsRouteWithChildren
+  '/docs/': typeof DocsIndexRoute
   '/_authed/_organization/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/_authed/_organization/profiles': typeof AuthedOrganizationProfilesRoute
   '/_authed/_organization/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/organization-setup'
+    | '/docs'
     | '/executables'
     | '/profiles'
     | '/web3-functions'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/organization-setup'
+    | '/docs'
     | '/profiles'
     | '/web3-functions'
     | '/'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/organization-setup'
     | '/_authed/_organization'
     | '/_authed/_settings'
+    | '/docs/'
     | '/_authed/_organization/executables'
     | '/_authed/_organization/profiles'
     | '/_authed/_organization/web3-functions'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OrganizationSetupRoute: typeof OrganizationSetupRoute
+  DocsIndexRoute: typeof DocsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/': {
+      id: '/docs/'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/_settings': {
@@ -363,6 +383,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OrganizationSetupRoute: OrganizationSetupRoute,
+  DocsIndexRoute: DocsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

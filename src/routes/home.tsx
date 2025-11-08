@@ -416,13 +416,13 @@ function RouteComponent() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </Button>
             </Link>
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               className="text-lg px-8 hover:scale-110 transition-all duration-300 hover:border-accent-secondary/50 hover:text-accent-secondary-light"
             >
               Connect Wallet
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>
@@ -432,8 +432,7 @@ function RouteComponent() {
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Logo className="size-6 text-foreground fill-current" />
-              <span className="text-lg font-semibold">Thyme</span>
+              <LogoSigned className="w-20 text-foreground fill-current" />
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <a

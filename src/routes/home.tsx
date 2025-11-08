@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { PricingTable } from 'autumn-js/react';
 import {
   Activity,
   ArrowRight,
@@ -204,123 +205,7 @@ function RouteComponent() {
               plan.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Free Plan */}
-            <div className="relative p-8 rounded-2xl border-2 border-border bg-card">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Free</h3>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">0%</span>
-                  <span className="text-muted-foreground">commission</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Perfect for testing
-                </p>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">Up to 100 executions/month</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">Basic monitoring</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">Community support</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">100% commission</span>
-                </li>
-              </ul>
-              <Link to="/login" className="block">
-                <Button variant="outline" className="w-full">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-
-            {/* Dev Plan */}
-            <div className="relative p-8 rounded-2xl border-2 border-emerald-500 bg-card shadow-lg shadow-emerald-500/20">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-white text-sm font-semibold">
-                Most Popular
-              </div>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Dev</h3>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">50%</span>
-                  <span className="text-muted-foreground">commission</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  For growing projects
-                </p>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">Up to 10,000 executions/month</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">
-                    Advanced monitoring & analytics
-                  </span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">Priority support</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">50% commission</span>
-                </li>
-              </ul>
-              <Link to="/login" className="block">
-                <Button className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600">
-                  Start Building
-                </Button>
-              </Link>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="relative p-8 rounded-2xl border-2 border-border bg-card">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Pro</h3>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold">25%</span>
-                  <span className="text-muted-foreground">commission</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  For production scale
-                </p>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2">
-                  <InfinityIcon className="size-5 text-green-500" />
-                  <span className="text-sm">Unlimited executions</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">Enterprise-grade monitoring</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">24/7 dedicated support</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="size-5 text-green-500" />
-                  <span className="text-sm">25% commission</span>
-                </li>
-              </ul>
-              <Link to="/login" className="block">
-                <Button variant="outline" className="w-full">
-                  Contact Sales
-                </Button>
-              </Link>
-            </div>
-          </div>
+          <PricingTable />
         </div>
       </section>
 

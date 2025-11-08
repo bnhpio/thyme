@@ -1,5 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
-import { ArrowLeft, Settings, Users } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { ArrowLeft, CreditCard, Settings, Users } from 'lucide-react';
+import { api } from '@/../convex/_generated/api';
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +23,28 @@ export function OrganizationSettingsSidebar({
   slug = '',
 }: OrganizationSettingsSidebarProps) {
   const location = useLocation();
+  const currentUser = useQuery(api.query.user.getCurrentUser);
+  const organizations = useQuery(
+    api.query.user.getUserOrganizations,
+    currentUser?.id
+      ? {
+          userId: currentUser?.id,
+        }
+      : 'skip',
+  );
+
+  const organization = organizations?.find((org) => org.slug === slug);
+  const membership = useQuery(
+    api.query.organization.getOrganizationMembership,
+    organization?._id && currentUser?.id
+      ? {
+          organizationId: organization._id,
+          userId: currentUser.id,
+        }
+      : 'skip',
+  );
+
+  const isAdmin = membership?.role === 'admin';
 
   return (
     <Sidebar>
@@ -71,6 +95,22 @@ export function OrganizationSettingsSidebar({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      location.pathname.includes('/organization/') &&
+                      location.pathname.includes('/plan')
+                    }
+                  >
+                    <Link to="/organization/$slug/plan" params={{ slug }}>
+                      <CreditCard className="h-4 w-4" />
+                      <span>Plan</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

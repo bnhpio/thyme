@@ -28,6 +28,7 @@ import { Route as AuthedSettingsSettingsSettingsRouteImport } from './routes/_au
 import { Route as AuthedSettingsSettingsApiKeysRouteImport } from './routes/_authed/_settings/settings/api-keys'
 import { Route as AuthedOrganizationExecutablesExecutableIdRouteImport } from './routes/_authed/_organization/executables.$executableId'
 import { Route as AuthedOrganizationOrganizationSlugSettingsRouteImport } from './routes/_authed/_organization/organization.$slug.settings'
+import { Route as AuthedOrganizationOrganizationSlugPlanRouteImport } from './routes/_authed/_organization/organization.$slug.plan'
 import { Route as AuthedOrganizationOrganizationSlugMembersRouteImport } from './routes/_authed/_organization/organization.$slug.members'
 
 const SupportRoute = SupportRouteImport.update({
@@ -130,6 +131,12 @@ const AuthedOrganizationOrganizationSlugSettingsRoute =
     path: '/organization/$slug/settings',
     getParentRoute: () => AuthedOrganizationRoute,
   } as any)
+const AuthedOrganizationOrganizationSlugPlanRoute =
+  AuthedOrganizationOrganizationSlugPlanRouteImport.update({
+    id: '/organization/$slug/plan',
+    path: '/organization/$slug/plan',
+    getParentRoute: () => AuthedOrganizationRoute,
+  } as any)
 const AuthedOrganizationOrganizationSlugMembersRoute =
   AuthedOrganizationOrganizationSlugMembersRouteImport.update({
     id: '/organization/$slug/members',
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
   '/executables/': typeof AuthedOrganizationExecutablesIndexRoute
   '/organization/$slug/members': typeof AuthedOrganizationOrganizationSlugMembersRoute
+  '/organization/$slug/plan': typeof AuthedOrganizationOrganizationSlugPlanRoute
   '/organization/$slug/settings': typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -172,6 +180,7 @@ export interface FileRoutesByTo {
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
   '/executables': typeof AuthedOrganizationExecutablesIndexRoute
   '/organization/$slug/members': typeof AuthedOrganizationOrganizationSlugMembersRoute
+  '/organization/$slug/plan': typeof AuthedOrganizationOrganizationSlugPlanRoute
   '/organization/$slug/settings': typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 export interface FileRoutesById {
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/_authed/_settings/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
   '/_authed/_organization/executables/': typeof AuthedOrganizationExecutablesIndexRoute
   '/_authed/_organization/organization/$slug/members': typeof AuthedOrganizationOrganizationSlugMembersRoute
+  '/_authed/_organization/organization/$slug/plan': typeof AuthedOrganizationOrganizationSlugPlanRoute
   '/_authed/_organization/organization/$slug/settings': typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 export interface FileRouteTypes {
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/settings/settings'
     | '/executables/'
     | '/organization/$slug/members'
+    | '/organization/$slug/plan'
     | '/organization/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/settings/settings'
     | '/executables'
     | '/organization/$slug/members'
+    | '/organization/$slug/plan'
     | '/organization/$slug/settings'
   id:
     | '__root__'
@@ -256,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authed/_settings/settings/settings'
     | '/_authed/_organization/executables/'
     | '/_authed/_organization/organization/$slug/members'
+    | '/_authed/_organization/organization/$slug/plan'
     | '/_authed/_organization/organization/$slug/settings'
   fileRoutesById: FileRoutesById
 }
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOrganizationOrganizationSlugSettingsRouteImport
       parentRoute: typeof AuthedOrganizationRoute
     }
+    '/_authed/_organization/organization/$slug/plan': {
+      id: '/_authed/_organization/organization/$slug/plan'
+      path: '/organization/$slug/plan'
+      fullPath: '/organization/$slug/plan'
+      preLoaderRoute: typeof AuthedOrganizationOrganizationSlugPlanRouteImport
+      parentRoute: typeof AuthedOrganizationRoute
+    }
     '/_authed/_organization/organization/$slug/members': {
       id: '/_authed/_organization/organization/$slug/members'
       path: '/organization/$slug/members'
@@ -439,6 +459,7 @@ interface AuthedOrganizationRouteChildren {
   AuthedOrganizationWeb3FunctionsRoute: typeof AuthedOrganizationWeb3FunctionsRoute
   AuthedOrganizationIndexRoute: typeof AuthedOrganizationIndexRoute
   AuthedOrganizationOrganizationSlugMembersRoute: typeof AuthedOrganizationOrganizationSlugMembersRoute
+  AuthedOrganizationOrganizationSlugPlanRoute: typeof AuthedOrganizationOrganizationSlugPlanRoute
   AuthedOrganizationOrganizationSlugSettingsRoute: typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 
@@ -450,6 +471,8 @@ const AuthedOrganizationRouteChildren: AuthedOrganizationRouteChildren = {
   AuthedOrganizationIndexRoute: AuthedOrganizationIndexRoute,
   AuthedOrganizationOrganizationSlugMembersRoute:
     AuthedOrganizationOrganizationSlugMembersRoute,
+  AuthedOrganizationOrganizationSlugPlanRoute:
+    AuthedOrganizationOrganizationSlugPlanRoute,
   AuthedOrganizationOrganizationSlugSettingsRoute:
     AuthedOrganizationOrganizationSlugSettingsRoute,
 }

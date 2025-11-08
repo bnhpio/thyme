@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as OrganizationSetupRouteImport } from './routes/organization-setup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
@@ -25,6 +27,16 @@ import { Route as AuthedSettingsSettingsSettingsRouteImport } from './routes/_au
 import { Route as AuthedSettingsSettingsApiKeysRouteImport } from './routes/_authed/_settings/settings/api-keys'
 import { Route as AuthedOrganizationExecutablesExecutableIdRouteImport } from './routes/_authed/_organization/executables.$executableId'
 
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationSetupRoute = OrganizationSetupRouteImport.update({
   id: '/organization-setup',
   path: '/organization-setup',
@@ -109,6 +121,8 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/support': typeof SupportRoute
   '/docs': typeof DocsIndexRoute
   '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
@@ -123,6 +137,8 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/support': typeof SupportRoute
   '/docs': typeof DocsIndexRoute
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
@@ -138,6 +154,8 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/support': typeof SupportRoute
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
   '/_authed/_settings': typeof AuthedSettingsRouteWithChildren
   '/docs/': typeof DocsIndexRoute
@@ -156,6 +174,8 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/organization-setup'
+    | '/privacy-policy'
+    | '/support'
     | '/docs'
     | '/executables'
     | '/profiles'
@@ -170,6 +190,8 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/organization-setup'
+    | '/privacy-policy'
+    | '/support'
     | '/docs'
     | '/profiles'
     | '/web3-functions'
@@ -184,6 +206,8 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/organization-setup'
+    | '/privacy-policy'
+    | '/support'
     | '/_authed/_organization'
     | '/_authed/_settings'
     | '/docs/'
@@ -202,11 +226,27 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OrganizationSetupRoute: typeof OrganizationSetupRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  SupportRoute: typeof SupportRoute
   DocsIndexRoute: typeof DocsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organization-setup': {
       id: '/organization-setup'
       path: '/organization-setup'
@@ -383,6 +423,8 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OrganizationSetupRoute: OrganizationSetupRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  SupportRoute: SupportRoute,
   DocsIndexRoute: DocsIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -446,12 +446,12 @@ function RouteComponent() {
               >
                 API Reference
               </a>
-              <a
-                href="/support"
+              <Link
+                to="/support"
                 className="hover:text-foreground transition-colors"
               >
                 Support
-              </a>
+              </Link>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">

@@ -20,6 +20,7 @@ import type * as action_task from "../action/task.js";
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
 import type * as email_templates_InvitationEmail from "../email/templates/InvitationEmail.js";
+import type * as email_templates_SupportEmail from "../email/templates/SupportEmail.js";
 import type * as email_templates_WelcomeEmail from "../email/templates/WelcomeEmail.js";
 import type * as http_task_upload from "../http/task/upload.js";
 import type * as http from "../http.js";
@@ -76,6 +77,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   autumn: typeof autumn;
   "email/templates/InvitationEmail": typeof email_templates_InvitationEmail;
+  "email/templates/SupportEmail": typeof email_templates_SupportEmail;
   "email/templates/WelcomeEmail": typeof email_templates_WelcomeEmail;
   "http/task/upload": typeof http_task_upload;
   http: typeof http;

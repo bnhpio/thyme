@@ -3,6 +3,7 @@ import { render } from '@react-email/render';
 import { v } from 'convex/values';
 import nodemailer from 'nodemailer';
 import { action } from '../_generated/server';
+import SupportEmail from '../email/templates/SupportEmail';
 import WelcomeEmail from '../email/templates/WelcomeEmail';
 
 // Email configuration - you'll need to set these environment variables
@@ -11,6 +12,7 @@ const SMTP_PORT = process.env.SMTP_PORT || '587';
 const BREVO_EMAIL = process.env.BREVO_EMAIL;
 const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@yourdomain.com';
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@yourdomain.com';
 
 // Create transporter instance
 const createTransporter = () => {
@@ -108,6 +110,53 @@ Welcome to ${organizationName}!
   });
 }
 
+// Support email function
+async function sendSupportEmail({
+  firstName,
+  lastName,
+  email,
+  phone,
+  message,
+}: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  message: string;
+}) {
+  const htmlContent = await render(
+    SupportEmail({
+      firstName,
+      lastName,
+      email,
+      phone,
+      message,
+    }),
+  );
+
+  const textContent = `
+New Support Request from Thyme Platform
+
+Contact Information:
+Name: ${firstName} ${lastName}
+Email: ${email}
+Phone: ${phone}
+
+Message:
+${message}
+
+---
+This email was sent from the Thyme support form.
+`;
+
+  return sendEmail({
+    to: SUPPORT_EMAIL,
+    subject: `New Support Request from ${firstName} ${lastName}`,
+    text: textContent,
+    html: htmlContent,
+  });
+}
+
 // Send welcome email after joining
 export const sendWelcomeEmailAction = action({
   args: {
@@ -132,6 +181,36 @@ export const sendWelcomeEmailAction = action({
     } catch (error) {
       console.error('Failed to send welcome email:', error);
       throw new Error('Failed to send welcome email');
+    }
+  },
+});
+
+// Send support email
+export const sendSupportEmailAction = action({
+  args: {
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    message: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    try {
+      await sendSupportEmail({
+        firstName: args.firstName,
+        lastName: args.lastName,
+        email: args.email,
+        phone: args.phone,
+        message: args.message,
+      });
+
+      console.log(
+        `Support email sent from ${args.firstName} ${args.lastName} (${args.email})`,
+      );
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to send support email:', error);
+      throw new Error('Failed to send support email');
     }
   },
 });

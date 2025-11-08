@@ -60,7 +60,7 @@ function RouteComponent() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
-              <LogoSigned className="w-20 fill-current text-primary" />
+              <LogoSigned className="w-20 fill-current text-primary transition-all duration-300 hover:scale-110 logo-typewriter" />
             </div>
             <div className="flex items-center gap-4">
               <Link to="/login">
@@ -71,7 +71,7 @@ function RouteComponent() {
               <Link to="/login">
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-accent-dark"
+                  className="bg-linear-to-r from-primary to-accent hover:from-primary-dark hover:to-accent-dark"
                 >
                   Start Building
                 </Button>
@@ -97,7 +97,7 @@ function RouteComponent() {
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
               <span
-                className="bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_ease_infinite] drop-shadow-lg"
+                className="bg-clip-text text-transparent bg-size-[200%_auto] animate-[gradient_3s_ease_infinite] drop-shadow-lg"
                 style={{
                   backgroundImage:
                     'linear-gradient(to right, var(--primary-light), var(--accent-secondary-light), var(--accent-light))',

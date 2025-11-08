@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
 import { convex } from '@/integrations/convex/provider';
 import { OrganizationSettingsLayout } from '@/layouts/OrganizationSettingsLayout';
+import { OrganizationSettings } from '@/pages/Organization/Settings/OrganizationSettings';
 
 export const Route = createFileRoute(
   '/_authed/_organization/organization/$slug/settings',
@@ -42,9 +43,13 @@ export const Route = createFileRoute(
       throw redirect({ to: '/' });
     }
 
+    // Get current user for context
+    const currentUser = await convex.query(api.query.user.getCurrentUser);
+
     return {
       organization,
       membership,
+      currentUser,
     };
   },
 });
@@ -53,25 +58,16 @@ function RouteComponent() {
   const { organization, membership } = Route.useRouteContext();
   const { slug } = Route.useParams();
 
+  if (!organization._id) {
+    return <div>Error: Organization not found</div>;
+  }
+
   return (
     <OrganizationSettingsLayout slug={slug}>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Organization Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your organization settings and members
-          </p>
-        </div>
-        <div className="border rounded-lg p-6">
-          <p className="text-muted-foreground">
-            Organization: {organization.name}
-          </p>
-          <p className="text-muted-foreground">Your role: {membership.role}</p>
-          <p className="text-muted-foreground mt-4">
-            Settings page coming soon...
-          </p>
-        </div>
-      </div>
+      <OrganizationSettings
+        organizationId={organization._id}
+        userRole={membership.role}
+      />
     </OrganizationSettingsLayout>
   );
 }

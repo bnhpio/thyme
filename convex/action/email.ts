@@ -3,6 +3,7 @@ import { render } from '@react-email/render';
 import { v } from 'convex/values';
 import nodemailer from 'nodemailer';
 import { action } from '../_generated/server';
+import InvitationEmail from '../email/templates/InvitationEmail';
 import SupportEmail from '../email/templates/SupportEmail';
 import WelcomeEmail from '../email/templates/WelcomeEmail';
 
@@ -85,27 +86,9 @@ async function sendWelcomeEmail({
     }),
   );
 
-  const textContent = `
-Welcome to ${organizationName}!
-
-🎉 You've successfully joined ${organizationName} as a ${role}!
-
-Hi ${userName},
-
-Welcome to the team! You now have access to all the organization's resources and can start collaborating with your new teammates.
-
-What's next?
-- Explore the organization dashboard
-- Connect with your team members  
-- Check out available projects and resources
-
-Welcome to ${organizationName}!
-`;
-
   return sendEmail({
     to,
     subject: `Welcome to ${organizationName}!`,
-    text: textContent,
     html: htmlContent,
   });
 }
@@ -134,25 +117,9 @@ async function sendSupportEmail({
     }),
   );
 
-  const textContent = `
-New Support Request from Thyme Platform
-
-Contact Information:
-Name: ${firstName} ${lastName}
-Email: ${email}
-Phone: ${phone}
-
-Message:
-${message}
-
----
-This email was sent from the Thyme support form.
-`;
-
   return sendEmail({
     to: SUPPORT_EMAIL,
     subject: `New Support Request from ${firstName} ${lastName}`,
-    text: textContent,
     html: htmlContent,
   });
 }
@@ -211,6 +178,65 @@ export const sendSupportEmailAction = action({
     } catch (error) {
       console.error('Failed to send support email:', error);
       throw new Error('Failed to send support email');
+    }
+  },
+});
+
+// Send invitation email
+async function sendInvitationEmailHelper({
+  to,
+  organizationName,
+  inviterName,
+  inviteUrl,
+  role,
+}: {
+  to: string;
+  organizationName: string;
+  inviterName: string;
+  inviteUrl: string;
+  role: string;
+}) {
+  const htmlContent = await render(
+    InvitationEmail({
+      organizationName,
+      inviterName,
+      inviteUrl,
+      role,
+    }),
+  );
+
+  return sendEmail({
+    to,
+    subject: `You're invited to join ${organizationName}`,
+    html: htmlContent,
+  });
+}
+
+export const sendInvitationEmail = action({
+  args: {
+    to: v.string(),
+    organizationName: v.string(),
+    inviterName: v.string(),
+    inviteUrl: v.string(),
+    role: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    try {
+      await sendInvitationEmailHelper({
+        to: args.to,
+        organizationName: args.organizationName,
+        inviterName: args.inviterName,
+        inviteUrl: args.inviteUrl,
+        role: args.role,
+      });
+
+      console.log(
+        `Invitation email sent to ${args.to} for ${args.organizationName}`,
+      );
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to send invitation email:', error);
+      throw new Error('Failed to send invitation email');
     }
   },
 });

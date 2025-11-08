@@ -6,6 +6,7 @@ import {
   Hr,
   Html,
   Section,
+  Tailwind,
   Text,
 } from '@react-email/components';
 
@@ -23,162 +24,64 @@ export const WelcomeEmail = ({
   return (
     <Html>
       <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <div style={logoContainer}>
-              <div style={logo}>✅</div>
-            </div>
-            <Heading style={title}>Welcome to {organizationName}!</Heading>
-          </Section>
+      <Tailwind>
+        <Body className="bg-gray-50 font-sans">
+          <Container className="bg-white mx-auto py-12 px-0 max-w-[600px]">
+            <Section className="text-center mb-8">
+              <div className="mb-6">
+                <div className="inline-flex w-[64px] h-[64px] bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-lg items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-white rounded-sm" />
+                </div>
+              </div>
+              <Heading className="text-gray-900 m-0 text-2xl font-semibold">
+                Welcome to {organizationName}
+              </Heading>
+            </Section>
 
-          <Section style={content}>
-            <div style={successCard}>
-              <Text style={successText}>
-                🎉 You've successfully joined {organizationName} as a {role}!
+            <Section className="px-6">
+              <div className="bg-indigo-50 border-l-4 border-indigo-600 p-5 rounded mb-6">
+                <Text className="text-indigo-900 m-0 font-semibold text-base leading-relaxed">
+                  You have successfully joined {organizationName} as a {role}.
+                </Text>
+              </div>
+
+              <Text className="text-gray-700 leading-relaxed mb-6 text-base">
+                Hi {userName},
               </Text>
-            </div>
 
-            <Text style={welcomeText}>
-              Hi {userName},<br />
-              <br />
-              Welcome to the team! You now have access to all the organization's
-              resources and can start collaborating with your new teammates.
-            </Text>
+              <Text className="text-gray-700 leading-relaxed mb-6 text-base">
+                Welcome to the team. You now have access to all organization
+                resources and can begin collaborating with your teammates.
+              </Text>
 
-            <div style={nextStepsCard}>
-              <Heading style={nextStepsTitle}>What's next?</Heading>
-              <ul style={nextStepsList}>
-                <li style={listItem}>Explore the organization dashboard</li>
-                <li style={listItem}>Connect with your team members</li>
-                <li style={listItem}>
-                  Check out available projects and resources
-                </li>
-              </ul>
-            </div>
-          </Section>
+              <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg my-6">
+                <Heading className="text-gray-900 mt-0 mb-4 text-lg font-semibold">
+                  Getting Started
+                </Heading>
+                <ul className="text-gray-700 leading-relaxed m-0 pl-5 space-y-2">
+                  <li className="text-base">
+                    Explore the organization dashboard
+                  </li>
+                  <li className="text-base">Connect with your team members</li>
+                  <li className="text-base">
+                    Review available projects and resources
+                  </li>
+                </ul>
+              </div>
+            </Section>
 
-          <Hr style={divider} />
+            <Hr className="border-gray-200 my-6" />
 
-          <Section style={footer}>
-            <Text style={footerText}>Welcome to {organizationName}!</Text>
-          </Section>
-        </Container>
-      </Body>
+            <Section className="text-center pt-4 px-6">
+              <Text className="text-gray-500 text-xs m-0">
+                {organizationName}
+              </Text>
+            </Section>
+          </Container>
+        </Body>
+      </Tailwind>
     </Html>
   );
-};
-
-// Styles
-const main = {
-  backgroundColor: '#f6f9fc',
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: '#ffffff',
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  marginBottom: '64px',
-  maxWidth: '600px',
-};
-
-const header = {
-  textAlign: 'center' as const,
-  marginBottom: '30px',
-};
-
-const logoContainer = {
-  marginBottom: '20px',
-};
-
-const logo = {
-  display: 'inline-flex',
-  width: '60px',
-  height: '60px',
-  background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-  borderRadius: '50%',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '24px',
-  fontWeight: 'bold',
-};
-
-const title = {
-  color: '#333',
-  margin: '0',
-  fontSize: '28px',
-  fontWeight: 'bold',
-};
-
-const content = {
-  padding: '0 20px',
-};
-
-const successCard = {
-  background: '#d4edda',
-  border: '1px solid #c3e6cb',
-  padding: '20px',
-  borderRadius: '8px',
-  marginBottom: '25px',
-};
-
-const successText = {
-  color: '#155724',
-  margin: '0',
-  fontWeight: 'bold',
-  fontSize: '16px',
-};
-
-const welcomeText = {
-  color: '#666',
-  lineHeight: '1.6',
-  marginBottom: '25px',
-  fontSize: '16px',
-};
-
-const nextStepsCard = {
-  background: '#f8f9fa',
-  padding: '20px',
-  borderRadius: '8px',
-  margin: '25px 0',
-};
-
-const nextStepsTitle = {
-  color: '#333',
-  marginTop: '0',
-  marginBottom: '15px',
-  fontSize: '18px',
-  fontWeight: 'bold',
-};
-
-const nextStepsList = {
-  color: '#666',
-  lineHeight: '1.6',
-  margin: '0',
-  paddingLeft: '20px',
-};
-
-const listItem = {
-  marginBottom: '8px',
-  fontSize: '16px',
-};
-
-const divider = {
-  borderColor: '#eee',
-  margin: '20px 0',
-};
-
-const footer = {
-  textAlign: 'center' as const,
-  paddingTop: '15px',
-};
-
-const footerText = {
-  color: '#999',
-  fontSize: '12px',
-  margin: '0',
 };
 
 export default WelcomeEmail;

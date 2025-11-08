@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from 'convex/react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { getErrorMessage } from '@/lib/utils';
 
 interface OrganizationFormProps {
   onSuccess?: () => void;
@@ -71,11 +73,22 @@ export function OrganizationForm({
       // Reset form
       setFormData({ name: '', slug: '', description: '' });
 
+      toast.success('Organization created successfully');
       // Call success callback
       onSuccess?.();
     } catch (error) {
-      console.error('Failed to create organization:', error);
-      alert('Failed to create organization. Please try again.');
+      // Extract and display error message
+      const errorMessage = getErrorMessage(
+        error,
+        'Failed to create organization. Please try again.',
+      );
+
+      // Only log to console in development, toast will show to user
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to create organization:', error);
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsCreating(false);
     }
@@ -89,10 +102,13 @@ export function OrganizationForm({
         token,
       });
 
+      toast.success('Invitation accepted successfully');
       onSuccess?.();
     } catch (error) {
       console.error('Failed to accept invite:', error);
-      alert('Failed to accept invite. Please try again.');
+      toast.error(
+        getErrorMessage(error, 'Failed to accept invite. Please try again.'),
+      );
     }
   };
 
@@ -128,7 +144,10 @@ export function OrganizationForm({
                       {invite.organization?.name}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Role: {invite.role} • Invited by {invite.invitedBy}
+                      Role: {invite.role} • Invited by{' '}
+                      {invite.inviter?.email ||
+                        invite.inviter?.name ||
+                        'Unknown'}
                     </p>
                   </div>
                   <Button

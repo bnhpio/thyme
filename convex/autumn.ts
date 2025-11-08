@@ -18,10 +18,14 @@ export const autumn = new Autumn(components.autumn, {
 
     const organizationId = settings?.currentOrganizationId;
 
+    if (!organizationId) {
+      return null;
+    }
+
     const organization = await ctx.runQuery(
       api.query.organization.getOrganizationById,
       {
-        organizationId: organizationId as Id<'organizations'>,
+        organizationId: organizationId,
       },
     );
     return {

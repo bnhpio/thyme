@@ -14,6 +14,7 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as OrganizationSetupRouteImport } from './routes/organization-setup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/_settings'
@@ -52,6 +53,11 @@ const LoginRoute = LoginRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -132,6 +138,7 @@ const AuthedOrganizationOrganizationSlugMembersRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/accept-invite': typeof AcceptInviteRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/organization/$slug/settings': typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 export interface FileRoutesByTo {
+  '/accept-invite': typeof AcceptInviteRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteWithChildren
+  '/accept-invite': typeof AcceptInviteRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
@@ -191,6 +200,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/accept-invite'
     | '/home'
     | '/login'
     | '/organization-setup'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/organization/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/accept-invite'
     | '/home'
     | '/login'
     | '/organization-setup'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authed'
+    | '/accept-invite'
     | '/home'
     | '/login'
     | '/organization-setup'
@@ -249,6 +261,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
+  AcceptInviteRoute: typeof AcceptInviteRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OrganizationSetupRoute: typeof OrganizationSetupRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -466,6 +486,7 @@ const AuthedRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
+  AcceptInviteRoute: AcceptInviteRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OrganizationSetupRoute: OrganizationSetupRoute,

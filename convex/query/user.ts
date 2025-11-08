@@ -37,16 +37,18 @@ export const getUserOrganizations = query({
       .filter((q) => q.eq(q.field('status'), 'active'))
       .collect();
 
-    const organizations = await Promise.all(
-      memberships.map(async (membership) => {
-        const org = await ctx.db.get(membership.organizationId);
-        return {
+    const organizations = [];
+    for (const membership of memberships) {
+      const org = await ctx.db.get(membership.organizationId);
+      // Filter out deleted organizations
+      if (org) {
+        organizations.push({
           ...org,
           role: membership.role,
           joinedAt: membership.joinedAt,
-        };
-      }),
-    );
+        });
+      }
+    }
 
     return organizations;
   },
@@ -67,17 +69,26 @@ export const getUserPendingInvites = query({
       )
       .collect();
 
-    const invitesWithOrg = await Promise.all(
-      invites.map(async (invite) => {
-        const org = await ctx.db.get(invite.organizationId);
-        return {
-          ...invite,
-          organization: org,
-        };
-      }),
-    );
+    // Enrich with organization and inviter details
+    const invitesWithDetails = [];
+    for (const invite of invites) {
+      const org = await ctx.db.get(invite.organizationId);
+      const inviter = await ctx.db.get(invite.invitedBy);
 
-    return invitesWithOrg;
+      invitesWithDetails.push({
+        ...invite,
+        organization: org,
+        inviter: inviter
+          ? {
+              id: inviter._id,
+              name: inviter.name,
+              email: inviter.email,
+            }
+          : null,
+      });
+    }
+
+    return invitesWithDetails;
   },
 });
 
@@ -96,7 +107,38 @@ export const getCurrentUserOrganizationId = query({
       .withIndex('by_user', (q) => q.eq('userId', userId))
       .first();
 
-    return settings?.currentOrganizationId || null;
+    const currentOrgId = settings?.currentOrganizationId;
+    if (!currentOrgId) {
+      return null;
+    }
+
+    // Verify the organization still exists
+    const org = await ctx.db.get(currentOrgId);
+    if (!org) {
+      // Organization was deleted, return null
+      // The frontend will handle cleanup via auto-selection
+      return null;
+    }
+
+    // Verify user is still a member
+    const membership = await ctx.db
+      .query('organizationMembers')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('organizationId'), currentOrgId),
+          q.eq(q.field('status'), 'active'),
+        ),
+      )
+      .first();
+
+    if (!membership) {
+      // User is no longer a member, return null
+      // The frontend will handle cleanup via auto-selection
+      return null;
+    }
+
+    return currentOrgId;
   },
 });
 

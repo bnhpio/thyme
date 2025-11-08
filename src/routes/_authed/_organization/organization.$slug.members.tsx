@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
 import { convex } from '@/integrations/convex/provider';
 import { OrganizationSettingsLayout } from '@/layouts/OrganizationSettingsLayout';
+import { OrganizationMembers } from '@/pages/Organization/Settings/OrganizationMembers';
 
 export const Route = createFileRoute(
   '/_authed/_organization/organization/$slug/members',
@@ -42,9 +43,13 @@ export const Route = createFileRoute(
       throw redirect({ to: '/' });
     }
 
+    // Get current user for context
+    const currentUser = await convex.query(api.query.user.getCurrentUser);
+
     return {
       organization,
       membership,
+      currentUser,
     };
   },
 });
@@ -52,29 +57,15 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const { organization, membership } = Route.useRouteContext();
   const { slug } = Route.useParams();
+  const currentUser = Route.useRouteContext().currentUser;
 
   return (
     <OrganizationSettingsLayout slug={slug}>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Organization Members</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage members and their roles in your organization
-          </p>
-        </div>
-        <div className="border rounded-lg p-6">
-          <p className="text-muted-foreground">
-            Organization: {organization.name}
-          </p>
-          <p className="text-muted-foreground">
-            Your role: {membership.role}
-          </p>
-          <p className="text-muted-foreground mt-4">
-            Members page coming soon...
-          </p>
-        </div>
-      </div>
+      <OrganizationMembers
+        organizationId={organization._id}
+        userRole={membership.role}
+        currentUserId={currentUser?.id}
+      />
     </OrganizationSettingsLayout>
   );
 }
-

@@ -20,7 +20,6 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
     const isAuthenticated = await convex.query(api.auth.isAuthenticated);
-    console.log('isAuthenticated', isAuthenticated);
 
     return {
       isAuthenticated,
@@ -43,6 +42,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+      {
+        rel: 'icon',
+        href: '/favicon.svg',
       },
     ],
   }),

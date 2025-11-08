@@ -3,10 +3,8 @@ import { PricingTable } from 'autumn-js/react';
 import {
   Activity,
   ArrowRight,
-  Check,
   Clock,
   Code,
-  Infinity as InfinityIcon,
   Layers,
   Lock,
   Rocket,
@@ -14,7 +12,9 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Logo } from '@/components/base/Logo/Logo';
+import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 
 export const Route = createFileRoute('/home')({
@@ -22,15 +22,45 @@ export const Route = createFileRoute('/home')({
 });
 
 function RouteComponent() {
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
+      {/* Animated Background Blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-float" />
+        <div
+          className="absolute top-40 right-20 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl animate-float-slow"
+          style={{ animationDelay: '2s' }}
+        />
+        <div
+          className="absolute bottom-40 left-1/4 w-72 h-72 bg-teal-500/20 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '4s' }}
+        />
+        <div
+          className="absolute bottom-20 right-1/3 w-96 h-96 bg-lime-500/15 rounded-full blur-3xl animate-float-slow"
+          style={{ animationDelay: '1s' }}
+        />
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-sm">
+      <nav
+        className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-sm transition-all duration-300"
+        style={{
+          boxShadow: scrollY > 50 ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        }}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
-              <Logo className="size-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">Thyme</span>
+              <LogoSigned className="w-20 text-gradient-to-r from-emerald-500 to-teal-500 fill-current" />
             </div>
             <div className="flex items-center gap-4">
               <Link to="/login">
@@ -52,18 +82,21 @@ function RouteComponent() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section
+        ref={heroRef}
+        className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+      >
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-sm">
-              <Sparkles className="size-4 text-emerald-400" />
+          <div className="text-center space-y-8 animate-slide-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-teal-500/20 border border-emerald-500/30 text-sm backdrop-blur-sm hover:scale-105 transition-transform duration-300 animate-pulse-glow">
+              <Sparkles className="size-4 text-emerald-400 animate-pulse" />
               <span className="text-muted-foreground">
                 Automate your Web3 logic without worrying about gas,
                 infrastructure, or uptime
               </span>
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_ease_infinite]">
+              <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_ease_infinite] drop-shadow-lg">
                 Web3 Automation
               </span>
               <br />
@@ -78,13 +111,20 @@ function RouteComponent() {
               <Link to="/login">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-lg px-8"
+                  className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-teal-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-teal-600 text-lg px-8 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 transition-all duration-300 relative overflow-hidden group"
                 >
-                  Try Free
-                  <ArrowRight className="ml-2 size-5" />
+                  <span className="relative z-10 flex items-center">
+                    Try Free
+                    <ArrowRight className="ml-2 size-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg px-8">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg px-8 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300"
+              >
                 View Documentation
               </Button>
             </div>
@@ -104,33 +144,33 @@ function RouteComponent() {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="group relative p-8 rounded-2xl border border-border bg-card hover:border-emerald-500/50 transition-all duration-300">
-              <div className="absolute -top-4 -left-4 size-12 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            <div className="group relative p-8 rounded-2xl border border-border bg-card hover:border-emerald-500/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/20">
+              <div className="absolute -top-4 -left-4 size-12 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
                 1
               </div>
-              <Code className="size-12 text-emerald-400 mb-4" />
+              <Code className="size-12 text-emerald-400 mb-4 group-hover:scale-110 group-hover:text-cyan-400 transition-all duration-300" />
               <h3 className="text-2xl font-bold mb-3">Create a Function</h3>
               <p className="text-muted-foreground">
                 Write your Web3 logic using our intuitive interface. Define
                 triggers, conditions, and on-chain actions.
               </p>
             </div>
-            <div className="group relative p-8 rounded-2xl border border-border bg-card hover:border-emerald-500/50 transition-all duration-300">
-              <div className="absolute -top-4 -left-4 size-12 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            <div className="group relative p-8 rounded-2xl border border-border bg-card hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/20">
+              <div className="absolute -top-4 -left-4 size-12 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
                 2
               </div>
-              <Clock className="size-12 text-teal-400 mb-4" />
+              <Clock className="size-12 text-cyan-400 mb-4 group-hover:scale-110 group-hover:text-teal-400 transition-all duration-300" />
               <h3 className="text-2xl font-bold mb-3">Schedule It</h3>
               <p className="text-muted-foreground">
                 Set up automated schedules, event-based triggers, or manual
                 executions. Your function, your rules.
               </p>
             </div>
-            <div className="group relative p-8 rounded-2xl border border-border bg-card hover:border-emerald-500/50 transition-all duration-300">
-              <div className="absolute -top-4 -left-4 size-12 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+            <div className="group relative p-8 rounded-2xl border border-border bg-card hover:border-teal-500/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-teal-500/20">
+              <div className="absolute -top-4 -left-4 size-12 rounded-full bg-gradient-to-br from-teal-500 to-lime-500 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
                 3
               </div>
-              <Rocket className="size-12 text-emerald-400 mb-4" />
+              <Rocket className="size-12 text-teal-400 mb-4 group-hover:scale-110 group-hover:text-lime-400 transition-all duration-300" />
               <h3 className="text-2xl font-bold mb-3">We Execute Reliably</h3>
               <p className="text-muted-foreground">
                 Our infrastructure handles gas management, transaction
@@ -153,8 +193,11 @@ function RouteComponent() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all">
-              <Shield className="size-8 text-emerald-400 mb-4" />
+            <div className="group p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-1">
+              <div className="relative">
+                <Shield className="size-8 text-emerald-400 mb-4 group-hover:scale-125 group-hover:text-cyan-400 transition-all duration-300" />
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
               <h3 className="text-lg font-semibold mb-2">
                 Execution Reliability
               </h3>
@@ -162,8 +205,11 @@ function RouteComponent() {
                 99.9% uptime with automatic retries and failover mechanisms
               </p>
             </div>
-            <div className="p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all">
-              <Zap className="size-8 text-teal-400 mb-4" />
+            <div className="group p-6 rounded-xl border border-border bg-card hover:border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1">
+              <div className="relative">
+                <Zap className="size-8 text-cyan-400 mb-4 group-hover:scale-125 group-hover:text-teal-400 transition-all duration-300" />
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
               <h3 className="text-lg font-semibold mb-2">
                 Built-in Gas Management
               </h3>
@@ -171,8 +217,11 @@ function RouteComponent() {
                 Automatic gas estimation and optimization for cost efficiency
               </p>
             </div>
-            <div className="p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all">
-              <Layers className="size-8 text-emerald-400 mb-4" />
+            <div className="group p-6 rounded-xl border border-border bg-card hover:border-teal-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-teal-500/10 hover:-translate-y-1">
+              <div className="relative">
+                <Layers className="size-8 text-teal-400 mb-4 group-hover:scale-125 group-hover:text-lime-400 transition-all duration-300" />
+                <div className="absolute inset-0 bg-teal-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
               <h3 className="text-lg font-semibold mb-2">
                 Scalable Concurrency
               </h3>
@@ -181,8 +230,11 @@ function RouteComponent() {
                 sweat
               </p>
             </div>
-            <div className="p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all">
-              <Lock className="size-8 text-teal-400 mb-4" />
+            <div className="group p-6 rounded-xl border border-border bg-card hover:border-lime-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-lime-500/10 hover:-translate-y-1">
+              <div className="relative">
+                <Lock className="size-8 text-lime-400 mb-4 group-hover:scale-125 group-hover:text-emerald-400 transition-all duration-300" />
+                <div className="absolute inset-0 bg-lime-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
               <h3 className="text-lg font-semibold mb-2">Secure Sandbox</h3>
               <p className="text-sm text-muted-foreground">
                 Isolated execution environment with comprehensive security
@@ -220,32 +272,51 @@ function RouteComponent() {
               Deploy your automation across all major blockchain networks
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {[
-              { name: 'Ethereum', icon: '⟠' },
-              { name: 'Polygon', icon: '⬟' },
-              { name: 'Arbitrum', icon: '🔷' },
-              { name: 'Optimism', icon: '🔴' },
-              { name: 'Base', icon: '🔵' },
-              { name: 'Avalanche', icon: '🔺' },
-            ].map((chain) => (
-              <div
-                key={chain.name}
-                className="group p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all text-center"
-              >
-                <div className="text-4xl mb-3">{chain.icon}</div>
-                <div className="text-sm font-medium">{chain.name}</div>
-              </div>
-            ))}
+        </div>
+        <div className="relative overflow-x-hidden overflow-y-visible -mx-4 sm:-mx-6 lg:-mx-8 py-4">
+          {/* Gradient fade masks */}
+          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+          <div className="flex animate-scroll-left gap-6 px-4 sm:px-6 lg:px-8 will-change-transform items-center">
+            {(() => {
+              const chains = [
+                { name: 'Ethereum', icon: '⟠' },
+                { name: 'Polygon', icon: '⬟' },
+                { name: 'Arbitrum', icon: '🔷' },
+                { name: 'Optimism', icon: '🔴' },
+                { name: 'Base', icon: '🔵' },
+                { name: 'Avalanche', icon: '🔺' },
+                { name: 'BNB Chain', icon: '🟡' },
+                { name: 'zkSync', icon: '⚡' },
+              ];
+              // Duplicate 3 times for seamless infinite scroll
+              return [...chains, ...chains, ...chains].map((chain, index) => (
+                <div
+                  key={`${chain.name}-${index}`}
+                  className="group shrink-0 w-32 sm:w-40 p-6 rounded-xl border border-border bg-card hover:border-emerald-500/50 transition-all duration-300 text-center hover:scale-110 hover:shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-2"
+                >
+                  <div className="text-4xl mb-3 group-hover:scale-125 transition-transform duration-300">
+                    {chain.icon}
+                  </div>
+                  <div className="text-sm font-medium group-hover:text-emerald-400 transition-colors duration-300">
+                    {chain.name}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="container mx-auto max-w-4xl text-center">
-          <Activity className="size-16 text-emerald-400 mx-auto mb-6" />
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-cyan-500/5 to-teal-500/5 animate-pulse-glow" />
+        <div className="container mx-auto max-w-4xl text-center relative z-10">
+          <div className="relative inline-block mb-6">
+            <Activity className="size-16 text-emerald-400 mx-auto animate-pulse" />
+            <div className="absolute inset-0 bg-emerald-400/30 rounded-full blur-2xl animate-pulse-glow" />
+          </div>
+          <h2 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-emerald-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
             Ready to Automate Your Web3?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -256,13 +327,20 @@ function RouteComponent() {
             <Link to="/login">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-lg px-8"
+                className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-teal-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-teal-600 text-lg px-8 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-110 transition-all duration-300 relative overflow-hidden group"
               >
-                Start Building Free
-                <ArrowRight className="ml-2 size-5" />
+                <span className="relative z-10 flex items-center">
+                  Start Building Free
+                  <ArrowRight className="ml-2 size-5 group-hover:translate-x-2 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 hover:scale-110 hover:border-cyan-500/50 hover:text-cyan-400 transition-all duration-300"
+            >
               Connect Wallet
             </Button>
           </div>
@@ -274,7 +352,7 @@ function RouteComponent() {
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Logo className="size-6 text-primary" />
+              <Logo className="size-6 text-foreground fill-current" />
               <span className="text-lg font-semibold">Thyme</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">

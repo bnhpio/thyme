@@ -864,3 +864,30 @@ export const declineInvite = internalMutation({
     return { success: true, organizationId: invite.organizationId };
   },
 });
+
+// Delete invite completely (Admin only)
+export const deleteInvite = internalMutation({
+  args: {
+    inviteId: v.id('organizationInvites'),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get invite
+    const invite = await ctx.db.get(args.inviteId);
+    if (!invite) {
+      throw new Error('Invite not found');
+    }
+
+    // Verify user is admin of the organization
+    await requireAdmin(ctx, invite.organizationId, userId);
+
+    // Delete the invite completely
+    await ctx.db.delete(args.inviteId);
+
+    return { success: true, organizationId: invite.organizationId };
+  },
+});

@@ -36,7 +36,7 @@ export const trackMemberRemoved = internalAction({
   args: {
     organizationId: v.id('organizations'),
   },
-  handler: async (ctx) => {
+  handler: async (ctx, _args) => {
     const result = await autumn.track(ctx, {
       featureId: 'members',
       value: -1,
@@ -138,13 +138,23 @@ export const declineInvite = action({
     inviteId: v.id('organizationInvites'),
   },
   handler: async (ctx, args) => {
+    await ctx.runMutation(internal.mutation.organizations.declineInvite, {
+      inviteId: args.inviteId,
+    });
+  },
+});
+
+export const deleteInvite = action({
+  args: {
+    inviteId: v.id('organizationInvites'),
+  },
+  handler: async (ctx, args) => {
     const result = await ctx.runMutation(
-      internal.mutation.organizations.declineInvite,
+      internal.mutation.organizations.deleteInvite,
       {
         inviteId: args.inviteId,
       },
     );
-
     await ctx.runAction(internal.action.organizations.trackMemberRemoved, {
       organizationId: result.organizationId,
     });

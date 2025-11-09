@@ -118,7 +118,7 @@ export const getActiveMemberCount = query({
   },
 });
 
-// Get all pending invites for an organization
+// Get all invites for an organization (pending, cancelled, expired)
 export const getOrganizationInvites = query({
   args: {
     organizationId: v.id('organizations'),
@@ -129,7 +129,13 @@ export const getOrganizationInvites = query({
       .withIndex('by_organization', (q) =>
         q.eq('organizationId', args.organizationId),
       )
-      .filter((q) => q.eq(q.field('status'), 'pending'))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field('status'), 'pending'),
+          q.eq(q.field('status'), 'cancelled'),
+          q.eq(q.field('status'), 'expired'),
+        ),
+      )
       .collect();
 
     // Enrich with inviter details

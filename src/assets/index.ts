@@ -1,0 +1,21 @@
+import arbitrumLogo from './logos/png/arbitrum-logo.png';
+import baseLogo from './logos/png/base-logo.png';
+import binanceIcon from './logos/png/binance-icon.png';
+import bnbLogo from './logos/png/bnb-logo.png';
+import ethereumLogo from './logos/png/ethereum-logo.png';
+import optimismLogo from './logos/png/optimism-logo.png';
+import polygonLogo from './logos/png/polygon-logo.png';
+import unichainLogo from './logos/png/unichain-logo.png';
+import unichainSepoliaLogo from './logos/png/unichain-sepolia-logo.png';
+import uniswapAppIcon from './logos/png/uniswap-app-icon.png';
+
+export const ETHEREUM_LOGO = ethereumLogo;
+export const OPTIMISM_LOGO = optimismLogo;
+export const ARBITRUM_LOGO = arbitrumLogo;
+export const BASE_LOGO = baseLogo;
+export const BNB_LOGO = bnbLogo;
+export const POLYGON_LOGO = polygonLogo;
+export const BINANCE_ICON = binanceIcon;
+export const UNISWAP_APP_ICON = uniswapAppIcon;
+export const UNICHAIN_LOGO = unichainLogo;
+export const UNICHAIN_SEPOLIA_LOGO = unichainSepoliaLogo;

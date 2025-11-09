@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import PricingTable from '@/components/autumn/pricing-table';
 import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
+import { CHAINS } from '@/lib/chains';
 
 export const Route = createFileRoute('/home')({
   component: RouteComponent,
@@ -327,24 +328,18 @@ function RouteComponent() {
           <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
           <div className="flex animate-scroll-left gap-6 px-4 sm:px-6 lg:px-8 will-change-transform items-center">
             {(() => {
-              const chains = [
-                { name: 'Ethereum', icon: '⟠' },
-                { name: 'Polygon', icon: '⬟' },
-                { name: 'Arbitrum', icon: '🔷' },
-                { name: 'Optimism', icon: '🔴' },
-                { name: 'Base', icon: '🔵' },
-                { name: 'Avalanche', icon: '🔺' },
-                { name: 'BNB Chain', icon: '🟡' },
-                { name: 'zkSync', icon: '⚡' },
-              ];
               // Duplicate 3 times for seamless infinite scroll
-              return [...chains, ...chains, ...chains].map((chain, index) => (
+              return [...CHAINS, ...CHAINS, ...CHAINS].map((chain, index) => (
                 <div
                   key={`${chain.name}-${index}`}
                   className="group shrink-0 w-32 sm:w-40 p-6 rounded-xl border border-border bg-card transition-all duration-300 text-center hover:scale-110 hover:shadow-lg hover:-translate-y-2 hover:border-primary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--primary)/0.2)]"
                 >
-                  <div className="text-4xl mb-3 group-hover:scale-125 transition-transform duration-300">
-                    {chain.icon}
+                  <div className="flex items-center justify-center mb-3 group-hover:scale-125 transition-transform duration-300">
+                    <img
+                      src={chain.logo}
+                      alt={chain.name}
+                      className="w-12 h-12 object-contain rounded-full"
+                    />
                   </div>
                   <div className="text-sm font-medium transition-colors duration-300 text-foreground hover:text-primary-light">
                     {chain.name}

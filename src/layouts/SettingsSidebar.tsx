@@ -1,8 +1,11 @@
 import { Link, useLocation } from '@tanstack/react-router';
-import { ArrowLeft, Key, User } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { ArrowLeft, Key, Settings, User } from 'lucide-react';
+import { api } from '@/../convex/_generated/api';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -15,6 +18,7 @@ import { OrganizationSwitcher } from '@/pages/Organization/OrganizationSwitcher'
 
 export function SettingsSidebar() {
   const location = useLocation();
+  const currentUser = useQuery(api.query.user.getCurrentUser);
 
   return (
     <Sidebar>
@@ -63,6 +67,30 @@ export function SettingsSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <div className="p-2">
+          <Link
+            to="/settings/settings"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+              <span className="text-xs font-medium">
+                {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </span>
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-medium">
+                {currentUser?.name || 'User'}
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {currentUser?.email || ''}
+              </span>
+            </div>
+            <Settings className="h-4 w-4 shrink-0" />
+          </Link>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

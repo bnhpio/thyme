@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
-import { query } from '../_generated/server';
+import { internalQuery, query } from '../_generated/server';
+import { autumn } from '../autumn';
 
 export const getOrganizationById = query({
   args: {
@@ -95,6 +96,25 @@ export const getOrganizationMembers = query({
     }
 
     return membersWithDetails;
+  },
+});
+
+// Get active member count for an organization
+export const getActiveMemberCount = query({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query('organizationMembers')
+      .withIndex('by_organization', (q) =>
+        q.eq('organizationId', args.organizationId),
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    return members.length;
   },
 });
 

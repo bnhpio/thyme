@@ -140,7 +140,7 @@ export const PricingTableContainer = ({
   }
 
   if (products.length === 0) {
-    return <></>;
+    return null;
   }
 
   const hasRecommended = products?.some((p) => p.display?.recommend_text);
@@ -201,7 +201,7 @@ export const PricingCard = ({
 
   const { buttonText } = getPricingTableContent(product);
 
-  const isRecommended = productDisplay?.recommend_text ? true : false;
+  const isRecommended = productDisplay?.recommend_text;
   const mainPriceDisplay = product.properties?.is_free
     ? {
         primary_text: 'Free',
@@ -266,7 +266,7 @@ export const PricingCard = ({
         </div>
         <div className={cn(' px-6 ', isRecommended && 'lg:-translate-y-12')}>
           <PricingCardButton
-            recommended={productDisplay?.recommend_text ? true : false}
+            recommended={!!productDisplay?.recommend_text}
             {...buttonProps}
           >
             {productDisplay?.button_text || buttonText}

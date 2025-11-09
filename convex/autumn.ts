@@ -1,11 +1,11 @@
 import { Autumn } from '@useautumn/convex';
 import { api, components } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import type { QueryCtx } from './_generated/server';
+import type { ActionCtx, QueryCtx } from './_generated/server';
 
 export const autumn = new Autumn(components.autumn, {
   secretKey: process.env.AUTUMN_SECRET_KEY ?? '',
-  identify: async (ctx: QueryCtx) => {
+  identify: async (ctx: QueryCtx | ActionCtx) => {
     const user = await ctx.auth.getUserIdentity();
 
     if (!user) {

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
@@ -52,8 +52,8 @@ export function OrganizationForm({
       : 'skip',
   );
 
-  const createOrganization = useMutation(
-    api.mutation.organizations.createOrganization,
+  const createOrganization = useAction(
+    api.action.organizations.createOrganization,
   );
   const acceptInvite = useMutation(api.mutation.organizations.acceptInvite);
 

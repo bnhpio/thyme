@@ -23,23 +23,28 @@ function getStatusColor(status: string): {
   switch (status) {
     case 'active':
       return {
-        className: 'px-3 py-1 rounded text-sm font-medium bg-success/10 text-success-foreground',
+        className:
+          'px-3 py-1 rounded text-sm font-medium bg-success/10 text-success-foreground',
       };
     case 'paused':
       return {
-        className: 'px-3 py-1 rounded text-sm font-medium bg-warning/10 text-warning-foreground',
+        className:
+          'px-3 py-1 rounded text-sm font-medium bg-warning/10 text-warning-foreground',
       };
     case 'finished':
       return {
-        className: 'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
+        className:
+          'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
       };
     case 'failed':
       return {
-        className: 'px-3 py-1 rounded text-sm font-medium bg-destructive/10 text-destructive-foreground',
+        className:
+          'px-3 py-1 rounded text-sm font-medium bg-destructive/10 text-destructive-foreground',
       };
     default:
       return {
-        className: 'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
+        className:
+          'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
       };
   }
 }
@@ -174,10 +179,7 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span
-            className={getStatusColor(executable.status).className}
-            style={getStatusColor(executable.status).style}
-          >
+          <span className={getStatusColor(executable.status).className}>
             {executable.status}
           </span>
           <Button variant="outline" size="sm">

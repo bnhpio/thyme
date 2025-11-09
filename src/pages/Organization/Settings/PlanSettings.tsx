@@ -33,7 +33,7 @@ export function PlanSettings({ organizationId, userRole }: PlanSettingsProps) {
   return (
     <div className="space-y-6">
       <PlanManagementCard organizationId={organizationId} />
-      <UsageCard organizationId={organizationId} />
+      <UsageCard />
     </div>
   );
 }

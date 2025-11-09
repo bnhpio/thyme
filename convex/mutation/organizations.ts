@@ -3,18 +3,16 @@ import { v } from 'convex/values';
 import { api } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import type { MutationCtx } from '../_generated/server';
-import { mutation } from '../_generated/server';
+import { internalMutation, mutation } from '../_generated/server';
 
 // Create new organization
-export const createOrganization = mutation({
+export const createOrganization = internalMutation({
   args: {
     name: v.string(),
     slug: v.string(),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    console.log(args, 'args');
-
     const userId = await getAuthUserId(ctx);
 
     if (!userId) {
@@ -180,6 +178,35 @@ export const acceptInvite = mutation({
       invitedAt: invite.createdAt,
     });
 
+    // Set this organization as the user's current organization
+    const userSettings = await ctx.db
+      .query('userSettings')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .first();
+
+    if (userSettings) {
+      await ctx.db.patch(userSettings._id, {
+        currentOrganizationId: invite.organizationId,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert('userSettings', {
+        userId,
+        currentOrganizationId: invite.organizationId,
+        preferences: {
+          theme: 'system',
+          language: 'en',
+          notifications: {
+            email: true,
+            push: true,
+            organizationUpdates: true,
+          },
+        },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
+
     // Update invite status
     await ctx.db.patch(invite._id, {
       status: 'accepted',
@@ -291,7 +318,7 @@ async function requireAdmin(
 }
 
 // Invite user to organization (Admin only)
-export const inviteMember = mutation({
+export const inviteMember = internalMutation({
   args: {
     organizationId: v.id('organizations'),
     email: v.string(),
@@ -338,8 +365,13 @@ export const inviteMember = mutation({
       throw new Error('User already has a pending invitation');
     }
 
-    // Generate unique token
-    const token = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    // Generate cryptographically secure token
+    // Use Web Crypto API for secure random generation
+    const randomBytes = new Uint8Array(32);
+    crypto.getRandomValues(randomBytes);
+    const token = Array.from(randomBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
     const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
     // Create invite
@@ -373,7 +405,7 @@ export const inviteMember = mutation({
 });
 
 // Remove member from organization (Admin only)
-export const removeMember = mutation({
+export const removeMember = internalMutation({
   args: {
     organizationId: v.id('organizations'),
     memberId: v.id('organizationMembers'),
@@ -756,7 +788,7 @@ export const leaveOrganization = mutation({
 });
 
 // Cancel/revoke invite (Admin only)
-export const cancelInvite = mutation({
+export const cancelInvite = internalMutation({
   args: {
     inviteId: v.id('organizationInvites'),
   },
@@ -775,17 +807,24 @@ export const cancelInvite = mutation({
     // Verify user is admin of the organization
     await requireAdmin(ctx, invite.organizationId, userId);
 
+    // Only track removal if invite was pending (not already accepted/cancelled)
+    const shouldTrackRemoval = invite.status === 'pending';
+
     // Cancel invite
     await ctx.db.patch(args.inviteId, {
       status: 'cancelled',
     });
 
-    return { success: true };
+    return {
+      success: true,
+      shouldRemoveMember: shouldTrackRemoval,
+      organizationId: invite.organizationId,
+    };
   },
 });
 
 // Decline invite (User action - for the invited user)
-export const declineInvite = mutation({
+export const declineInvite = internalMutation({
   args: {
     inviteId: v.id('organizationInvites'),
   },
@@ -822,6 +861,6 @@ export const declineInvite = mutation({
       status: 'cancelled', // Using cancelled status for declined invites
     });
 
-    return { success: true };
+    return { success: true, organizationId: invite.organizationId };
   },
 });

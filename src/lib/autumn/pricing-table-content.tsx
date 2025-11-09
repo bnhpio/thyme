@@ -1,7 +1,7 @@
-import { type Product } from "autumn-js";
+import type { Product } from 'autumn-js';
 
 export const getPricingTableContent = (product: Product) => {
-  const { scenario, free_trial, properties } = product;
+  const { scenario, properties } = product;
   const { is_one_off, updateable, has_trial } = properties;
 
   if (has_trial) {
@@ -11,12 +11,12 @@ export const getPricingTableContent = (product: Product) => {
   }
 
   switch (scenario) {
-    case "scheduled":
+    case 'scheduled':
       return {
         buttonText: <p>Plan Scheduled</p>,
       };
 
-    case "active":
+    case 'active':
       if (updateable) {
         return {
           buttonText: <p>Update Plan</p>,
@@ -27,7 +27,7 @@ export const getPricingTableContent = (product: Product) => {
         buttonText: <p>Current Plan</p>,
       };
 
-    case "new":
+    case 'new':
       if (is_one_off) {
         return {
           buttonText: <p>Purchase</p>,
@@ -38,22 +38,22 @@ export const getPricingTableContent = (product: Product) => {
         buttonText: <p>Get started</p>,
       };
 
-    case "renew":
+    case 'renew':
       return {
         buttonText: <p>Renew</p>,
       };
 
-    case "upgrade":
+    case 'upgrade':
       return {
         buttonText: <p>Upgrade</p>,
       };
 
-    case "downgrade":
+    case 'downgrade':
       return {
         buttonText: <p>Downgrade</p>,
       };
 
-    case "cancel":
+    case 'cancel':
       return {
         buttonText: <p>Cancel Plan</p>,
       };

@@ -1,3 +1,4 @@
+import type { Id } from '@/../convex/_generated/dataModel';
 import PricingTable from '@/components/autumn/pricing-table';
 import {
   Card,
@@ -6,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { Id } from '@/../convex/_generated/dataModel';
 
 interface PlanManagementCardProps {
   organizationId: Id<'organizations'>;
@@ -32,4 +32,3 @@ export function PlanManagementCard({
     </Card>
   );
 }
-

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import {
   Building2,
   Check,
@@ -53,7 +53,7 @@ export function OrganizationSwitcher() {
     api.mutation.organizations.setUserCurrentOrganization,
   );
   const acceptInvite = useMutation(api.mutation.organizations.acceptInvite);
-  const declineInvite = useMutation(api.mutation.organizations.declineInvite);
+  const declineInvite = useAction(api.action.organizations.declineInvite);
   const [declineInviteId, setDeclineInviteId] =
     useState<Id<'organizationInvites'> | null>(null);
 
@@ -96,6 +96,7 @@ export function OrganizationSwitcher() {
     async (inviteId: Id<'organizationInvites'>) => {
       try {
         await declineInvite({ inviteId });
+        // Tracking happens automatically on the backend via scheduler
         setDeclineInviteId(null);
         toast.success('Invitation declined');
         // The query will automatically refetch after mutation

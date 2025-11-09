@@ -1,8 +1,11 @@
-import { useMutation } from 'convex/react';
+import { useCustomer } from 'autumn-js/react';
+import { useAction } from 'convex/react';
+import { UserPlus } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
+import PaywallDialog from '@/components/autumn/paywall-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserPlus } from 'lucide-react';
 import { getErrorMessage } from '@/lib/utils';
 import type { Role } from './utils';
 
@@ -35,7 +37,8 @@ export function InviteMemberDialog({
   organizationId,
   isAdmin,
 }: InviteMemberDialogProps) {
-  const inviteMember = useMutation(api.mutation.organizations.inviteMember);
+  const inviteMember = useAction(api.action.organizations.inviteMember);
+  const { check } = useCustomer();
 
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -56,6 +59,17 @@ export function InviteMemberDialog({
       return;
     }
 
+    const result = check({
+      featureId: 'members',
+      dialog: PaywallDialog,
+      withPreview: true,
+    });
+
+    if (!result.data.allowed) {
+      toast.error('Member limit reached');
+      return;
+    }
+
     setIsInviting(true);
     try {
       await inviteMember({
@@ -63,13 +77,16 @@ export function InviteMemberDialog({
         email: email.trim(),
         role,
       });
+
       toast.success('Invitation sent');
       setOpen(false);
       setEmail('');
       setRole('member');
     } catch (error) {
       console.error('Failed to invite member:', error);
-      toast.error(getErrorMessage(error, 'Failed to send invitation'));
+      const errorMessage = getErrorMessage(error, 'Failed to send invitation');
+
+      toast.error(errorMessage);
     } finally {
       setIsInviting(false);
     }
@@ -108,7 +125,9 @@ export function InviteMemberDialog({
               type="email"
               placeholder="user@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isInviting) {
                   handleInvite();
@@ -118,7 +137,10 @@ export function InviteMemberDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor={roleId}>Role</Label>
-            <Select value={role} onValueChange={(value: Role) => setRole(value)}>
+            <Select
+              value={role}
+              onValueChange={(value: Role) => setRole(value)}
+            >
               <SelectTrigger id={roleId}>
                 <SelectValue />
               </SelectTrigger>
@@ -151,4 +173,3 @@ export function InviteMemberDialog({
     </Dialog>
   );
 }
-

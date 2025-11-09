@@ -15,6 +15,7 @@ import type * as action_node_createPrivateKey from "../action/node/createPrivate
 import type * as action_node_createSmartAccount from "../action/node/createSmartAccount.js";
 import type * as action_node_customToken from "../action/node/customToken.js";
 import type * as action_node_utils from "../action/node/utils.js";
+import type * as action_organizations from "../action/organizations.js";
 import type * as action_profile from "../action/profile.js";
 import type * as action_task from "../action/task.js";
 import type * as auth from "../auth.js";
@@ -72,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   "action/node/createSmartAccount": typeof action_node_createSmartAccount;
   "action/node/customToken": typeof action_node_customToken;
   "action/node/utils": typeof action_node_utils;
+  "action/organizations": typeof action_organizations;
   "action/profile": typeof action_profile;
   "action/task": typeof action_task;
   auth: typeof auth;

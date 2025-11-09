@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { MoreVertical, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -56,7 +56,7 @@ export function ActiveMembersCard({
   const changeMemberRole = useMutation(
     api.mutation.organizations.changeMemberRole,
   );
-  const removeMember = useMutation(api.mutation.organizations.removeMember);
+  const removeMember = useAction(api.action.organizations.removeMember);
 
   const [pendingChanges, setPendingChanges] = useState<
     Map<Id<'organizationMembers'>, PendingChange>

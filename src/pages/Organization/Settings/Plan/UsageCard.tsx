@@ -1,6 +1,5 @@
 import { useCustomer } from 'autumn-js/react';
 import { BarChart3, Calendar } from 'lucide-react';
-import type { Id } from '@/../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -11,10 +10,6 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface UsageCardProps {
-  organizationId: Id<'organizations'>;
-}
 
 interface FeatureUsage {
   balance: number;
@@ -30,10 +25,7 @@ interface FeatureUsage {
   usage: number;
 }
 
-export function UsageCard({ organizationId }: UsageCardProps) {
-  // organizationId will be used when needed
-  void organizationId;
-
+export function UsageCard() {
   const { customer, isLoading, error } = useCustomer({
     errorOnNotFound: false,
   });
@@ -99,10 +91,14 @@ export function UsageCard({ organizationId }: UsageCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Usage & Limits</CardTitle>
-        <CardDescription>
-          Track your current usage and remaining limits for your plan
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Usage & Limits</CardTitle>
+            <CardDescription>
+              Track your current usage and remaining limits for your plan
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {features.length === 0 ? (

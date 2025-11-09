@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { Mail, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -21,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/utils';
 import { getRoleBadgeVariant, getRoleIcon } from './utils';
 
@@ -37,11 +37,10 @@ export function PendingInvitationsCard({
   const invites = useQuery(api.query.organization.getOrganizationInvites, {
     organizationId,
   });
-  const cancelInvite = useMutation(api.mutation.organizations.cancelInvite);
+  const cancelInvite = useAction(api.action.organizations.cancelInvite);
 
-  const [cancellingInviteId, setCancellingInviteId] = useState<
-    Id<'organizationInvites'> | null
-  >(null);
+  const [cancellingInviteId, setCancellingInviteId] =
+    useState<Id<'organizationInvites'> | null>(null);
 
   const handleCancelInvite = async (inviteId: Id<'organizationInvites'>) => {
     if (!isAdmin) {
@@ -51,6 +50,7 @@ export function PendingInvitationsCard({
     setCancellingInviteId(inviteId);
     try {
       await cancelInvite({ inviteId });
+      // Tracking happens automatically on the backend via scheduler
       toast.success('Invitation cancelled');
     } catch (error) {
       console.error('Failed to cancel invite:', error);
@@ -79,7 +79,9 @@ export function PendingInvitationsCard({
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead className="hidden sm:table-cell">Invited By</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Invited By
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -134,7 +136,9 @@ export function PendingInvitationsCard({
               <TableRow>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead className="hidden sm:table-cell">Invited By</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  Invited By
+                </TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -185,4 +189,3 @@ export function PendingInvitationsCard({
     </Card>
   );
 }
-

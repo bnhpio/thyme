@@ -286,7 +286,12 @@ export function OrganizationSwitcher() {
                 to="/organization/$slug/settings"
                 params={{ slug: org.slug || '' }}
                 className="flex items-center justify-center p-2 hover:bg-accent rounded-sm mx-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => e.stopPropagation()}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (org?._id) {
+                    await handleSetCurrentOrganization(org._id);
+                  }
+                }}
               >
                 <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
               </Link>

@@ -1,4 +1,5 @@
-import { useMutation } from 'convex/react';
+import { useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -34,8 +35,17 @@ export function DangerZoneCard({
   organizationId,
   isAdmin,
 }: DangerZoneCardProps) {
+  const navigate = useNavigate();
+  const currentUser = useQuery(api.query.user.getCurrentUser);
   const deleteOrganization = useMutation(
     api.mutation.organizations.deleteOrganization,
+  );
+  const setCurrentOrganization = useMutation(
+    api.mutation.organizations.setUserCurrentOrganization,
+  );
+  const organizations = useQuery(
+    api.query.user.getUserOrganizations,
+    currentUser?.id ? { userId: currentUser.id } : 'skip',
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -49,7 +59,22 @@ export function DangerZoneCard({
     try {
       await deleteOrganization({ organizationId });
       toast.success('Organization deleted');
-      window.location.href = '/';
+
+      // Get remaining organizations after deletion
+      const remainingOrgs = organizations?.filter(
+        (org) => org._id !== organizationId,
+      );
+
+      // Switch to first available organization if any exist
+      if (remainingOrgs && remainingOrgs.length > 0) {
+        const firstOrg = remainingOrgs[0];
+        if (firstOrg?._id) {
+          await setCurrentOrganization({ organizationId: firstOrg._id });
+        }
+      }
+
+      // Navigate to root
+      navigate({ to: '/' });
     } catch (error) {
       console.error('Failed to delete organization:', error);
       toast.error(getErrorMessage(error, 'Failed to delete organization'));
@@ -66,9 +91,7 @@ export function DangerZoneCard({
     <Card className="border-destructive">
       <CardHeader>
         <CardTitle className="text-destructive">Danger Zone</CardTitle>
-        <CardDescription>
-          Irreversible and destructive actions
-        </CardDescription>
+        <CardDescription>Irreversible and destructive actions</CardDescription>
       </CardHeader>
       <CardContent>
         <AlertDialog>
@@ -102,4 +125,3 @@ export function DangerZoneCard({
     </Card>
   );
 }
-

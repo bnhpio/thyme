@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import PricingTable from '@/components/autumn/pricing-table';
+import PricingTableView from '@/components/autumn/pricing-table-view';
 import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 import { CHAINS } from '@/lib/chains';
@@ -306,7 +306,7 @@ function RouteComponent() {
               plan.
             </p>
           </div>
-          <PricingTable />
+          <PricingTableView />
         </div>
       </section>
 

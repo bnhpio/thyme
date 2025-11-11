@@ -30,4 +30,6 @@ export default defineTable({
       withRetry: v.boolean(),
     }),
   ),
+  schedulerJobId: v.optional(v.string()),
+  cronJobId: v.optional(v.string()),
 }).index('by_organization', ['organization']);

@@ -1,3 +1,4 @@
+import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
 import { internalQuery, query } from '../_generated/server';
 
@@ -297,5 +298,65 @@ export const getExecutableByIdInternal = internalQuery({
       createdAt: executable.createdAt,
       updatedAt: executable.updatedAt,
     };
+  },
+});
+
+export const getExecutableLogs = query({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.array(
+    v.object({
+      id: v.id('taskLogs'),
+      taskExecutableId: v.id('executables'),
+      log: v.any(),
+      createdAt: v.number(),
+      type: v.union(v.literal('info'), v.literal('warn'), v.literal('error')),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get executable to check organization
+    const executable = await ctx.db.get(args.executableId);
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    // Verify user is a member of the organization
+    const membership = await ctx.db
+      .query('organizationMembers')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('organizationId'), executable.organization),
+          q.eq(q.field('status'), 'active'),
+        ),
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error('User is not a member of this organization');
+    }
+
+    // Get logs for this executable
+    const logs = await ctx.db
+      .query('taskLogs')
+      .withIndex('by_executable', (q) =>
+        q.eq('taskExecutableId', args.executableId),
+      )
+      .order('desc')
+      .collect();
+
+    return logs.map((log) => ({
+      id: log._id,
+      taskExecutableId: log.taskExecutableId,
+      log: log.log,
+      createdAt: log.createdAt,
+      type: log.type,
+    }));
   },
 });

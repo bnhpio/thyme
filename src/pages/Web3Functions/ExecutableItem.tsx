@@ -1,8 +1,33 @@
-import { Calendar, Clock, Copy, Play, User } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { useMutation } from 'convex/react';
+import {
+  Calendar,
+  Clock,
+  Copy,
+  MoreVertical,
+  Play,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Executable {
   id: Id<'executables'>;
@@ -91,88 +116,174 @@ function getStatusColor(status: string): string {
 }
 
 export function ExecutableItem({ executable }: ExecutableItemProps) {
+  const navigate = useNavigate();
+  const terminateExecutable = useMutation(
+    api.mutation.executable.terminateExecutable,
+  );
   const [copied, setCopied] = useState(false);
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(executable.id);
     setCopied(true);
     toast.success('Executable ID copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleTerminate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTerminating(true);
+    try {
+      await terminateExecutable({ executableId: executable.id });
+      toast.success('Executable terminated successfully');
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to terminate executable',
+      );
+    } finally {
+      setIsTerminating(false);
+      setShowTerminateDialog(false);
+    }
+  };
+
   return (
-    <div className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-      <div className="flex-1 space-y-2">
-        <div className="flex items-center gap-2">
-          <Play className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-medium text-sm">{executable.name}</h3>
-          <span className="text-xs text-muted-foreground font-mono">
-            ({executable.id})
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCopy}
-            className="h-4 w-4 shrink-0 p-0"
-          >
-            {copied ? (
-              <Copy className="h-2.5 w-2.5 text-green-500" />
-            ) : (
-              <Copy className="h-2.5 w-2.5" />
-            )}
-          </Button>
-          <span
-            className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(executable.status)}`}
-          >
-            {executable.status}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          {executable.createdBy && (
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span>{executable.createdBy.name}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1">
-            <span>Chain: {getChainName(executable.chain.chainId)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span>Profile: {executable.profile.alias}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span>
-              Type:{' '}
-              {executable.trigger.type === 'single' ? 'Single Run' : 'Cron'}
+    <>
+      <div
+        className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+        onClick={() => {
+          navigate({
+            to: '/executables/$executableId',
+            params: { executableId: executable.id as string },
+          });
+        }}
+      >
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <Play className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-medium text-sm">{executable.name}</h3>
+            <span className="text-xs text-muted-foreground font-mono">
+              ({executable.id})
             </span>
-          </div>
-          {executable.trigger.type === 'single' ? (
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>Runs: {formatDate(executable.trigger.timestamp)}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>Cron: {executable.trigger.schedule}</span>
-              {executable.trigger.until && (
-                <span className="ml-2">
-                  Until: {formatDate(executable.trigger.until)}
-                </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopy}
+              className="h-4 w-4 shrink-0 p-0"
+            >
+              {copied ? (
+                <Copy className="h-2.5 w-2.5 text-green-500" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
               )}
-            </div>
-          )}
-          {executable.trigger.withRetry && (
-            <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
-              Retry enabled
+            </Button>
+            <span
+              className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(executable.status)}`}
+            >
+              {executable.status}
             </span>
-          )}
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            {executable.createdBy && (
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                <span>{executable.createdBy.name}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1">
+              <span>Chain: {getChainName(executable.chain.chainId)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>Profile: {executable.profile.alias}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>
+                Type:{' '}
+                {executable.trigger.type === 'single' ? 'Single Run' : 'Cron'}
+              </span>
+            </div>
+            {executable.trigger.type === 'single' ? (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>Runs: {formatDate(executable.trigger.timestamp)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>Cron: {executable.trigger.schedule}</span>
+                {executable.trigger.until && (
+                  <span className="ml-2">
+                    Until: {formatDate(executable.trigger.until)}
+                  </span>
+                )}
+              </div>
+            )}
+            {executable.trigger.withRetry && (
+              <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                Retry enabled
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Created: {formatDate(executable.createdAt)} • Updated:{' '}
+            {formatDate(executable.updatedAt)}
+          </div>
         </div>
-        <div className="text-xs text-muted-foreground">
-          Created: {formatDate(executable.createdAt)} • Updated:{' '}
-          {formatDate(executable.updatedAt)}
+        <div
+          className="flex items-center gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setShowTerminateDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Terminate
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-    </div>
+
+      {/* Terminate Confirmation Dialog */}
+      <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Terminate Executable</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to terminate "{executable.name}"? This will
+              stop the cron job (if running) and permanently delete the
+              executable. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowTerminateDialog(false)}
+              disabled={isTerminating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleTerminate}
+              disabled={isTerminating}
+            >
+              {isTerminating ? 'Terminating...' : 'Terminate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Clock, Repeat } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -265,9 +265,7 @@ export function CreateExecutableDialog({
   onOpenChange,
   onSuccess,
 }: CreateExecutableDialogProps) {
-  const createExecutable = useMutation(
-    api.mutation.executable.createExecutable,
-  );
+  const createExecutable = useAction(api.action.executable.createExecutable);
   const getTaskSchema = useAction(api.action.task.getTaskSchema);
   const chains = useQuery(api.query.chain.getAllChains, {});
   const profiles = useQuery(api.query.profile.getProfilesByOrganization, {

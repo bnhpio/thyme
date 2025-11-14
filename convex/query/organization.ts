@@ -1,7 +1,6 @@
 import { v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
-import { internalQuery, query } from '../_generated/server';
-import { autumn } from '../autumn';
+import { query } from '../_generated/server';
 
 export const getOrganizationById = query({
   args: {

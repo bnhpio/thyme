@@ -7,11 +7,49 @@ import { runTask as runTaskSDK } from '@bnhpio/thyme-sdk/task/transaction';
 import { v } from 'convex/values';
 import { type Hex, keccak256, toHex } from 'viem';
 import { internal } from '../_generated/api';
-import { internalAction } from '../_generated/server';
+import { action, internalAction } from '../_generated/server';
+import { autumn } from '../autumn';
 
 // Execution action - this is the actual work that might fail
 // It's scheduled separately from the rescheduler to ensure reliability
 export const runTask = internalAction({
+  args: {
+    executableId: v.id('executables'),
+  },
+  handler: async (ctx, args) => {
+    const executable = await ctx.runQuery(
+      internal.query.executable.getExecutableByIdInternal,
+      {
+        executableId: args.executableId,
+      },
+    );
+
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    const executionsLimit = await ctx.runAction(
+      internal.action.executable.checkExecutionsLimit,
+      {
+        organizationId: executable.organization,
+      },
+    );
+
+    //TODO: We need to pause next jobs here, and handle cron jobs here.
+    if (!executionsLimit.allowed && executionsLimit.reason) {
+      throw new Error(executionsLimit.reason);
+    }
+
+    await ctx.runAction(internal.action.executable._runTask, {
+      executableId: args.executableId,
+    });
+    await ctx.runAction(internal.action.executable.trackExecutionsAdded, {
+      organizationId: executable.organization,
+    });
+  },
+});
+
+export const _runTask = internalAction({
   args: {
     executableId: v.id('executables'),
   },
@@ -27,6 +65,7 @@ export const runTask = internalAction({
     if (!executable) {
       throw new Error('Executable not found');
     }
+    executable.organization;
 
     // Get task
     const task = await ctx.runQuery(internal.query.task.getTaskById, {
@@ -136,5 +175,184 @@ export const runTask = internalAction({
         error,
       );
     }
+  },
+});
+export const checkActiveJobsLimit = internalAction({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  returns: v.object({
+    allowed: v.boolean(),
+    reason: v.union(v.string(), v.null()),
+  }),
+  handler: async (
+    ctx,
+    _args,
+  ): Promise<{
+    allowed: boolean;
+    reason: string | null;
+  }> => {
+    const result = await autumn.check(ctx, {
+      featureId: 'concurrent_jobs',
+    });
+
+    if (result.error || !result.data?.allowed) {
+      throw new Error('Active jobs limit exceeded');
+    }
+
+    return {
+      allowed: result.data.allowed,
+      reason: null,
+    };
+  },
+});
+export const trackActiveJobsRemoved = internalAction({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, _args) => {
+    const result = await autumn.track(ctx, {
+      featureId: 'concurrent_jobs',
+      value: -1,
+    });
+
+    if (result.error) {
+      throw new Error(
+        `Failed to track active jobs removal: ${result.error.message || 'Unknown error'}`,
+      );
+    }
+
+    return result.data;
+  },
+});
+
+export const trackActiveJobsAdded = internalAction({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx) => {
+    const result = await autumn.track(ctx, {
+      featureId: 'concurrent_jobs',
+      value: 1,
+    });
+
+    if (result.error) {
+      throw new Error(
+        `Failed to track active jobs addition: ${result.error.message || 'Unknown error'}`,
+      );
+    }
+
+    return result.data;
+  },
+});
+
+export const checkExecutionsLimit = internalAction({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  returns: v.object({
+    allowed: v.boolean(),
+    reason: v.union(v.string(), v.null()),
+  }),
+  handler: async (
+    ctx,
+    _args,
+  ): Promise<{
+    allowed: boolean;
+    reason: string | null;
+  }> => {
+    const result = await autumn.check(ctx, {
+      featureId: 'executions_limit',
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    if (!result.data?.allowed) {
+      return {
+        allowed: false,
+        reason: 'Executions limit exceeded',
+      };
+    }
+
+    return {
+      allowed: result.data.allowed,
+      reason: null,
+    };
+  },
+});
+export const trackExecutionsRemoved = internalAction({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, _args) => {
+    const result = await autumn.track(ctx, {
+      featureId: 'executions_limit',
+      value: -1,
+    });
+
+    if (result.error) {
+      throw new Error(
+        `Failed to track executions removal: ${result.error.message || 'Unknown error'}`,
+      );
+    }
+
+    return result.data;
+  },
+});
+
+export const trackExecutionsAdded = internalAction({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx) => {
+    const result = await autumn.track(ctx, {
+      featureId: 'executions_limit',
+      value: 1,
+    });
+
+    if (result.error) {
+      throw new Error(
+        `Failed to track executions addition: ${result.error.message || 'Unknown error'}`,
+      );
+    }
+
+    return result.data;
+  },
+});
+
+export const createExecutable = action({
+  args: {
+    taskId: v.id('tasks'),
+    name: v.string(),
+    organizationId: v.id('organizations'),
+    chainId: v.id('chains'),
+    profileId: v.id('profiles'),
+    args: v.string(),
+    trigger: v.union(
+      v.object({
+        type: v.literal('cron'),
+        schedule: v.string(),
+        withRetry: v.boolean(),
+        until: v.optional(v.number()),
+      }),
+      v.object({
+        type: v.literal('single'),
+        timestamp: v.number(),
+        withRetry: v.boolean(),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runAction(internal.action.executable.checkActiveJobsLimit, {
+      organizationId: args.organizationId,
+    });
+    await ctx.runAction(internal.action.executable.trackActiveJobsAdded, {
+      organizationId: args.organizationId,
+    });
+    await ctx.runMutation(internal.mutation.executable.createExecutable, {
+      ...args,
+    });
   },
 });

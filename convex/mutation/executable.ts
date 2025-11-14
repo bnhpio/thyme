@@ -2,11 +2,11 @@ import { getAuthUserId } from '@convex-dev/auth/server';
 import { Crons } from '@convex-dev/crons';
 import { v } from 'convex/values';
 import { components, internal } from '../_generated/api';
-import { mutation } from '../_generated/server';
+import { internalMutation } from '../_generated/server';
 
 const crons = new Crons(components.crons);
 
-export const createExecutable = mutation({
+export const createExecutable = internalMutation({
   args: {
     taskId: v.id('tasks'),
     name: v.string(),
@@ -90,6 +90,7 @@ export const createExecutable = mutation({
       updatedAt: now,
     });
     console.log('executable', executable, args.trigger.type);
+
     try {
       if (args.trigger.type === 'cron') {
         console.log('cron', executable.toString(), args.trigger.schedule);

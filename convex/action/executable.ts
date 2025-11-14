@@ -1,17 +1,24 @@
 'use node';
 
-import * as fs from 'node:fs';
-import * as os from 'node:os';
-import * as path from 'node:path';
-import { runTask as runTaskSDK } from '@bnhpio/thyme-sdk/task/transaction';
+import { sandbox } from '@bnhpio/thyme-sdk/sandbox';
 import { v } from 'convex/values';
-import { type Hex, keccak256, toHex } from 'viem';
+import {
+  type Call,
+  createPublicClient,
+  type Hex,
+  http,
+  keccak256,
+  toHex,
+} from 'viem';
 import { internal } from '../_generated/api';
+import type { Id } from '../_generated/dataModel';
 import { action, internalAction } from '../_generated/server';
 import { autumn } from '../autumn';
+import {
+  type AlchemyOptions,
+  createAlchemyClient,
+} from './node/createSmartAccount';
 
-// Execution action - this is the actual work that might fail
-// It's scheduled separately from the rescheduler to ensure reliability
 export const runTask = internalAction({
   args: {
     executableId: v.id('executables'),
@@ -63,117 +70,37 @@ export const _runTask = internalAction({
     );
 
     if (!executable) {
-      throw new Error('Executable not found');
+      // Executable was deleted, silently return
+      return;
     }
     executable.organization;
 
-    // Get task
-    const task = await ctx.runQuery(internal.query.task.getTaskById, {
-      taskId: executable.taskId,
-    });
-
-    if (!task) {
-      throw new Error('Task not found');
+    // Check if executable is still active
+    if (executable.status !== 'active') {
+      // Executable is paused, finished, or failed - don't run
+      return;
     }
 
-    // Get chain info
-    const chain = await ctx.runQuery(internal.query.chain.getChainById, {
-      chainId: executable.chain,
-    });
-
-    if (!chain) {
-      throw new Error('Chain not found');
+    // Check if cron has expired (until timestamp)
+    if (executable.trigger.type === 'cron' && executable.trigger.until) {
+      const now = Date.now();
+      if (now > executable.trigger.until) {
+        // Cron has expired, mark as finished and stop
+        await ctx.runMutation(internal.mutation.executable.markFinished, {
+          executableId: args.executableId,
+        });
+        return;
+      }
     }
 
-    // Get profile
-    const profile = await ctx.runQuery(internal.query.profile.getProfileById, {
-      profileId: executable.profile,
-    });
+    // All checks passed, execute the task
+    await executeTask(ctx, executable);
 
-    if (!profile) {
-      throw new Error('Profile not found');
-    }
-
-    // Get task code from storage
-    const taskCode = (await ctx.runAction(
-      internal.action.task.getTaskCodeInternal,
-      {
-        storageId: task.hash,
-      },
-    )) as string;
-
-    if (!taskCode) {
-      throw new Error('Task code not found');
-    }
-    // Parse args
-    let parsedArgs: Record<string, unknown> = {};
-    try {
-      parsedArgs = JSON.parse(executable.args);
-    } catch {
-      console.error('Error parsing args', executable.args);
-      // If args is not valid JSON, use empty object
-      parsedArgs = {};
-    }
-
-    // Get Alchemy API key from environment
-    const alchemyApiKey = process.env.ALCHEMY_API_KEY;
-    if (!alchemyApiKey) {
-      throw new Error('ALCHEMY_API_KEY environment variable is not set');
-    }
-
-    // Get Alchemy Policy ID from environment
-    const alchemyPolicyId = process.env.ALCHEMY_POLICY_ID;
-    if (!alchemyPolicyId) {
-      throw new Error('ALCHEMY_POLICY_ID environment variable is not set');
-    }
-
-    // Get private key from environment
-    const privateKey = process.env.PRIVATE_KEY;
-    if (!privateKey) {
-      throw new Error('PRIVATE_KEY environment variable is not set');
-    }
-
-    // Execute the task using runTask from thyme-sdk
-    // Note: The exact parameter names may need to be verified against the SDK
-    try {
-      const tempFilePath = path.join(
-        os.tmpdir(),
-        `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.js`,
-      );
-
-      // Write the minified JavaScript to a temporary file
-      fs.writeFileSync(tempFilePath, taskCode, 'utf8');
-      const exec = await import(tempFilePath);
-      const saltBase = btoa(profile.alias).concat(
-        executable.organization.toString(),
-      );
-
-      await runTaskSDK({
-        runner: exec.default,
-        options: {
-          privateKey: privateKey as Hex,
-          rpcUrl: chain.rpcUrls[0] || '',
-          alchemyOptions: {
-            apiKey: alchemyApiKey,
-            salt: keccak256(toHex(saltBase)),
-            policyId: alchemyPolicyId,
-            baseUrl: chain.baseUrl || '',
-          },
-          skipSimulation: false,
-          skipSuccessCallback: false,
-          skipFailCallback: false,
-        },
-        context: {
-          userArgs: parsedArgs,
-          secrets: undefined,
-        },
+    // For single-run executables, mark as finished after execution
+    if (executable.trigger.type === 'single') {
+      await ctx.runMutation(internal.mutation.executable.markFinished, {
+        executableId: args.executableId,
       });
-    } catch (error) {
-      // Log error but don't throw - the rescheduler will continue
-      console.error(
-        `Error executing task for executable ${args.executableId}:`,
-        error,
-      );
     }
   },
 });
@@ -356,3 +283,158 @@ export const createExecutable = action({
     });
   },
 });
+
+// Execution action - this is the actual work that might fail
+// It's scheduled separately from the rescheduler to ensure reliability
+async function executeTask(
+  ctx: any,
+  executable: {
+    taskId: Id<'tasks'>;
+    chain: Id<'chains'>;
+    profile: Id<'profiles'>;
+    args: string;
+  },
+) {
+  // Get task
+  const task = await ctx.runQuery(internal.query.task.getTaskById, {
+    taskId: executable.taskId,
+  });
+
+  if (!task) {
+    throw new Error('Task not found');
+  }
+
+  // Get chain info
+  const chain = await ctx.runQuery(internal.query.chain.getChainById, {
+    chainId: executable.chain,
+  });
+
+  if (!chain) {
+    throw new Error('Chain not found');
+  }
+
+  // Get profile
+  const profile = await ctx.runQuery(internal.query.profile.getProfileById, {
+    profileId: executable.profile,
+  });
+
+  if (!profile) {
+    throw new Error('Profile not found');
+  }
+
+  // Get task code from storage
+  const taskCode = (await ctx.runAction(
+    internal.action.task.getTaskCodeInternal,
+    {
+      storageId: task.hash,
+    },
+  )) as string;
+
+  if (!taskCode) {
+    throw new Error('Task code not found');
+  }
+
+  // Parse args
+  let parsedArgs: Record<string, unknown> = {};
+  try {
+    parsedArgs = JSON.parse(executable.args);
+  } catch {
+    console.error('Error parsing args', executable.args);
+    // If args is not valid JSON, use empty object
+    parsedArgs = {};
+  }
+
+  // Get Alchemy API key from environment
+  const alchemyApiKey = process.env.ALCHEMY_API_KEY;
+  if (!alchemyApiKey) {
+    throw new Error('ALCHEMY_API_KEY environment variable is not set');
+  }
+
+  // Get Alchemy Policy ID from environment
+  const alchemyPolicyId = process.env.ALCHEMY_POLICY_ID;
+  if (!alchemyPolicyId) {
+    throw new Error('ALCHEMY_POLICY_ID environment variable is not set');
+  }
+
+  // Get private key from environment
+  const privateKey = process.env.PRIVATE_KEY;
+  if (!privateKey) {
+    throw new Error('PRIVATE_KEY environment variable is not set');
+  }
+
+  const result = await sandbox({
+    file: taskCode,
+    context: {
+      userArgs: parsedArgs,
+      secrets: {},
+    },
+  });
+  if (result.result.canExec) {
+    const txs = await sendAlchemyCalls({
+      calls: result.result.calls,
+      options: {
+        privateKey: privateKey as Hex,
+        rpcUrl: chain.rpcUrls[0],
+        alchemyOptions: {
+          apiKey: alchemyApiKey,
+          policyId: alchemyPolicyId,
+          salt: keccak256(toHex(profile.salt)),
+          baseUrl: chain.baseUrl,
+        },
+      },
+    });
+    console.log('txs', txs);
+  }
+}
+
+export interface SendCallsAlchemyOptions {
+  calls: Call[];
+  options: {
+    privateKey: Hex;
+    rpcUrl: string;
+    alchemyOptions: AlchemyOptions;
+  };
+}
+
+export async function sendAlchemyCalls(
+  args: SendCallsAlchemyOptions,
+): Promise<Hex[]> {
+  const publicClient = createPublicClient({
+    transport: http(args.options.rpcUrl),
+  });
+  const chainId = await publicClient.getChainId();
+  const { client, account } = await createAlchemyClient(
+    args.options.privateKey,
+    args.options.alchemyOptions,
+    chainId,
+  );
+  const preparedCalls = await client.prepareCalls({
+    calls: args.calls.map((call) => ({
+      to: call.to,
+      data: call.data,
+    })),
+
+    from: account,
+    capabilities: {
+      paymasterService: {
+        policyId: args.options.alchemyOptions.policyId,
+      },
+    },
+  });
+  try {
+    const signedCalls = await client.signPreparedCalls(preparedCalls);
+    const result = await client.sendPreparedCalls(signedCalls);
+    const callsStatus = await client.waitForCallsStatus({
+      id: result.preparedCallIds[0],
+    });
+    const tsx =
+      callsStatus.receipts?.map((receipt) => receipt.transactionHash) || [];
+    if (callsStatus.status !== 'success') {
+      throw new Error('Failed to send alchemy calls');
+    }
+    return tsx;
+  } catch (error) {
+    console.error('Error sending alchemy calls:', error);
+    throw error;
+  }
+}

@@ -1,8 +1,19 @@
-import { Check, Code2, Copy, FileCode, Play, User } from 'lucide-react';
+import { useMutation } from 'convex/react';
+import { Check, Code2, Copy, FileCode, Play, Trash2, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { CodeViewDialog } from './CodeViewDialog';
 import { CreateExecutableDialog } from './CreateExecutableDialog';
 
@@ -16,6 +27,7 @@ interface Task {
     email: string | null;
   } | null;
   _creationTime: number;
+  executableCount: number;
 }
 
 interface FunctionItemProps {
@@ -41,6 +53,8 @@ export function FunctionItem({
 }: FunctionItemProps) {
   const [copied, setCopied] = useState(false);
   const [isExecutableDialogOpen, setIsExecutableDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const deleteTask = useMutation(api.mutation.task.deleteTask);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(task._id);
@@ -48,6 +62,20 @@ export function FunctionItem({
     toast.success('Function ID copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleDelete = async () => {
+    try {
+      await deleteTask({ taskId: task._id });
+      toast.success('Task deleted successfully');
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete task',
+      );
+    }
+  };
+
+  const canDelete = task.executableCount === 0;
 
   return (
     <>
@@ -83,6 +111,13 @@ export function FunctionItem({
             <div className="flex items-center gap-1">
               <span>Created: {formatDate(task._creationTime)}</span>
             </div>
+            <div className="flex items-center gap-1">
+              <span>
+                {task.executableCount === 0
+                  ? 'No executables'
+                  : `${task.executableCount} executable${task.executableCount === 1 ? '' : 's'}`}
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -115,6 +150,42 @@ export function FunctionItem({
               </Button>
             }
           />
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!canDelete}
+                className={!canDelete ? 'opacity-50 cursor-not-allowed' : ''}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Task</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this task? This action cannot
+                  be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleDelete}>
+                  Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <CreateExecutableDialog

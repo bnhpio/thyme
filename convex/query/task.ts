@@ -33,10 +33,17 @@ export const getTasksByOrganization = query({
       .filter((q) => q.eq(q.field('organizationId'), args.organizationId))
       .collect();
 
-    // Enrich tasks with creator information
+    // Enrich tasks with creator information and executable count
     const tasksWithCreator = await Promise.all(
       tasks.map(async (task) => {
         const creator = task.creator ? await ctx.db.get(task.creator) : null;
+
+        // Count executables linked to this task
+        const executables = await ctx.db
+          .query('executables')
+          .filter((q) => q.eq(q.field('taskId'), task._id))
+          .collect();
+
         return {
           _id: task._id,
           hash: task.hash,
@@ -49,6 +56,7 @@ export const getTasksByOrganization = query({
               }
             : null,
           _creationTime: task._creationTime,
+          executableCount: executables.length,
         };
       }),
     );

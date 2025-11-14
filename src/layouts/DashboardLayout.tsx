@@ -74,7 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 backgroundSize: '24px 24px',
               }}
             />
-            <div className="w-full max-w-full relative z-10 min-w-0">
+            <div className="w-full max-w-screen-xl mx-auto relative z-10 min-w-0">
               {children}
             </div>
           </main>

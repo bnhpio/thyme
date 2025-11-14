@@ -1,12 +1,35 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
-import { ChevronDown, Filter, Play, Search } from 'lucide-react';
+import { useMutation, useQuery } from 'convex/react';
+import {
+  ChevronDown,
+  Filter,
+  MoreVertical,
+  Play,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import * as viemChains from 'viem/chains';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -72,8 +95,28 @@ function getNetworkColor(chainId: number): string {
     : 'bg-warning';
 }
 
+function getStatusBadgeVariant(
+  status: string,
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'active':
+      return 'default';
+    case 'paused':
+      return 'secondary';
+    case 'finished':
+      return 'outline';
+    case 'failed':
+      return 'destructive';
+    default:
+      return 'secondary';
+  }
+}
+
 export function ExecutablesList({ organizationId }: ExecutablesListProps) {
   const navigate = useNavigate();
+  const terminateExecutable = useMutation(
+    api.mutation.executable.terminateExecutable,
+  );
   const [statusFilter, setStatusFilter] = useState<
     'active' | 'paused' | 'finished' | 'failed' | 'all'
   >('all');
@@ -81,6 +124,14 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
   const [profileFilter] = useState<Id<'profiles'> | 'all'>('all');
   const [triggerTypeFilter] = useState<'single' | 'cron' | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [terminatingId, setTerminatingId] = useState<Id<'executables'> | null>(
+    null,
+  );
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
+  const [selectedExecutable, setSelectedExecutable] = useState<{
+    id: Id<'executables'>;
+    name: string;
+  } | null>(null);
 
   const stats = useQuery(api.query.executable.getExecutableStats, {
     organizationId,
@@ -112,6 +163,25 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
     }
     return true;
   });
+
+  const handleTerminate = async () => {
+    if (!selectedExecutable) return;
+    setTerminatingId(selectedExecutable.id);
+    try {
+      await terminateExecutable({ executableId: selectedExecutable.id });
+      toast.success('Executable terminated successfully');
+      setShowTerminateDialog(false);
+      setSelectedExecutable(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to terminate executable',
+      );
+    } finally {
+      setTerminatingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -241,11 +311,14 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Status / Task name</TableHead>
+                  <TableHead className="w-[300px]">
+                    Status / Task name
+                  </TableHead>
                   <TableHead>Network</TableHead>
-                  <TableHead>Throttled</TableHead>
-                  <TableHead>Runs</TableHead>
-                  <TableHead>Executions</TableHead>
+                  <TableHead>Profile</TableHead>
+                  <TableHead>Trigger</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -266,23 +339,85 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
                         <div
                           className={`h-2 w-2 rounded-full ${getNetworkColor(executable.chain.chainId)}`}
                         />
-                        <span className="font-medium">{executable.name}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{executable.name}</span>
+                          <Badge
+                            variant={getStatusBadgeVariant(executable.status)}
+                            className="text-xs w-fit mt-1"
+                          >
+                            {executable.status}
+                          </Badge>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <span>{getChainName(executable.chain.chainId)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span>0</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(executable.updatedAt)}
+                        <span className="text-sm">
+                          {getChainName(executable.chain.chainId)}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {executable.profile.alias}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm">
+                          {executable.trigger.type === 'cron'
+                            ? 'Cron'
+                            : 'Single'}
+                        </span>
+                        {executable.trigger.type === 'cron' && (
+                          <span className="text-xs text-muted-foreground font-mono">
+                            {executable.trigger.schedule}
+                          </span>
+                        )}
+                        {executable.trigger.type === 'single' && (
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(executable.trigger.timestamp)}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-sm">
+                          {formatDate(executable.updatedAt)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Created {formatDate(executable.createdAt)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => {
+                              setSelectedExecutable({
+                                id: executable.id,
+                                name: executable.name,
+                              });
+                              setShowTerminateDialog(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Terminate
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -291,6 +426,39 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Terminate Confirmation Dialog */}
+      <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Terminate Executable</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to terminate "{selectedExecutable?.name}"?
+              This will stop the cron job (if running) and permanently delete
+              the executable. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTerminateDialog(false);
+                setSelectedExecutable(null);
+              }}
+              disabled={terminatingId !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleTerminate}
+              disabled={terminatingId !== null}
+            >
+              {terminatingId ? 'Terminating...' : 'Terminate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

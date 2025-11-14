@@ -1,13 +1,36 @@
-import { Link } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
-import { Calendar, ChevronLeft, Clock, Copy, Pause } from 'lucide-react';
+import {
+  Calendar,
+  ChevronLeft,
+  Clock,
+  Copy,
+  MoreVertical,
+  Pause,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import * as viemChains from 'viem/chains';
 import { api } from '@/../convex/_generated/api';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function getChainName(chainId: number): string {
@@ -17,35 +40,20 @@ function getChainName(chainId: number): string {
   return chain?.name || `Chain ${chainId}`;
 }
 
-function getStatusColor(status: string): {
-  className: string;
-} {
+function getStatusBadgeVariant(
+  status: string,
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
     case 'active':
-      return {
-        className:
-          'px-3 py-1 rounded text-sm font-medium bg-success/10 text-success-foreground',
-      };
+      return 'default';
     case 'paused':
-      return {
-        className:
-          'px-3 py-1 rounded text-sm font-medium bg-warning/10 text-warning-foreground',
-      };
+      return 'secondary';
     case 'finished':
-      return {
-        className:
-          'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
-      };
+      return 'outline';
     case 'failed':
-      return {
-        className:
-          'px-3 py-1 rounded text-sm font-medium bg-destructive/10 text-destructive-foreground',
-      };
+      return 'destructive';
     default:
-      return {
-        className:
-          'px-3 py-1 rounded text-sm font-medium text-muted-foreground bg-muted',
-      };
+      return 'secondary';
   }
 }
 
@@ -75,10 +83,19 @@ interface ExecutableDetailProps {
 }
 
 export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
+  const navigate = useNavigate();
   const executable = useQuery(api.query.executable.getExecutableById, {
     executableId: executableId as any,
   });
+  const logs = useQuery(api.query.executable.getExecutableLogs, {
+    executableId: executableId as any,
+  });
+  const terminateExecutable = useMutation(
+    api.mutation.executable.terminateExecutable,
+  );
 
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
   const [, setCopiedId] = useState(false);
   const [, setCopiedArgs] = useState(false);
   const [, setCopiedTaskId] = useState(false);
@@ -94,6 +111,25 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
       if (type === 'args') setCopiedArgs(false);
       if (type === 'taskId') setCopiedTaskId(false);
     }, 2000);
+  };
+
+  const handleTerminate = async () => {
+    if (!executable) return;
+    setIsTerminating(true);
+    try {
+      await terminateExecutable({ executableId: executable.id });
+      toast.success('Executable terminated successfully');
+      navigate({ to: '/executables' });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to terminate executable',
+      );
+    } finally {
+      setIsTerminating(false);
+      setShowTerminateDialog(false);
+    }
   };
 
   if (executable === undefined) {
@@ -179,13 +215,33 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className={getStatusColor(executable.status).className}>
+          <Badge variant={getStatusBadgeVariant(executable.status)}>
             {executable.status}
-          </span>
-          <Button variant="outline" size="sm">
-            <Pause className="h-4 w-4 mr-2" />
-            Pause Executable
-          </Button>
+          </Badge>
+          <div className="flex items-center gap-2">
+            {executable.status === 'active' && (
+              <Button variant="outline" size="sm">
+                <Pause className="h-4 w-4 mr-2" />
+                Pause
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setShowTerminateDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Terminate Executable
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -369,7 +425,57 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
               <CardTitle>Task Logs</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">No logs available</p>
+              {logs === undefined ? (
+                <p className="text-sm text-muted-foreground">Loading logs...</p>
+              ) : logs.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No logs available
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                  {logs.map((log) => {
+                    const logColor =
+                      log.type === 'error'
+                        ? 'bg-red-50 dark:bg-red-950/20 border-red-200 text-red-900 dark:text-red-200'
+                        : log.type === 'warn'
+                          ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 text-yellow-900 dark:text-yellow-200'
+                          : 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 text-blue-900 dark:text-blue-200';
+                    return (
+                      <div
+                        key={log.id}
+                        className={`p-3 rounded-lg border ${logColor}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge
+                                variant={
+                                  log.type === 'error'
+                                    ? 'destructive'
+                                    : log.type === 'warn'
+                                      ? 'secondary'
+                                      : 'default'
+                                }
+                                className="text-xs"
+                              >
+                                {log.type.toUpperCase()}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(log.createdAt), 'PPpp')}
+                              </span>
+                            </div>
+                            <pre className="text-sm whitespace-pre-wrap break-words font-mono">
+                              {typeof log.log === 'string'
+                                ? log.log
+                                : JSON.stringify(log.log, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -410,6 +516,36 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
           </Card>
         </TabsContent> */}
       </Tabs>
+
+      {/* Terminate Confirmation Dialog */}
+      <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Terminate Executable</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to terminate this executable? This will stop
+              the cron job (if running) and permanently delete the executable.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowTerminateDialog(false)}
+              disabled={isTerminating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleTerminate}
+              disabled={isTerminating}
+            >
+              {isTerminating ? 'Terminating...' : 'Terminate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

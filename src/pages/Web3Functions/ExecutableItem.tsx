@@ -1,8 +1,33 @@
-import { Calendar, Clock, Copy, Play, User } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { useMutation } from 'convex/react';
+import {
+  Calendar,
+  Clock,
+  Copy,
+  MoreVertical,
+  Play,
+  Trash2,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Executable {
   id: Id<'executables'>;
@@ -108,13 +133,38 @@ function getStatusColor(status: string): {
 }
 
 export function ExecutableItem({ executable }: ExecutableItemProps) {
+  const navigate = useNavigate();
+  const terminateExecutable = useMutation(
+    api.mutation.executable.terminateExecutable,
+  );
   const [copied, setCopied] = useState(false);
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(executable.id);
     setCopied(true);
     toast.success('Executable ID copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleTerminate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTerminating(true);
+    try {
+      await terminateExecutable({ executableId: executable.id });
+      toast.success('Executable terminated successfully');
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to terminate executable',
+      );
+    } finally {
+      setIsTerminating(false);
+      setShowTerminateDialog(false);
+    }
   };
 
   return (

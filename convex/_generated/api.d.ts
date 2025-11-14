@@ -11,7 +11,7 @@
 import type * as action_auth from "../action/auth.js";
 import type * as action_email from "../action/email.js";
 import type * as action_executable from "../action/executable.js";
-import type * as action_node_createPrivateKey from "../action/node/createPrivateKey.js";
+import type * as action_logger from "../action/logger.js";
 import type * as action_node_createSmartAccount from "../action/node/createSmartAccount.js";
 import type * as action_node_customToken from "../action/node/customToken.js";
 import type * as action_node_utils from "../action/node/utils.js";
@@ -23,10 +23,11 @@ import type * as autumn from "../autumn.js";
 import type * as email_templates_InvitationEmail from "../email/templates/InvitationEmail.js";
 import type * as email_templates_SupportEmail from "../email/templates/SupportEmail.js";
 import type * as email_templates_WelcomeEmail from "../email/templates/WelcomeEmail.js";
-import type * as http_task_upload from "../http/task/upload.js";
 import type * as http from "../http.js";
+import type * as http_task_upload from "../http/task/upload.js";
 import type * as mutation_customToken from "../mutation/customToken.js";
 import type * as mutation_executable from "../mutation/executable.js";
+import type * as mutation_log from "../mutation/log.js";
 import type * as mutation_organizations from "../mutation/organizations.js";
 import type * as mutation_profile from "../mutation/profile.js";
 import type * as mutation_task from "../mutation/task.js";
@@ -48,6 +49,7 @@ import type * as schemas_profile_index from "../schemas/profile/index.js";
 import type * as schemas_profile_profile from "../schemas/profile/profile.js";
 import type * as schemas_task_executable from "../schemas/task/executable.js";
 import type * as schemas_task_index from "../schemas/task/index.js";
+import type * as schemas_task_log from "../schemas/task/log.js";
 import type * as schemas_task_task from "../schemas/task/task.js";
 import type * as schemas_user_userCustomToken from "../schemas/user/userCustomToken.js";
 import type * as schemas_user_userSettings from "../schemas/user/userSettings.js";
@@ -58,19 +60,11 @@ import type {
   FunctionReference,
 } from "convex/server";
 
-/**
- * A utility for referencing Convex functions in your app's API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
- * ```
- */
 declare const fullApi: ApiFromModules<{
   "action/auth": typeof action_auth;
   "action/email": typeof action_email;
   "action/executable": typeof action_executable;
-  "action/node/createPrivateKey": typeof action_node_createPrivateKey;
+  "action/logger": typeof action_logger;
   "action/node/createSmartAccount": typeof action_node_createSmartAccount;
   "action/node/customToken": typeof action_node_customToken;
   "action/node/utils": typeof action_node_utils;
@@ -82,10 +76,11 @@ declare const fullApi: ApiFromModules<{
   "email/templates/InvitationEmail": typeof email_templates_InvitationEmail;
   "email/templates/SupportEmail": typeof email_templates_SupportEmail;
   "email/templates/WelcomeEmail": typeof email_templates_WelcomeEmail;
-  "http/task/upload": typeof http_task_upload;
   http: typeof http;
+  "http/task/upload": typeof http_task_upload;
   "mutation/customToken": typeof mutation_customToken;
   "mutation/executable": typeof mutation_executable;
+  "mutation/log": typeof mutation_log;
   "mutation/organizations": typeof mutation_organizations;
   "mutation/profile": typeof mutation_profile;
   "mutation/task": typeof mutation_task;
@@ -107,18 +102,35 @@ declare const fullApi: ApiFromModules<{
   "schemas/profile/profile": typeof schemas_profile_profile;
   "schemas/task/executable": typeof schemas_task_executable;
   "schemas/task/index": typeof schemas_task_index;
+  "schemas/task/log": typeof schemas_task_log;
   "schemas/task/task": typeof schemas_task_task;
   "schemas/user/userCustomToken": typeof schemas_user_userCustomToken;
   "schemas/user/userSettings": typeof schemas_user_userSettings;
 }>;
-declare const fullApiWithMounts: typeof fullApi;
 
+/**
+ * A utility for referencing Convex functions in your app's public API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = api.myModule.myFunction;
+ * ```
+ */
 export declare const api: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "public">
 >;
+
+/**
+ * A utility for referencing Convex functions in your app's internal API.
+ *
+ * Usage:
+ * ```js
+ * const myFunctionReference = internal.myModule.myFunction;
+ * ```
+ */
 export declare const internal: FilterApi<
-  typeof fullApiWithMounts,
+  typeof fullApi,
   FunctionReference<any, "internal">
 >;
 

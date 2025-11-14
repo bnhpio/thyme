@@ -36,7 +36,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex min-h-svh w-full">
         <AppSidebar />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Top Header */}
           <header className="border-b bg-background shadow-sm">
             <div className="flex h-14 items-center px-4">
@@ -50,11 +50,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
 
               <div className="ml-auto flex items-center space-x-4">
-                {currentUser && (
-                  <span className="text-sm text-muted-foreground hidden sm:block">
-                    Welcome, {currentUser.name}
-                  </span>
-                )}
                 <ThemeToggle />
                 <Button
                   variant="ghost"
@@ -70,7 +65,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 bg-background p-6 relative">
+          <main className="flex-1 bg-background p-3 sm:p-4 md:p-6 relative overflow-x-hidden min-w-0">
             <div
               className="absolute inset-0 opacity-[0.02] pointer-events-none"
               style={{
@@ -79,7 +74,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 backgroundSize: '24px 24px',
               }}
             />
-            <div className="max-w-7xl mx-auto relative z-10">{children}</div>
+            <div className="w-full max-w-full relative z-10 min-w-0">
+              {children}
+            </div>
           </main>
         </div>
       </div>

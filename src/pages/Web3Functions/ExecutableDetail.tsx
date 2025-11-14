@@ -338,9 +338,9 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
         <TabsList>
           <TabsTrigger value="executions">Executions</TabsTrigger>
           <TabsTrigger value="logs">Task Logs</TabsTrigger>
-          <TabsTrigger value="code">Code</TabsTrigger>
-          <TabsTrigger value="storage">Storage</TabsTrigger>
-          <TabsTrigger value="secrets">Secrets</TabsTrigger>
+          {/* <TabsTrigger value="code">Code</TabsTrigger> */}
+          {/* <TabsTrigger value="storage">Storage</TabsTrigger> */}
+          {/* <TabsTrigger value="secrets">Secrets</TabsTrigger> */}
         </TabsList>
         <TabsContent value="executions" className="space-y-4">
           <Card>
@@ -373,7 +373,7 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="code">
+        {/* <TabsContent value="code">
           <Card>
             <CardHeader>
               <CardTitle>Code</CardTitle>
@@ -384,8 +384,8 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="storage">
+        </TabsContent> */}
+        {/* <TabsContent value="storage">
           <Card>
             <CardHeader>
               <CardTitle>Storage</CardTitle>
@@ -396,8 +396,8 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="secrets">
+        </TabsContent> */}
+        {/* <TabsContent value="secrets">
           <Card>
             <CardHeader>
               <CardTitle>Secrets</CardTitle>
@@ -408,7 +408,7 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

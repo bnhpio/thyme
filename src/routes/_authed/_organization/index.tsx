@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { Dashboard } from '@/pages/Dashboard/Dashboard';
 
 export const Route = createFileRoute('/_authed/_organization/')({
   component: RouteComponent,
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/_authed/_organization/')({
 function RouteComponent() {
   return (
     <DashboardLayout>
-      <div>Hello "/_authed/_organization/"!</div>
+      <Dashboard />
     </DashboardLayout>
   );
 }

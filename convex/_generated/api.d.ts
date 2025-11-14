@@ -32,6 +32,7 @@ import type * as mutation_profile from "../mutation/profile.js";
 import type * as mutation_task from "../mutation/task.js";
 import type * as query_chain from "../query/chain.js";
 import type * as query_customToken from "../query/customToken.js";
+import type * as query_dashboard from "../query/dashboard.js";
 import type * as query_executable from "../query/executable.js";
 import type * as query_organization from "../query/organization.js";
 import type * as query_profile from "../query/profile.js";
@@ -90,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   "mutation/task": typeof mutation_task;
   "query/chain": typeof query_chain;
   "query/customToken": typeof query_customToken;
+  "query/dashboard": typeof query_dashboard;
   "query/executable": typeof query_executable;
   "query/organization": typeof query_organization;
   "query/profile": typeof query_profile;

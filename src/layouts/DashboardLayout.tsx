@@ -1,7 +1,7 @@
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { LogOut, Zap } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Logo } from '@/components/base/Logo/Logo';

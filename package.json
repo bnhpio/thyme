@@ -13,8 +13,10 @@
     "check": "biome check --write"
   },
   "dependencies": {
+    "@aa-sdk/core": "^4.78.0",
     "@account-kit/infra": "^4.78.0",
-    "@bnhpio/thyme-sdk": "^0.0.3",
+    "@account-kit/wallet-client": "^4.78.0",
+    "@bnhpio/thyme-sdk": "^0.0.4",
     "@convex-dev/crons": "^0.1.9",
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@icons-pack/react-simple-icons": "^13.8.0",

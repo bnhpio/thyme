@@ -8,6 +8,8 @@ import {
 } from 'node:crypto';
 import { promisify } from 'node:util';
 import type { Address } from 'viem';
+import type { Chain } from 'viem/chains';
+import * as chains from 'viem/chains';
 
 const scryptAsync = promisify(scrypt);
 
@@ -82,4 +84,13 @@ export function generateToken(): string {
 
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Gets a chain from the viem/chains library by its ID
+ * @param chainId - The ID of the chain
+ * @returns The chain or undefined if not found
+ */
+export function getChain(chainId: number): Chain | undefined {
+  return Object.values(chains).find((chain: Chain) => chain.id === chainId);
 }

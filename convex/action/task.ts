@@ -1,6 +1,6 @@
 'use node';
 
-import { decompressFiles } from '@bnhpio/thyme-sdk/task/archive';
+import { decompressFiles } from '@bnhpio/thyme-sdk/archive';
 import { v } from 'convex/values';
 import { action, internalAction } from '../_generated/server';
 

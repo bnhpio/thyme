@@ -43,10 +43,14 @@ export const _createProfile = internalAction({
     }
     const salt = btoa(args.alias).concat(args.organizationId.toString());
 
+    const chain = await ctx.runQuery(internal.query.chain.getChainById, {
+      chainId: args.chain,
+    });
+
     const { address } = await ctx.runAction(
       internal.action.node.createSmartAccount.default,
       {
-        chain: args.chain,
+        chain: chain.chainId,
         salt,
       },
     );

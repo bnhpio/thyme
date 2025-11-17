@@ -44,7 +44,7 @@ export function SettingsSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === '/settings'}
+                  isActive={location.pathname === '/settings/settings'}
                 >
                   <Link to="/settings/settings">
                     <User className="h-4 w-4" />

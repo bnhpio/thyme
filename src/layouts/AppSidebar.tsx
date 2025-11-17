@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { Building2, Home, Play, Settings, User } from 'lucide-react';
 import { api } from '@/../convex/_generated/api';
@@ -18,6 +18,7 @@ import { OrganizationSwitcher } from '@/pages/Organization/OrganizationSwitcher'
 //import { OrganizationSwitcher } from './OrganizationSwitcher';
 
 export function AppSidebar() {
+  const location = useLocation();
   const currentUser = useQuery(api.query.user.getCurrentUser);
   const userOrganizations = useQuery(
     api.query.user.getUserOrganizations,
@@ -38,7 +39,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === '/dashboard'}
+                >
                   <Link to="/dashboard">
                     <Home className="h-4 w-4" />
                     <span>Dashboard</span>
@@ -55,7 +59,10 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith('/web3-functions')}
+                  >
                     <Link to="/web3-functions">
                       <Building2 className="h-4 w-4" />
                       <span>Functions</span>
@@ -63,7 +70,10 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith('/executables')}
+                  >
                     <Link to="/executables">
                       <Play className="h-4 w-4" />
                       <span>Executables</span>
@@ -71,7 +81,10 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith('/profiles')}
+                  >
                     <Link to="/profiles">
                       <User className="h-4 w-4" />
                       <span>Profiles</span>

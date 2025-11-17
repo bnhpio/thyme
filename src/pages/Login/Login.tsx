@@ -17,11 +17,14 @@ export function Login() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { navigate } = useRouter();
   const handleGitHubSignIn = () => {
-    signIn('github');
+    signIn('github', {
+      redirectTo: '/dashboard',
+    });
   };
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('redirecting to dashboard', isAuthenticated);
       navigate({
         to: '/dashboard',
       });

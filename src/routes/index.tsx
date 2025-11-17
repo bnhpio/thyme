@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { useConvexAuth } from 'convex/react';
 import {
   Activity,
   ArrowRight,
@@ -24,6 +25,7 @@ export const Route = createFileRoute('/')({
 function RouteComponent() {
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useConvexAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -63,19 +65,25 @@ function RouteComponent() {
               <LogoSigned className="w-20 fill-current text-primary transition-all duration-300 hover:scale-110 logo-typewriter" />
             </div>
             <div className="flex items-center gap-4">
-              <Link to="/login">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button
-                  size="sm"
-                  className="bg-linear-to-r from-primary to-accent hover:from-primary-dark hover:to-accent-dark"
-                >
-                  Start Building
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">
+                  <Button
+                    size="sm"
+                    className="bg-linear-to-r from-primary to-accent hover:from-primary-dark hover:to-accent-dark"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/login">
+                  <Button
+                    size="sm"
+                    className="bg-linear-to-r from-primary to-accent hover:from-primary-dark hover:to-accent-dark"
+                  >
+                    Start Building
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

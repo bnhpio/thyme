@@ -13,6 +13,11 @@ export const getRouter = () => {
     routeTree,
     context: { ...rqContext },
     defaultPreload: 'intent',
+    scrollRestoration: true,
+    getScrollRestorationKey() {
+      // scroll restoration key is unique for each page, means going back or forward in history will not restore scroll position
+      return Date.now().toString();
+    },
     Wrap: (props: { children: React.ReactNode }) => {
       return (
         <TanstackQuery.Provider {...rqContext}>

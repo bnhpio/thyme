@@ -22,39 +22,44 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'system',
+  defaultTheme = 'dark',
   storageKey = 'vite-ui-theme',
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return defaultTheme;
-    try {
-      const stored = localStorage.getItem(storageKey) as Theme | null;
-      return stored && ['dark', 'light', 'system'].includes(stored)
-        ? stored
-        : defaultTheme;
-    } catch {
-      return defaultTheme;
-    }
-  });
+  // Start with defaultTheme to avoid SSR hydration mismatch
+  // Will read from localStorage after mount (client-side only)
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [mounted, setMounted] = useState(false);
 
-  // Apply theme immediately on mount
+  // Read from localStorage after mount (client-side only)
   useEffect(() => {
-    const root = window.document.documentElement;
-    const targetTheme =
-      theme === 'system'
-        ? window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light'
-        : theme;
-
-    // Only update if different to avoid unnecessary reflows
-    const hasTarget = root.classList.contains(targetTheme);
-    if (!hasTarget) {
-      root.classList.remove('light', 'dark');
-      root.classList.add(targetTheme);
+    setMounted(true);
+    const stored = localStorage.getItem(storageKey) as Theme | null;
+    if (stored && ['dark', 'light', 'system'].includes(stored)) {
+      setTheme(stored);
     }
-  }, [theme]);
+  }, [storageKey]);
+
+  // Apply theme to document
+  useEffect(() => {
+    if (!mounted) return; // Don't apply theme until after hydration
+
+    const root = window.document.documentElement;
+
+    root.classList.remove('light', 'dark');
+
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+        .matches
+        ? 'dark'
+        : 'light';
+
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    root.classList.add(theme);
+  }, [theme, mounted]);
 
   const value = {
     theme,

@@ -1,7 +1,6 @@
 import type { Id } from '@/../convex/_generated/dataModel';
 import { DangerZoneCard } from './Settings/DangerZoneCard';
 import { GeneralSettingsCard } from './Settings/GeneralSettingsCard';
-import { InviteSettingsCard } from './Settings/InviteSettingsCard';
 
 interface OrganizationSettingsProps {
   organizationId: Id<'organizations'>;
@@ -17,7 +16,6 @@ export function OrganizationSettings({
   return (
     <div className="space-y-6">
       <GeneralSettingsCard organizationId={organizationId} isAdmin={isAdmin} />
-      <InviteSettingsCard organizationId={organizationId} isAdmin={isAdmin} />
       <DangerZoneCard organizationId={organizationId} isAdmin={isAdmin} />
     </div>
   );

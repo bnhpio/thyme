@@ -66,8 +66,7 @@ export function OrganizationSwitcher() {
 
   // Check if we're on an organization settings page
   const isOnOrganizationSettingsPage =
-    location.pathname.includes('/organization/') &&
-    location.pathname.endsWith('/settings');
+    location.pathname.includes('/organization/');
 
   const handleSetCurrentOrganization = useCallback(
     async (orgId: Id<'organizations'>) => {

@@ -6,27 +6,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { ApiKey, Organization } from './types';
-import { formatDate, getOrganizationNames } from './utils';
+import type { ApiKey } from './types';
+import { formatDate } from './utils';
 
 interface ApiKeyItemProps {
   apiKey: ApiKey;
-  organizations: Organization[] | undefined;
   onDelete: (keyId: ApiKey['id']) => void;
 }
 
-export function ApiKeyItem({
-  apiKey,
-  organizations,
-  onDelete,
-}: ApiKeyItemProps) {
+export function ApiKeyItem({ apiKey, onDelete }: ApiKeyItemProps) {
   const isExpired = apiKey.expiresAt < Date.now();
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted transition-colors">
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
-          <h3 className="font-medium">{apiKey.name}</h3>
+          <h3 className="font-medium flex items-center gap-2">
+            {' '}
+            <Key className="h-3 w-3" />
+            {apiKey.name}
+          </h3>
           {isExpired && (
             <span className="text-xs px-2 py-0.5 bg-muted rounded-full">
               Expired
@@ -35,19 +34,9 @@ export function ApiKeyItem({
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <Key className="h-3 w-3" />
-            <code className="text-xs font-mono">
-              {apiKey.id.slice(0, 8)}...{apiKey.id.slice(-8)}
-            </code>
-          </div>
-          <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>Expires: {formatDate(apiKey.expiresAt)}</span>
           </div>
-        </div>
-        <div className="text-xs  text-muted-foreground">
-          Organizations:{' '}
-          {getOrganizationNames(apiKey.organzations, organizations)}
         </div>
       </div>
       <DropdownMenu>

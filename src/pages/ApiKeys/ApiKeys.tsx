@@ -1,22 +1,23 @@
 import { useMutation, useQuery } from 'convex/react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { ApiKeyList } from './ApiKeyList';
 import { CreateApiKeyDialog } from './CreateApiKeyDialog';
-import type { ApiKey, Organization } from './types';
+import { TokenDisplayModal } from './TokenDisplayModal';
+import type { ApiKey } from './types';
 
 export function ApiKeys() {
-  const currentUser = useQuery(api.query.user.getCurrentUser);
-  const organizations = useQuery(
-    api.query.user.getUserOrganizations,
-    currentUser?.id ? { userId: currentUser.id } : 'skip',
-  ) as Organization[] | undefined;
-
   const apiKeys = useQuery(api.query.customToken.getCustomTokens) as
     | ApiKey[]
     | undefined;
 
+  const [createdToken, setCreatedToken] = useState<string>('');
+
+  const handleTokenModalClose = () => {
+    setCreatedToken('');
+  };
   const deleteToken = useMutation(api.mutation.customToken.deleteCustomToken);
 
   const handleDeleteKey = async (keyId: Id<'userCustomTokens'>) => {
@@ -30,10 +31,6 @@ export function ApiKeys() {
     }
   };
 
-  const handleRefresh = () => {
-    // Query will automatically refresh
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -44,16 +41,19 @@ export function ApiKeys() {
           </p>
         </div>
         <CreateApiKeyDialog
-          organizations={organizations}
-          onSuccess={handleRefresh}
+          onSetCreatedToken={(token) => setCreatedToken(token)}
         />
       </div>
 
       <ApiKeyList
+        onSetCreatedToken={(token) => setCreatedToken(token)}
         apiKeys={apiKeys || []}
-        organizations={organizations}
         onDelete={handleDeleteKey}
-        onRefresh={handleRefresh}
+      />
+      <TokenDisplayModal
+        token={createdToken}
+        isOpen={!!createdToken}
+        onClose={handleTokenModalClose}
       />
     </div>
   );

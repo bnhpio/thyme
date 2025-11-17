@@ -22,7 +22,6 @@ export const _getCustomTokensByUserId = internalQuery({
     v.object({
       id: v.id('userCustomTokens'),
       expiresAt: v.number(),
-      organzations: v.array(v.id('organizations')),
       name: v.string(),
     }),
   ),
@@ -34,7 +33,6 @@ export const _getCustomTokensByUserId = internalQuery({
     return tokens.map((token) => ({
       id: token._id,
       expiresAt: token.expiresAt,
-      organzations: token.organzations,
       name: token.name,
     }));
   },
@@ -70,7 +68,6 @@ export const getCustomTokens = query({
     return tokens.map((token) => ({
       id: token._id,
       expiresAt: token.expiresAt,
-      organzations: token.organzations,
       name: token.name,
     }));
   },

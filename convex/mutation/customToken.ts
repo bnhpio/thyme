@@ -6,7 +6,6 @@ export const _saveCustomToken = internalMutation({
   args: {
     userId: v.id('users'),
     expiresAt: v.number(),
-    organzations: v.array(v.id('organizations')),
     name: v.string(),
     tokenHash: v.string(),
   },
@@ -15,7 +14,6 @@ export const _saveCustomToken = internalMutation({
       userId: args.userId,
       tokenHash: args.tokenHash,
       expiresAt: args.expiresAt,
-      organzations: args.organzations,
       name: args.name,
     });
   },

@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
-import { internalQuery, query } from '../_generated/server';
+import { internalQuery, type QueryCtx, query } from '../_generated/server';
 
 export const getOrganizationById = query({
   args: {
@@ -17,19 +17,51 @@ export const getOrganizationMembership = query({
     userId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const membership = await ctx.db
-      .query('organizationMembers')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field('organizationId'), args.organizationId),
-          q.eq(q.field('status'), 'active'),
-        ),
-      )
-      .first();
+    const membership = await _getOrganizationMembership(
+      ctx,
+      args.userId,
+      args.organizationId,
+    );
 
     return membership;
   },
+});
+
+async function _getOrganizationMembership(
+  ctx: QueryCtx,
+  userId: Id<'users'>,
+  organizationId: Id<'organizations'>,
+) {
+  const membership = await ctx.db
+    .query('organizationMembers')
+    .withIndex('by_user', (q) => q.eq('userId', userId))
+    .filter((q) =>
+      q.and(
+        q.eq(q.field('organizationId'), organizationId),
+        q.eq(q.field('status'), 'active'),
+      ),
+    )
+    .first();
+  return membership;
+}
+
+export const hasWriteAccessToOrganization = internalQuery({
+  args: {
+    organizationId: v.id('organizations'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const isOrganizationMember = await _getOrganizationMembership(
+      ctx,
+      args.userId,
+      args.organizationId,
+    );
+    return (
+      isOrganizationMember?.role === 'admin' ||
+      isOrganizationMember?.role === 'member'
+    );
+  },
+  returns: v.boolean(),
 });
 
 // Get all members of an organization

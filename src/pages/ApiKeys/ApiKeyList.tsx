@@ -9,20 +9,19 @@ import {
 } from '@/components/ui/card';
 import { ApiKeyItem } from './ApiKeyItem';
 import { CreateApiKeyDialog } from './CreateApiKeyDialog';
-import type { ApiKey, Organization } from './types';
+import type { ApiKey } from './types';
 
 interface ApiKeyListProps {
   apiKeys: ApiKey[];
-  organizations: Organization[] | undefined;
   onDelete: (keyId: ApiKey['id']) => void;
   onRefresh?: () => void;
+  onSetCreatedToken: (token: string) => void;
 }
 
 export function ApiKeyList({
   apiKeys,
-  organizations,
   onDelete,
-  onRefresh,
+  onSetCreatedToken,
 }: ApiKeyListProps) {
   return (
     <Card>
@@ -41,8 +40,7 @@ export function ApiKeyList({
               No API keys found. Create your first API key to get started.
             </p>
             <CreateApiKeyDialog
-              organizations={organizations}
-              onSuccess={onRefresh || (() => {})}
+              onSetCreatedToken={onSetCreatedToken}
               trigger={
                 <Button variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
@@ -54,12 +52,7 @@ export function ApiKeyList({
         ) : (
           <div className="space-y-4">
             {apiKeys.map((apiKey) => (
-              <ApiKeyItem
-                key={apiKey.id}
-                apiKey={apiKey}
-                organizations={organizations}
-                onDelete={onDelete}
-              />
+              <ApiKeyItem key={apiKey.id} apiKey={apiKey} onDelete={onDelete} />
             ))}
           </div>
         )}

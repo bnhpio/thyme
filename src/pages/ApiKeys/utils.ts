@@ -1,23 +1,9 @@
-import type { Id } from '@/../convex/_generated/dataModel';
-import type { Organization } from './types';
-
 export const formatDate = (timestamp: number): string => {
   return new Date(timestamp).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
-};
-
-export const getOrganizationNames = (
-  orgIds: Id<'organizations'>[],
-  organizations: Organization[] | undefined,
-): string => {
-  if (!organizations) return '';
-  return orgIds
-    .map((id) => organizations.find((org) => org._id === id)?.name)
-    .filter(Boolean)
-    .join(', ');
 };
 
 export const calculateExpirationDate = (expiration: string): number => {

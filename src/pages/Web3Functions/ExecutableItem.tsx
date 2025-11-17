@@ -1,14 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useMutation } from 'convex/react';
-import {
-  Calendar,
-  Clock,
-  Copy,
-  MoreVertical,
-  Play,
-  Trash2,
-  User,
-} from 'lucide-react';
+import { useAction, useMutation } from 'convex/react';
+import { Calendar, Clock, Copy, Play, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
@@ -134,8 +126,8 @@ function getStatusColor(status: string): {
 
 export function ExecutableItem({ executable }: ExecutableItemProps) {
   const navigate = useNavigate();
-  const terminateExecutable = useMutation(
-    api.mutation.executable.terminateExecutable,
+  const terminateExecutable = useAction(
+    api.action.executable.terminateExecutable,
   );
   const [copied, setCopied] = useState(false);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
@@ -183,10 +175,7 @@ export function ExecutableItem({ executable }: ExecutableItemProps) {
             className="h-4 w-4 shrink-0 p-0"
           >
             {copied ? (
-              <Copy
-                className="h-2.5 w-2.5"
-                style={{ color: 'var(--success)' }}
-              />
+              <Copy className="h-2.5 w-2.5 text-success" />
             ) : (
               <Copy className="h-2.5 w-2.5" />
             )}

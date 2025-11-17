@@ -100,6 +100,20 @@ export const uploadTask = httpAction(async (ctx, request) => {
   const uploadData = await extractUploadData(request);
   if ('error' in uploadData) return uploadData.error;
   const { organizationId, checkSum, blob } = uploadData;
+
+  const hasWriteAccess = await ctx.runQuery(
+    internal.query.organization.hasWriteAccessToOrganization,
+    {
+      organizationId: organizationId as Id<'organizations'>,
+      userId,
+    },
+  );
+  if (!hasWriteAccess) {
+    return createJsonResponse(
+      { error: 'User does not have write access to this organization' },
+      401,
+    );
+  }
   // Step 3: Store the blob
   let storageId: Id<'_storage'>;
   try {

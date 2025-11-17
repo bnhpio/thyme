@@ -7,7 +7,6 @@ import { action } from '../_generated/server';
 
 export const generateCustomToken = action({
   args: {
-    organizations: v.array(v.id('organizations')),
     name: v.string(),
     expiresAt: v.number(),
   },
@@ -44,7 +43,6 @@ export const generateCustomToken = action({
     await ctx.runMutation(internal.mutation.customToken._saveCustomToken, {
       userId: userId,
       expiresAt: args.expiresAt,
-      organzations: args.organizations,
       name: args.name,
       tokenHash: tokenHash,
     });

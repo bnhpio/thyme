@@ -1,9 +1,7 @@
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/../convex/_generated/api';
 import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -18,7 +16,6 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
-  const currentUser = useQuery(api.query.user.getCurrentUser);
 
   const handleLogout = async () => {
     try {
@@ -74,7 +71,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 backgroundSize: '24px 24px',
               }}
             />
-            <div className="w-full max-w-screen-xl mx-auto relative z-10 min-w-0">
+            <div className="w-full max-w-7xl mx-auto relative z-10 min-w-0">
               {children}
             </div>
           </main>

@@ -1,25 +1,25 @@
 'use client';
- 
-import * as React from 'react';
 import {
   motion,
-  useInView,
-  type UseInViewOptions,
   type Transition,
+  type UseInViewOptions,
+  useInView,
 } from 'motion/react';
- 
+
+import * as React from 'react';
+
 const ENTRY_ANIMATION = {
   initial: { rotateX: 0 },
   animate: { rotateX: 90 },
 };
- 
+
 const EXIT_ANIMATION = {
   initial: { rotateX: 90 },
   animate: { rotateX: 0 },
 };
- 
+
 const formatCharacter = (char: string) => (char === ' ' ? '\u00A0' : char);
- 
+
 type RollingTextProps = Omit<React.ComponentProps<'span'>, 'children'> & {
   transition?: Transition;
   inView?: boolean;
@@ -27,7 +27,7 @@ type RollingTextProps = Omit<React.ComponentProps<'span'>, 'children'> & {
   inViewOnce?: boolean;
   text: string;
 };
- 
+
 function RollingText({
   ref,
   transition = { duration: 0.5, delay: 0.1, ease: 'easeOut' },
@@ -41,10 +41,7 @@ function RollingText({
 }: RollingTextProps) {
   const localRef = React.useRef<HTMLSpanElement>(null);
   if (ref) {
-    React.useImperativeHandle(
-      ref,
-      () => localRef.current as HTMLSpanElement
-    );
+    React.useImperativeHandle(ref, () => localRef.current as HTMLSpanElement);
   }
 
   const inViewResult = useInView(localRef, {
@@ -67,7 +64,7 @@ function RollingText({
             cls.includes('text-transparent') ||
             cls.includes('bg-size') ||
             cls.includes('animate-') ||
-            cls.includes('drop-shadow'))
+            cls.includes('drop-shadow')),
       )
       .join(' ')
       .trim();
@@ -85,7 +82,7 @@ function RollingText({
           !cls.includes('text-transparent') &&
           !cls.includes('bg-size') &&
           !cls.includes('animate-') &&
-          !cls.includes('drop-shadow')
+          !cls.includes('drop-shadow'),
       )
       .join(' ')
       .trim();
@@ -136,5 +133,5 @@ function RollingText({
     </span>
   );
 }
- 
+
 export { RollingText, type RollingTextProps };

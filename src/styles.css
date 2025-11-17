@@ -191,6 +191,9 @@ code {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -467,6 +470,52 @@ code {
   animation: rotate-slow 30s linear infinite;
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.6s ease-out forwards;
+}
+
+/* Smooth section transitions */
+section {
+  will-change: transform, opacity;
+}
+
+/* Enhanced gradient dividers */
+.section-divider {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    oklch(from var(--background) l c h / 0.3) 30%,
+    oklch(from var(--background) l c h / 0.6) 60%,
+    var(--background) 100%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-float-slow,
@@ -477,8 +526,18 @@ code {
   .animate-mesh-move,
   .animate-grid-move,
   .animate-blob-float,
-  .animate-rotate-slow {
+  .animate-rotate-slow,
+  .animate-fade-in-up,
+  .animate-fade-in-scale {
     animation: none;
     opacity: 1;
+  }
+  
+  section {
+    will-change: auto;
+  }
+  
+  html {
+    scroll-behavior: auto;
   }
 }

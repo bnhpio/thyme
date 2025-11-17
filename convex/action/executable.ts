@@ -12,7 +12,7 @@ import {
 } from 'viem';
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
-import { ActionCtx, action, internalAction } from '../_generated/server';
+import { type ActionCtx, action, internalAction } from '../_generated/server';
 import { autumn } from '../autumn';
 import {
   type AlchemyOptions,

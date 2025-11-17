@@ -8,7 +8,8 @@ export default function PrivacyPolicy() {
               Privacy Policy
             </h1>
             <p className="text-muted-foreground text-sm">
-              Last updated: {new Date().toLocaleDateString('en-US', {
+              Last updated:{' '}
+              {new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -54,7 +55,9 @@ export default function PrivacyPolicy() {
                     <li>Your name</li>
                     <li>Your email address</li>
                     <li>Your profile picture/avatar</li>
-                    <li>Your unique identifier from the authentication provider</li>
+                    <li>
+                      Your unique identifier from the authentication provider
+                    </li>
                   </ul>
                   <p className="text-muted-foreground leading-relaxed mt-4">
                     We do not store your authentication provider credentials
@@ -72,7 +75,9 @@ export default function PrivacyPolicy() {
                   </p>
                   <ul className="text-muted-foreground list-disc list-inside space-y-2 ml-4">
                     <li>Organization names and descriptions</li>
-                    <li>User preferences (theme, language, notification settings)</li>
+                    <li>
+                      User preferences (theme, language, notification settings)
+                    </li>
                     <li>Blockchain addresses and associated aliases</li>
                     <li>Chain/network preferences</li>
                     <li>API keys and custom tokens (encrypted)</li>
@@ -84,8 +89,8 @@ export default function PrivacyPolicy() {
                     2.3 Usage and Technical Information
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    We automatically collect certain information when you use our
-                    service:
+                    We automatically collect certain information when you use
+                    our service:
                   </p>
                   <ul className="text-muted-foreground list-disc list-inside space-y-2 ml-4">
                     <li>IP address and location data</li>
@@ -198,8 +203,8 @@ export default function PrivacyPolicy() {
                       other OAuth providers for authentication services
                     </li>
                     <li>
-                      <strong>Email Services:</strong> Brevo (formerly Sendinblue)
-                      for sending transactional and support emails
+                      <strong>Email Services:</strong> Brevo (formerly
+                      Sendinblue) for sending transactional and support emails
                     </li>
                     <li>
                       <strong>Payment Processors:</strong> Autumn for payment
@@ -252,8 +257,8 @@ export default function PrivacyPolicy() {
                 5. Data Security
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                We implement appropriate technical and organizational measures to
-                protect your personal information:
+                We implement appropriate technical and organizational measures
+                to protect your personal information:
               </p>
               <ul className="text-muted-foreground list-disc list-inside space-y-2 ml-4">
                 <li>Encryption of data in transit using TLS/SSL</li>
@@ -276,8 +281,8 @@ export default function PrivacyPolicy() {
                 6. Your Rights and Choices
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Depending on your location, you may have certain rights regarding
-                your personal information:
+                Depending on your location, you may have certain rights
+                regarding your personal information:
               </p>
               <ul className="text-muted-foreground list-disc list-inside space-y-2 ml-4">
                 <li>
@@ -408,11 +413,11 @@ export default function PrivacyPolicy() {
                 11. International Data Transfers
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Your information may be transferred to and processed in countries
-                other than your country of residence. These countries may have
-                data protection laws that differ from those in your country. By
-                using our service, you consent to the transfer of your
-                information to these countries.
+                Your information may be transferred to and processed in
+                countries other than your country of residence. These countries
+                may have data protection laws that differ from those in your
+                country. By using our service, you consent to the transfer of
+                your information to these countries.
               </p>
             </section>
 
@@ -425,8 +430,8 @@ export default function PrivacyPolicy() {
                 notify you of any changes by posting the new Privacy Policy on
                 this page and updating the "Last updated" date. You are advised
                 to review this Privacy Policy periodically for any changes.
-                Changes to this Privacy Policy are effective when they are posted
-                on this page.
+                Changes to this Privacy Policy are effective when they are
+                posted on this page.
               </p>
             </section>
 
@@ -441,10 +446,7 @@ export default function PrivacyPolicy() {
               <ul className="text-muted-foreground list-none space-y-2 ml-4">
                 <li>
                   <strong>Email:</strong>{' '}
-                  <a
-                    href="/support"
-                    className="text-primary underline"
-                  >
+                  <a href="/support" className="text-primary underline">
                     Contact Support
                   </a>
                 </li>

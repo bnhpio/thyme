@@ -6,11 +6,11 @@ import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { api } from '@/../convex/_generated/api';
-import { HomeLayout } from '@/layouts/HomeLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { HomeLayout } from '@/layouts/HomeLayout';
 
 const supportFormSchema = z.object({
   firstName: z

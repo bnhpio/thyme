@@ -15,6 +15,7 @@ import PricingTableView from '@/components/autumn/pricing-table-view';
 import { AnimatedBackground } from '@/components/ui/animated-background';
 import { Button } from '@/components/ui/button';
 import { RollingText } from '@/components/ui/shadcn-io/rolling-text';
+import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 import { HomeLayout } from '@/layouts/HomeLayout';
 import { CHAINS } from '@/lib/chains';
 
@@ -23,10 +24,38 @@ export const Route = createFileRoute('/')({
 });
 
 function RouteComponent() {
+  const heroRef = useScrollAnimation({
+    threshold: 0.2,
+    margin: '0px 0px -100px 0px',
+  });
+  const howItWorksRef = useScrollAnimation({
+    threshold: 0.15,
+    margin: '0px 0px -100px 0px',
+  });
+  const featuresRef = useScrollAnimation({
+    threshold: 0.15,
+    margin: '0px 0px -100px 0px',
+  });
+  const pricingRef = useScrollAnimation({
+    threshold: 0.15,
+    margin: '0px 0px -100px 0px',
+  });
+  const chainsRef = useScrollAnimation({
+    threshold: 0.15,
+    margin: '0px 0px -100px 0px',
+  });
+  const ctaRef = useScrollAnimation({
+    threshold: 0.2,
+    margin: '0px 0px -100px 0px',
+  });
+
   return (
     <HomeLayout>
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[600px]">
+      <section
+        ref={heroRef.ref as React.RefObject<HTMLElement>}
+        className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[600px]"
+      >
         <AnimatedBackground variant="hero" intensity="high" />
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-8 animate-slide-up">
@@ -108,13 +137,28 @@ function RouteComponent() {
             </div>
           </div>
         </div>
+        {/* Section Divider - Gradient Flow */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 section-divider pointer-events-none" />
       </section>
 
       {/* How It Works */}
-      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 overflow-hidden">
+      <section
+        ref={howItWorksRef.ref as React.RefObject<HTMLElement>}
+        className={`relative py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 overflow-hidden transition-all duration-1000 ${
+          howItWorksRef.isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-8'
+        }`}
+      >
         <AnimatedBackground variant="section" intensity="low" />
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center mb-16">
+          <div
+            className={`text-center mb-16 transition-all duration-700 delay-200 ${
+              howItWorksRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               How It Works
             </h2>
@@ -123,7 +167,16 @@ function RouteComponent() {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="group relative p-8 rounded-2xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-primary/50 hover:shadow-[0_20px_25px_-5px_rgb(var(--primary)/0.2)]">
+            <div
+              className={`group relative p-8 rounded-2xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-xl hover:border-primary/50 hover:shadow-[0_20px_25px_-5px_rgb(var(--primary)/0.2)] ${
+                howItWorksRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-8'
+              }`}
+              style={{
+                transitionDelay: howItWorksRef.isVisible ? '300ms' : '0ms',
+              }}
+            >
               <div
                 className="absolute -top-4 -left-4 size-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
                 style={{
@@ -140,7 +193,16 @@ function RouteComponent() {
                 triggers, conditions, and on-chain actions.
               </p>
             </div>
-            <div className="group relative p-8 rounded-2xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-accent-secondary/50 hover:shadow-[0_20px_25px_-5px_rgb(var(--accent-secondary)/0.2)]">
+            <div
+              className={`group relative p-8 rounded-2xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-xl hover:border-accent-secondary/50 hover:shadow-[0_20px_25px_-5px_rgb(var(--accent-secondary)/0.2)] ${
+                howItWorksRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-8'
+              }`}
+              style={{
+                transitionDelay: howItWorksRef.isVisible ? '450ms' : '0ms',
+              }}
+            >
               <div
                 className="absolute -top-4 -left-4 size-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
                 style={{
@@ -157,7 +219,16 @@ function RouteComponent() {
                 executions. Your function, your rules.
               </p>
             </div>
-            <div className="group relative p-8 rounded-2xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-accent/50 hover:shadow-[0_20px_25px_-5px_rgb(var(--accent)/0.2)]">
+            <div
+              className={`group relative p-8 rounded-2xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-xl hover:border-accent/50 hover:shadow-[0_20px_25px_-5px_rgb(var(--accent)/0.2)] ${
+                howItWorksRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-8'
+              }`}
+              style={{
+                transitionDelay: howItWorksRef.isVisible ? '600ms' : '0ms',
+              }}
+            >
               <div
                 className="absolute -top-4 -left-4 size-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300"
                 style={{
@@ -176,13 +247,28 @@ function RouteComponent() {
             </div>
           </div>
         </div>
+        {/* Section Divider - Gradient Flow */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 section-divider pointer-events-none" />
       </section>
 
       {/* Developer-Focused Features */}
-      <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section
+        ref={featuresRef.ref as React.RefObject<HTMLElement>}
+        className={`relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden transition-all duration-1000 ${
+          featuresRef.isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-8'
+        }`}
+      >
         <AnimatedBackground variant="section" intensity="medium" />
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center mb-16">
+          <div
+            className={`text-center mb-16 transition-all duration-700 delay-200 ${
+              featuresRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Built for Developers
             </h2>
@@ -191,7 +277,16 @@ function RouteComponent() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="group p-6 rounded-xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--primary)/0.2)]">
+            <div
+              className={`group p-6 rounded-xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-primary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--primary)/0.2)] ${
+                featuresRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-6'
+              }`}
+              style={{
+                transitionDelay: featuresRef.isVisible ? '300ms' : '0ms',
+              }}
+            >
               <div className="relative">
                 <Shield className="size-8 mb-4 group-hover:scale-125 transition-all duration-300 text-primary-light group-hover:text-accent-secondary-light" />
                 <div className="absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-primary/20" />
@@ -203,7 +298,16 @@ function RouteComponent() {
                 99.9% uptime with automatic retries and failover mechanisms
               </p>
             </div>
-            <div className="group p-6 rounded-xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-accent-secondary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--accent-secondary)/0.2)]">
+            <div
+              className={`group p-6 rounded-xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-accent-secondary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--accent-secondary)/0.2)] ${
+                featuresRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-6'
+              }`}
+              style={{
+                transitionDelay: featuresRef.isVisible ? '400ms' : '0ms',
+              }}
+            >
               <div className="relative">
                 <Zap className="size-8 mb-4 group-hover:scale-125 transition-all duration-300 text-accent-secondary-light group-hover:text-accent-light" />
                 <div className="absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-accent-secondary/20" />
@@ -215,7 +319,16 @@ function RouteComponent() {
                 Automatic gas estimation and optimization for cost efficiency
               </p>
             </div>
-            <div className="group p-6 rounded-xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--accent)/0.2)]">
+            <div
+              className={`group p-6 rounded-xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--accent)/0.2)] ${
+                featuresRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-6'
+              }`}
+              style={{
+                transitionDelay: featuresRef.isVisible ? '500ms' : '0ms',
+              }}
+            >
               <div className="relative">
                 <Layers className="size-8 mb-4 group-hover:scale-125 transition-all duration-300 text-accent-light group-hover:text-accent-tertiary-light" />
                 <div className="absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-accent/20" />
@@ -228,7 +341,16 @@ function RouteComponent() {
                 sweat
               </p>
             </div>
-            <div className="group p-6 rounded-xl border border-border bg-card transition-all duration-300 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-accent-tertiary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--accent-tertiary)/0.2)]">
+            <div
+              className={`group p-6 rounded-xl border border-border bg-card transition-all duration-500 hover:scale-105 hover:shadow-lg hover:-translate-y-1 hover:border-accent-tertiary/50 hover:shadow-[0_10px_15px_-3px_rgb(var(--accent-tertiary)/0.2)] ${
+                featuresRef.isVisible
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-6'
+              }`}
+              style={{
+                transitionDelay: featuresRef.isVisible ? '600ms' : '0ms',
+              }}
+            >
               <div className="relative">
                 <Lock className="size-8 mb-4 group-hover:scale-125 transition-all duration-300 text-accent-tertiary-light group-hover:text-primary-light" />
                 <div className="absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-accent-tertiary/20" />
@@ -241,13 +363,28 @@ function RouteComponent() {
             </div>
           </div>
         </div>
+        {/* Section Divider - Gradient Flow */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 section-divider pointer-events-none" />
       </section>
 
       {/* Plans & Pricing */}
-      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 overflow-hidden">
+      <section
+        ref={pricingRef.ref as React.RefObject<HTMLElement>}
+        className={`relative py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 overflow-hidden transition-all duration-1000 ${
+          pricingRef.isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-8'
+        }`}
+      >
         <AnimatedBackground variant="section" intensity="low" />
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center mb-16">
+          <div
+            className={`text-center mb-16 transition-all duration-700 delay-200 ${
+              pricingRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Simple, Transparent Pricing
             </h2>
@@ -256,15 +393,38 @@ function RouteComponent() {
               plan.
             </p>
           </div>
-          <PricingTableView />
+          <div
+            className={`transition-all duration-700 delay-300 ${
+              pricingRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <PricingTableView />
+          </div>
         </div>
+        {/* Section Divider - Gradient Flow */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 section-divider pointer-events-none" />
       </section>
 
       {/* Integrations / Supported Chains */}
-      <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section
+        ref={chainsRef.ref as React.RefObject<HTMLElement>}
+        className={`relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden transition-all duration-1000 ${
+          chainsRef.isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-8'
+        }`}
+      >
         <AnimatedBackground variant="section" intensity="medium" />
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="text-center mb-16">
+          <div
+            className={`text-center mb-16 transition-all duration-700 delay-200 ${
+              chainsRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Supported Chains
             </h2>
@@ -300,18 +460,35 @@ function RouteComponent() {
             })()}
           </div>
         </div>
+        {/* Section Divider - Gradient Flow */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 section-divider pointer-events-none" />
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 relative overflow-hidden">
+      <section
+        ref={ctaRef.ref as React.RefObject<HTMLElement>}
+        className={`py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 relative overflow-hidden transition-all duration-1000 ${
+          ctaRef.isVisible
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-8'
+        }`}
+      >
         <AnimatedBackground variant="cta" intensity="high" />
         <div className="container mx-auto max-w-4xl text-center relative z-10">
-          <div className="relative inline-block mb-6">
+          <div
+            className={`relative inline-block mb-6 transition-all duration-700 delay-200 ${
+              ctaRef.isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+            }`}
+          >
             <Activity className="size-16 mx-auto animate-pulse text-primary-light" />
             <div className="absolute inset-0 rounded-full blur-2xl animate-pulse-glow bg-primary-light/30" />
           </div>
           <h2
-            className="text-4xl sm:text-5xl font-bold mb-4 bg-clip-text text-transparent"
+            className={`text-4xl sm:text-5xl font-bold mb-4 bg-clip-text text-transparent transition-all duration-700 delay-300 ${
+              ctaRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
             style={{
               backgroundImage:
                 'linear-gradient(to right, var(--primary-light), var(--accent-secondary-light), var(--accent-light))',
@@ -319,11 +496,23 @@ function RouteComponent() {
           >
             Ready to Automate Your Web3?
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p
+            className={`text-xl text-muted-foreground mb-8 max-w-2xl mx-auto transition-all duration-700 delay-400 ${
+              ctaRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
             Join thousands of developers building the future of Web3 automation.
             Start free, scale as you grow.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div
+            className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-700 delay-500 ${
+              ctaRef.isVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-4'
+            }`}
+          >
             <Link to="/login">
               <Button
                 size="lg"

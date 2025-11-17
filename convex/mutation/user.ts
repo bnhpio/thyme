@@ -35,4 +35,3 @@ export const updateUserName = mutation({
     return { success: true };
   },
 });
-

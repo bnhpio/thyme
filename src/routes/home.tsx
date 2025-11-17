@@ -429,7 +429,7 @@ function RouteComponent() {
               <LogoSigned className="w-20 text-foreground fill-current" />
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a
+              {/* <a
                 href="/docs"
                 className="hover:text-foreground transition-colors"
               >
@@ -440,7 +440,7 @@ function RouteComponent() {
                 className="hover:text-foreground transition-colors"
               >
                 API Reference
-              </a>
+              </a> */}
               <Link
                 to="/support"
                 className="hover:text-foreground transition-colors"

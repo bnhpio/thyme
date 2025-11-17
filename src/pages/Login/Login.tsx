@@ -1,5 +1,5 @@
 import { useAuthActions } from '@convex-dev/auth/react';
-import { useRouter } from '@tanstack/react-router';
+import { Link, useRouter } from '@tanstack/react-router';
 import { useConvexAuth } from 'convex/react';
 import { Github } from 'lucide-react';
 import { useEffect } from 'react';
@@ -23,7 +23,7 @@ export function Login() {
   useEffect(() => {
     if (isAuthenticated) {
       navigate({
-        to: '/',
+        to: '/dashboard',
       });
     }
   }, [isAuthenticated, navigate]);
@@ -40,7 +40,7 @@ export function Login() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+          <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
           <CardDescription>Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -53,6 +53,11 @@ export function Login() {
             <Github className="mr-2 h-5 w-5" />
             Continue with GitHub
           </Button>
+          <div className="text-center text-sm text-muted-foreground">
+            <Link to="/" className="hover:underline">
+              ← Back to home
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

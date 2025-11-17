@@ -17,7 +17,7 @@ import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 import { CHAINS } from '@/lib/chains';
 
-export const Route = createFileRoute('/home')({
+export const Route = createFileRoute('/')({
   component: RouteComponent,
 });
 

@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { Dashboard } from '@/pages/Dashboard/Dashboard';
 
-export const Route = createFileRoute('/_authed/_organization/')({
+export const Route = createFileRoute('/_authed/_organization/dashboard')({
   component: RouteComponent,
 });
 

@@ -16,7 +16,7 @@ export const Route = createFileRoute('/organization-setup')({
     );
 
     if (organization.length > 0) {
-      throw redirect({ to: '/' });
+      throw redirect({ to: '/dashboard' });
     }
   },
 });
@@ -24,7 +24,7 @@ export const Route = createFileRoute('/organization-setup')({
 function OrganizationSetupComponent() {
   const handleSuccess = () => {
     // Redirect to dashboard after successful creation
-    window.location.href = '/';
+    window.location.href = '/dashboard';
   };
 
   return (

@@ -27,7 +27,7 @@ export function SettingsSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link to="/">
+              <Link to="/dashboard">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back to Dashboard</span>
               </Link>

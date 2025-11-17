@@ -13,16 +13,16 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as OrganizationSetupRouteImport } from './routes/organization-setup'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as HomeRouteImport } from './routes/home'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/_settings'
 import { Route as AuthedOrganizationRouteImport } from './routes/_authed/_organization'
-import { Route as AuthedOrganizationIndexRouteImport } from './routes/_authed/_organization/index'
 import { Route as AuthedOrganizationWeb3FunctionsRouteImport } from './routes/_authed/_organization/web3-functions'
 import { Route as AuthedOrganizationProfilesRouteImport } from './routes/_authed/_organization/profiles'
 import { Route as AuthedOrganizationExecutablesRouteImport } from './routes/_authed/_organization/executables'
+import { Route as AuthedOrganizationDashboardRouteImport } from './routes/_authed/_organization/dashboard'
 import { Route as AuthedOrganizationExecutablesIndexRouteImport } from './routes/_authed/_organization/executables.index'
 import { Route as AuthedSettingsSettingsSettingsRouteImport } from './routes/_authed/_settings/settings/settings'
 import { Route as AuthedSettingsSettingsApiKeysRouteImport } from './routes/_authed/_settings/settings/api-keys'
@@ -51,11 +51,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeRoute = HomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AcceptInviteRoute = AcceptInviteRouteImport.update({
   id: '/accept-invite',
   path: '/accept-invite',
@@ -63,6 +58,11 @@ const AcceptInviteRoute = AcceptInviteRouteImport.update({
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsIndexRoute = DocsIndexRouteImport.update({
@@ -77,11 +77,6 @@ const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
 const AuthedOrganizationRoute = AuthedOrganizationRouteImport.update({
   id: '/_organization',
   getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedOrganizationIndexRoute = AuthedOrganizationIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedOrganizationRoute,
 } as any)
 const AuthedOrganizationWeb3FunctionsRoute =
   AuthedOrganizationWeb3FunctionsRouteImport.update({
@@ -99,6 +94,12 @@ const AuthedOrganizationExecutablesRoute =
   AuthedOrganizationExecutablesRouteImport.update({
     id: '/executables',
     path: '/executables',
+    getParentRoute: () => AuthedOrganizationRoute,
+  } as any)
+const AuthedOrganizationDashboardRoute =
+  AuthedOrganizationDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
     getParentRoute: () => AuthedOrganizationRoute,
   } as any)
 const AuthedOrganizationExecutablesIndexRoute =
@@ -145,17 +146,17 @@ const AuthedOrganizationOrganizationSlugMembersRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
   '/docs': typeof DocsIndexRoute
+  '/dashboard': typeof AuthedOrganizationDashboardRoute
   '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
-  '/': typeof AuthedOrganizationIndexRoute
   '/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
@@ -165,16 +166,16 @@ export interface FileRoutesByFullPath {
   '/organization/$slug/settings': typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
   '/docs': typeof DocsIndexRoute
+  '/dashboard': typeof AuthedOrganizationDashboardRoute
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
-  '/': typeof AuthedOrganizationIndexRoute
   '/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
@@ -185,9 +186,9 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/accept-invite': typeof AcceptInviteRoute
-  '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -195,10 +196,10 @@ export interface FileRoutesById {
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
   '/_authed/_settings': typeof AuthedSettingsRouteWithChildren
   '/docs/': typeof DocsIndexRoute
+  '/_authed/_organization/dashboard': typeof AuthedOrganizationDashboardRoute
   '/_authed/_organization/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/_authed/_organization/profiles': typeof AuthedOrganizationProfilesRoute
   '/_authed/_organization/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
-  '/_authed/_organization/': typeof AuthedOrganizationIndexRoute
   '/_authed/_organization/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/_authed/_settings/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/_authed/_settings/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
@@ -210,17 +211,17 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/accept-invite'
-    | '/home'
     | '/login'
     | '/organization-setup'
     | '/privacy-policy'
     | '/support'
     | '/docs'
+    | '/dashboard'
     | '/executables'
     | '/profiles'
     | '/web3-functions'
-    | '/'
     | '/executables/$executableId'
     | '/settings/api-keys'
     | '/settings/settings'
@@ -230,16 +231,16 @@ export interface FileRouteTypes {
     | '/organization/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/accept-invite'
-    | '/home'
     | '/login'
     | '/organization-setup'
     | '/privacy-policy'
     | '/support'
     | '/docs'
+    | '/dashboard'
     | '/profiles'
     | '/web3-functions'
-    | '/'
     | '/executables/$executableId'
     | '/settings/api-keys'
     | '/settings/settings'
@@ -249,9 +250,9 @@ export interface FileRouteTypes {
     | '/organization/$slug/settings'
   id:
     | '__root__'
+    | '/'
     | '/_authed'
     | '/accept-invite'
-    | '/home'
     | '/login'
     | '/organization-setup'
     | '/privacy-policy'
@@ -259,10 +260,10 @@ export interface FileRouteTypes {
     | '/_authed/_organization'
     | '/_authed/_settings'
     | '/docs/'
+    | '/_authed/_organization/dashboard'
     | '/_authed/_organization/executables'
     | '/_authed/_organization/profiles'
     | '/_authed/_organization/web3-functions'
-    | '/_authed/_organization/'
     | '/_authed/_organization/executables/$executableId'
     | '/_authed/_settings/settings/api-keys'
     | '/_authed/_settings/settings/settings'
@@ -273,9 +274,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   AcceptInviteRoute: typeof AcceptInviteRoute
-  HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OrganizationSetupRoute: typeof OrganizationSetupRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
@@ -313,13 +314,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/home': {
-      id: '/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof HomeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/accept-invite': {
       id: '/accept-invite'
       path: '/accept-invite'
@@ -332,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/': {
@@ -355,13 +356,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOrganizationRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/_organization/': {
-      id: '/_authed/_organization/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthedOrganizationIndexRouteImport
-      parentRoute: typeof AuthedOrganizationRoute
-    }
     '/_authed/_organization/web3-functions': {
       id: '/_authed/_organization/web3-functions'
       path: '/web3-functions'
@@ -381,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/executables'
       fullPath: '/executables'
       preLoaderRoute: typeof AuthedOrganizationExecutablesRouteImport
+      parentRoute: typeof AuthedOrganizationRoute
+    }
+    '/_authed/_organization/dashboard': {
+      id: '/_authed/_organization/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedOrganizationDashboardRouteImport
       parentRoute: typeof AuthedOrganizationRoute
     }
     '/_authed/_organization/executables/': {
@@ -454,21 +455,21 @@ const AuthedOrganizationExecutablesRouteWithChildren =
   )
 
 interface AuthedOrganizationRouteChildren {
+  AuthedOrganizationDashboardRoute: typeof AuthedOrganizationDashboardRoute
   AuthedOrganizationExecutablesRoute: typeof AuthedOrganizationExecutablesRouteWithChildren
   AuthedOrganizationProfilesRoute: typeof AuthedOrganizationProfilesRoute
   AuthedOrganizationWeb3FunctionsRoute: typeof AuthedOrganizationWeb3FunctionsRoute
-  AuthedOrganizationIndexRoute: typeof AuthedOrganizationIndexRoute
   AuthedOrganizationOrganizationSlugMembersRoute: typeof AuthedOrganizationOrganizationSlugMembersRoute
   AuthedOrganizationOrganizationSlugPlanRoute: typeof AuthedOrganizationOrganizationSlugPlanRoute
   AuthedOrganizationOrganizationSlugSettingsRoute: typeof AuthedOrganizationOrganizationSlugSettingsRoute
 }
 
 const AuthedOrganizationRouteChildren: AuthedOrganizationRouteChildren = {
+  AuthedOrganizationDashboardRoute: AuthedOrganizationDashboardRoute,
   AuthedOrganizationExecutablesRoute:
     AuthedOrganizationExecutablesRouteWithChildren,
   AuthedOrganizationProfilesRoute: AuthedOrganizationProfilesRoute,
   AuthedOrganizationWeb3FunctionsRoute: AuthedOrganizationWeb3FunctionsRoute,
-  AuthedOrganizationIndexRoute: AuthedOrganizationIndexRoute,
   AuthedOrganizationOrganizationSlugMembersRoute:
     AuthedOrganizationOrganizationSlugMembersRoute,
   AuthedOrganizationOrganizationSlugPlanRoute:
@@ -508,9 +509,9 @@ const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   AcceptInviteRoute: AcceptInviteRoute,
-  HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OrganizationSetupRoute: OrganizationSetupRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,

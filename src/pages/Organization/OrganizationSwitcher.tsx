@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import {
   Building2,
@@ -37,6 +37,8 @@ import { getErrorMessage } from '@/lib/utils';
 import { AddOrganizationModal } from './AddOrganizationModal';
 
 export function OrganizationSwitcher() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const currentUser = useQuery(api.query.user.getCurrentUser);
   const organizations = useQuery(
     api.query.user.getUserOrganizations,
@@ -61,6 +63,11 @@ export function OrganizationSwitcher() {
     (org) => org._id === currentOrganizationId,
   );
   const isLoading = organizations === undefined;
+
+  // Check if we're on an organization settings page
+  const isOnOrganizationSettingsPage =
+    location.pathname.includes('/organization/') &&
+    location.pathname.endsWith('/settings');
 
   const handleSetCurrentOrganization = useCallback(
     async (orgId: Id<'organizations'>) => {
@@ -262,9 +269,18 @@ export function OrganizationSwitcher() {
           {organizations?.map((org, index) => (
             <div key={org._id} className="flex items-center group">
               <DropdownMenuItem
-                onClick={() =>
-                  org?._id && handleSetCurrentOrganization(org._id)
-                }
+                onClick={async () => {
+                  if (org?._id) {
+                    await handleSetCurrentOrganization(org._id);
+                    // If we're on organization settings page, navigate to the new org's settings
+                    if (isOnOrganizationSettingsPage && org.slug) {
+                      navigate({
+                        to: '/organization/$slug/settings',
+                        params: { slug: org.slug },
+                      });
+                    }
+                  }
+                }}
                 className="flex items-center justify-between flex-1"
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">

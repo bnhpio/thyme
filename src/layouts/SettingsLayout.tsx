@@ -1,9 +1,7 @@
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
 import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/../convex/_generated/api';
 import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +20,6 @@ interface SettingsLayoutProps {
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
-  const currentUser = useQuery(api.query.user.getCurrentUser);
 
   const handleLogout = async () => {
     try {
@@ -54,11 +51,6 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
               </div>
 
               <div className="ml-auto flex items-center space-x-4">
-                {currentUser && (
-                  <span className="text-sm text-muted-foreground hidden sm:block">
-                    Welcome, {currentUser.name}
-                  </span>
-                )}
                 <ThemeToggle />
                 <Button
                   variant="ghost"

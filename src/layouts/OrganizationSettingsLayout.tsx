@@ -26,7 +26,6 @@ export function OrganizationSettingsLayout({
 }: OrganizationSettingsLayoutProps) {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
-  const currentUser = useQuery(api.query.user.getCurrentUser);
 
   const handleLogout = async () => {
     try {
@@ -58,11 +57,6 @@ export function OrganizationSettingsLayout({
               </div>
 
               <div className="ml-auto flex items-center space-x-4">
-                {currentUser && (
-                  <span className="text-sm text-muted-foreground hidden sm:block">
-                    Welcome, {currentUser.name}
-                  </span>
-                )}
                 <ThemeToggle />
                 <Button
                   variant="ghost"

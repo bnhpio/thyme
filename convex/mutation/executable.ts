@@ -2,9 +2,122 @@ import { getAuthUserId } from '@convex-dev/auth/server';
 import { Crons } from '@convex-dev/crons';
 import { v } from 'convex/values';
 import { components, internal } from '../_generated/api';
-import { internalMutation } from '../_generated/server';
+import type { Id } from '../_generated/dataModel';
+import { internalMutation, type MutationCtx } from '../_generated/server';
 
 const crons = new Crons(components.crons);
+
+async function ensureOrganizationMembership(
+  ctx: any,
+  userId: string,
+  organizationId: Id<'organizations'>,
+) {
+  const membership = await ctx.db
+    .query('organizationMembers')
+    .withIndex('by_user', (q: any) => q.eq('userId', userId))
+    .filter((q: any) =>
+      q.and(
+        q.eq(q.field('organizationId'), organizationId),
+        q.eq(q.field('status'), 'active'),
+      ),
+    )
+    .first();
+
+  if (!membership) {
+    throw new Error('User is not a member of this organization');
+  }
+
+  return membership;
+}
+
+async function appendHistoryEntry(
+  ctx: any,
+  params: {
+    executableId: Id<'executables'>;
+    userId: Id<'users'>;
+    change: 'register' | 'pause' | 'resume';
+  },
+) {
+  await ctx.db.insert('executableHistory', {
+    executableId: params.executableId,
+    user: params.userId,
+    change: params.change,
+    timestamp: Date.now(),
+  });
+}
+
+async function stopExecutableJobs(
+  ctx: any,
+  executableId: Id<'executables'>,
+  executable: any,
+) {
+  if (executable.cronJobId) {
+    try {
+      await crons.delete(ctx, { id: executable.cronJobId as any });
+    } catch (error) {
+      try {
+        await crons.delete(ctx, { name: executableId.toString() });
+      } catch (nameError) {
+        console.error(
+          'Error deleting cron job by ID and name:',
+          error,
+          nameError,
+        );
+      }
+    }
+  }
+
+  if (executable.schedulerJobId && executable.schedulerJobId !== 'pending') {
+    try {
+      await ctx.scheduler.cancel(executable.schedulerJobId as any);
+    } catch (error) {
+      console.error('Error canceling scheduled job:', error);
+    }
+  }
+}
+
+async function registerExecutableSchedule(
+  ctx: MutationCtx,
+  executableId: Id<'executables'>,
+  trigger:
+    | {
+        type: 'cron';
+        schedule: string;
+      }
+    | {
+        type: 'interval';
+        interval: number;
+        startAt?: number | undefined;
+      },
+) {
+  if (trigger.type === 'cron') {
+    const cronJobId = await crons.register(
+      ctx,
+      { kind: 'cron', cronspec: trigger.schedule },
+      internal.action.executable.runTask,
+      { executableId },
+      executableId.toString(),
+    );
+    const cronJob = await (ctx.db as any).get(cronJobId);
+    await ctx.db.patch(executableId, {
+      cronJobId: cronJobId.toString(),
+      schedulerJobId: cronJob?.schedulerJobId?.toString(),
+    });
+    return;
+  }
+
+  const schedulerJobId = await crons.register(
+    ctx,
+    { kind: 'interval', ms: trigger.interval * 1000 },
+    internal.action.executable.runTask,
+    { executableId },
+    executableId.toString(),
+  );
+
+  await ctx.db.patch(executableId, {
+    schedulerJobId: schedulerJobId.toString(),
+  });
+}
 
 export const createExecutable = internalMutation({
   args: {
@@ -168,6 +281,11 @@ export const createExecutable = internalMutation({
         });
       }
     }
+    await appendHistoryEntry(ctx, {
+      executableId: executable,
+      userId,
+      change: 'register',
+    });
     return { success: true };
   },
 });
@@ -215,56 +333,95 @@ export const terminateExecutable = internalMutation({
       throw new Error('Executable not found');
     }
 
-    // Verify user is a member of this organization
-    const membership = await ctx.db
-      .query('organizationMembers')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field('organizationId'), executable.organization),
-          q.eq(q.field('status'), 'active'),
-        ),
-      )
-      .first();
+    await ensureOrganizationMembership(ctx, userId, executable.organization);
 
-    if (!membership) {
-      throw new Error('User is not a member of this organization');
-    }
-
-    // Stop cron job if it exists
-    // According to https://www.convex.dev/components/crons, we can delete by name or id
-    // We use the executable ID as the name when registering, so we can delete by name
-    if (executable.cronJobId) {
-      try {
-        // Try deleting by ID first (more reliable)
-        await crons.delete(ctx, { id: executable.cronJobId as any });
-      } catch (error) {
-        // If ID deletion fails, try by name as fallback
-        try {
-          await crons.delete(ctx, { name: args.executableId.toString() });
-        } catch (nameError) {
-          console.error(
-            'Error deleting cron job by ID and name:',
-            error,
-            nameError,
-          );
-          // Continue with deletion even if cron deletion fails
-        }
-      }
-    }
-
-    // Cancel scheduled job if it exists (for interval executables)
-    if (executable.schedulerJobId) {
-      try {
-        await ctx.scheduler.cancel(executable.schedulerJobId as any);
-      } catch (error) {
-        console.error('Error canceling scheduled job:', error);
-        // Continue with deletion even if cancel fails
-      }
-    }
+    await stopExecutableJobs(ctx, args.executableId, executable);
 
     // Remove executable from database
     await ctx.db.delete(args.executableId);
+
+    return { success: true };
+  },
+});
+
+export const pauseExecutable = internalMutation({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const executable = await ctx.db.get(args.executableId);
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    await ensureOrganizationMembership(ctx, userId, executable.organization);
+
+    if (executable.status === 'paused') {
+      return { success: false };
+    }
+
+    await stopExecutableJobs(ctx, args.executableId, executable);
+
+    await ctx.db.patch(args.executableId, {
+      status: 'paused',
+      updatedAt: Date.now(),
+    });
+
+    await appendHistoryEntry(ctx, {
+      executableId: args.executableId,
+      userId,
+      change: 'pause',
+    });
+
+    return { success: true };
+  },
+});
+
+export const resumeExecutable = internalMutation({
+  args: {
+    executableId: v.id('executables'),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const executable = await ctx.db.get(args.executableId);
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    await ensureOrganizationMembership(ctx, userId, executable.organization);
+
+    if (executable.status === 'active') {
+      return { success: false };
+    }
+
+    await registerExecutableSchedule(
+      ctx,
+      args.executableId,
+      executable.trigger,
+    );
+
+    await ctx.db.patch(args.executableId, {
+      status: 'active',
+      updatedAt: Date.now(),
+    });
+
+    await appendHistoryEntry(ctx, {
+      executableId: args.executableId,
+      userId,
+      change: 'resume',
+    });
 
     return { success: true };
   },

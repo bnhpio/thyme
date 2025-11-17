@@ -337,3 +337,77 @@ export const getExecutableLogs = query({
     }));
   },
 });
+
+export const getExecutableHistory = query({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.array(
+    v.object({
+      id: v.id('executableHistory'),
+      change: v.union(
+        v.literal('register'),
+        v.literal('pause'),
+        v.literal('resume'),
+      ),
+      timestamp: v.number(),
+      user: v.optional(
+        v.object({
+          id: v.id('users'),
+          name: v.string(),
+        }),
+      ),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const executable = await ctx.db.get(args.executableId);
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    const membership = await ctx.db
+      .query('organizationMembers')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('organizationId'), executable.organization),
+          q.eq(q.field('status'), 'active'),
+        ),
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error('User is not a member of this organization');
+    }
+
+    const history = await ctx.db
+      .query('executableHistory')
+      .withIndex('by_executable', (q) =>
+        q.eq('executableId', args.executableId),
+      )
+      .order('desc')
+      .collect();
+
+    return Promise.all(
+      history.map(async (entry) => {
+        const historyUser = await ctx.db.get(entry.user);
+        return {
+          id: entry._id,
+          change: entry.change,
+          timestamp: entry.timestamp,
+          user: historyUser
+            ? {
+                id: historyUser._id,
+                name: historyUser.name ?? 'Unknown',
+              }
+            : undefined,
+        };
+      }),
+    );
+  },
+});

@@ -51,6 +51,7 @@ import type * as schemas_organization_organizationMember from "../schemas/organi
 import type * as schemas_profile_index from "../schemas/profile/index.js";
 import type * as schemas_profile_profile from "../schemas/profile/profile.js";
 import type * as schemas_task_executable from "../schemas/task/executable.js";
+import type * as schemas_task_history from "../schemas/task/history.js";
 import type * as schemas_task_index from "../schemas/task/index.js";
 import type * as schemas_task_log from "../schemas/task/log.js";
 import type * as schemas_task_task from "../schemas/task/task.js";
@@ -107,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   "schemas/profile/index": typeof schemas_profile_index;
   "schemas/profile/profile": typeof schemas_profile_profile;
   "schemas/task/executable": typeof schemas_task_executable;
+  "schemas/task/history": typeof schemas_task_history;
   "schemas/task/index": typeof schemas_task_index;
   "schemas/task/log": typeof schemas_task_log;
   "schemas/task/task": typeof schemas_task_task;

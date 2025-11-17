@@ -12,7 +12,7 @@ import {
 } from 'viem';
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
-import { action, internalAction } from '../_generated/server';
+import { ActionCtx, action, internalAction } from '../_generated/server';
 import { autumn } from '../autumn';
 import {
   type AlchemyOptions,
@@ -116,6 +116,89 @@ export const terminateExecutable = action({
     }
   },
 });
+
+export const pauseExecutable = action({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args): Promise<{ success: boolean }> => {
+    const executable = await ctx.runQuery(
+      internal.query.executable.getExecutableByIdInternal,
+      {
+        executableId: args.executableId,
+      },
+    );
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    if (executable.status === 'paused') {
+      return { success: false };
+    }
+
+    const result = await ctx.runMutation(
+      internal.mutation.executable.pauseExecutable,
+      {
+        executableId: args.executableId,
+      },
+    );
+
+    if (result.success) {
+      await ctx.runAction(internal.action.executable.trackActiveJobsRemoved, {
+        organizationId: executable.organization,
+      });
+    }
+
+    return result;
+  },
+});
+
+export const resumeExecutable = action({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args): Promise<{ success: boolean }> => {
+    const executable = await ctx.runQuery(
+      internal.query.executable.getExecutableByIdInternal,
+      {
+        executableId: args.executableId,
+      },
+    );
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    if (executable.status === 'active') {
+      return { success: false };
+    }
+
+    await ctx.runAction(internal.action.executable.checkActiveJobsLimit, {
+      organizationId: executable.organization,
+    });
+
+    const result = await ctx.runMutation(
+      internal.mutation.executable.resumeExecutable,
+      {
+        executableId: args.executableId,
+      },
+    );
+
+    if (result.success) {
+      await ctx.runAction(internal.action.executable.trackActiveJobsAdded, {
+        organizationId: executable.organization,
+      });
+    }
+
+    return result;
+  },
+});
+
 export const checkActiveJobsLimit = internalAction({
   args: {
     organizationId: v.id('organizations'),
@@ -319,7 +402,7 @@ export const createExecutable = action({
 // Execution action - this is the actual work that might fail
 // It's scheduled separately from the rescheduler to ensure reliability
 async function executeTask(
-  ctx: any,
+  ctx: ActionCtx,
   executable: {
     taskId: Id<'tasks'>;
     chain: Id<'chains'>;
@@ -411,7 +494,7 @@ async function executeTask(
           apiKey: alchemyApiKey,
           policyId: alchemyPolicyId,
           salt: keccak256(toHex(profile.salt)),
-          baseUrl: chain.baseUrl,
+          baseUrl: chain.baseUrl || '',
         },
       },
     });

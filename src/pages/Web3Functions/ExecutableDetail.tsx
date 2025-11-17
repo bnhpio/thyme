@@ -6,6 +6,7 @@ import {
   Copy,
   MoreVertical,
   Pause,
+  Play,
   Repeat,
   Trash2,
 } from 'lucide-react';
@@ -30,6 +31,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function getChainName(chainId: number): string {
@@ -66,6 +75,12 @@ function formatCronSchedule(schedule: string): string {
   return schedule;
 }
 
+function getHistoryLabel(change: 'register' | 'pause' | 'resume'): string {
+  if (change === 'register') return 'Created';
+  if (change === 'pause') return 'Paused';
+  return 'Resumed';
+}
+
 interface ExecutableDetailProps {
   executableId: string;
 }
@@ -78,12 +93,23 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
   const logs = useQuery(api.query.executable.getExecutableLogs, {
     executableId: executableId as any,
   });
+  const history = useQuery(api.query.executable.getExecutableHistory, {
+    executableId: executableId as any,
+  });
   const terminateExecutable = useAction(
     api.action.executable.terminateExecutable,
+  );
+  const pauseExecutableMutation = useAction(
+    api.action.executable.pauseExecutable,
+  );
+  const resumeExecutableMutation = useAction(
+    api.action.executable.resumeExecutable,
   );
 
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
   const [, setCopiedId] = useState(false);
   const [, setCopiedArgs] = useState(false);
   const [, setCopiedTaskId] = useState(false);
@@ -99,6 +125,36 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
       if (type === 'args') setCopiedArgs(false);
       if (type === 'taskId') setCopiedTaskId(false);
     }, 2000);
+  };
+
+  const handlePause = async () => {
+    if (!executable) return;
+    setIsPausing(true);
+    try {
+      await pauseExecutableMutation({ executableId: executable.id });
+      toast.success('Executable paused');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to pause executable',
+      );
+    } finally {
+      setIsPausing(false);
+    }
+  };
+
+  const handleResume = async () => {
+    if (!executable) return;
+    setIsResuming(true);
+    try {
+      await resumeExecutableMutation({ executableId: executable.id });
+      toast.success('Executable resumed');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to resume executable',
+      );
+    } finally {
+      setIsResuming(false);
+    }
   };
 
   const handleTerminate = async () => {
@@ -207,10 +263,25 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
             {executable.status}
           </Badge>
           <div className="flex items-center gap-2">
-            {executable.status === 'active' && (
-              <Button variant="outline" size="sm">
+            {executable.status === 'active' ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePause}
+                disabled={isPausing || isResuming}
+              >
                 <Pause className="h-4 w-4 mr-2" />
-                Pause
+                {isPausing ? 'Pausing...' : 'Pause'}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResume}
+                disabled={isPausing || isResuming}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                {isResuming ? 'Resuming...' : 'Resume'}
               </Button>
             )}
             <DropdownMenu>
@@ -373,6 +444,7 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
         <TabsList>
           <TabsTrigger value="executions">Executions</TabsTrigger>
           <TabsTrigger value="logs">Task Logs</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
           {/* <TabsTrigger value="code">Code</TabsTrigger> */}
           {/* <TabsTrigger value="storage">Storage</TabsTrigger> */}
           {/* <TabsTrigger value="secrets">Secrets</TabsTrigger> */}
@@ -453,6 +525,51 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="history">
+          <Card>
+            <CardHeader>
+              <CardTitle>History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {history === undefined ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading history...
+                </p>
+              ) : history.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No history recorded yet
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Timestamp</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {history.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="font-medium">
+                            {getHistoryLabel(entry.change)}
+                          </TableCell>
+                          <TableCell>
+                            {entry.user?.name ?? 'Unknown user'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {format(new Date(entry.timestamp), 'PPpp')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>

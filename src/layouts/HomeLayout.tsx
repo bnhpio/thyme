@@ -85,6 +85,20 @@ export function HomeLayout({ children }: HomeLayoutProps) {
               <LogoSigned className="w-20 text-foreground fill-current" />
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <a
+                href="https://docs.thyme.sh/getting-started"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition-colors"
+              >
+                Documentation
+              </a>
+              <Link
+                to="/privacy-policy"
+                className="hover:text-foreground transition-colors"
+              >
+                Privacy Policy
+              </Link>
               <Link
                 to="/support"
                 className="hover:text-foreground transition-colors"

@@ -14,6 +14,7 @@ import {
 import { useRef } from 'react';
 import PricingTableView from '@/components/autumn/pricing-table-view';
 import { Button } from '@/components/ui/button';
+import { AuroraShaders } from '@/components/ui/shadcn-io/aurora-shaders';
 import { RollingText } from '@/components/ui/shadcn-io/rolling-text';
 import { HomeLayout } from '@/layouts/HomeLayout';
 import { CHAINS } from '@/lib/chains';
@@ -30,8 +31,20 @@ function RouteComponent() {
       {/* Hero Section */}
       <section
         ref={heroRef}
-        className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[600px]"
       >
+        {/* Aurora Background */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <AuroraShaders
+            speed={0.5}
+            intensity={1.0}
+            vibrancy={1.2}
+            frequency={0.8}
+            stretch={1.5}
+            className="w-full h-full"
+            style={{ opacity: 0.4 }}
+          />
+        </div>
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-8 animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 text-sm backdrop-blur-sm hover:scale-105 transition-transform duration-300 animate-pulse-glow bg-gradient-to-r from-primary/20 via-accent-secondary/20 to-accent/20">
@@ -361,13 +374,6 @@ function RouteComponent() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </Button>
             </Link>
-            {/* <Button
-              size="lg"
-              variant="outline"
-              className="text-lg px-8 hover:scale-110 transition-all duration-300 hover:border-accent-secondary/50 hover:text-accent-secondary-light"
-            >
-              Connect Wallet
-            </Button> */}
           </div>
         </div>
       </section>

@@ -47,11 +47,13 @@ export const runTask = internalAction({
       throw new Error(executionsLimit.reason);
     }
 
-    await ctx.runAction(internal.action.executable._runTask, {
-      executableId: args.executableId,
-    });
+    //TODO: Move this below execution, we need to update counter only if execution was successful.
     await ctx.runAction(internal.action.executable.trackExecutionsAdded, {
       organizationId: executable.organization,
+    });
+
+    await ctx.runAction(internal.action.executable._runTask, {
+      executableId: args.executableId,
     });
   },
 });
@@ -104,6 +106,35 @@ export const _runTask = internalAction({
     }
   },
 });
+
+export const terminateExecutable = action({
+  args: {
+    executableId: v.id('executables'),
+  },
+  handler: async (ctx, args) => {
+    const executable = await ctx.runQuery(
+      internal.query.executable.getExecutableByIdInternal,
+      {
+        executableId: args.executableId,
+      },
+    );
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+    const res = await ctx.runMutation(
+      internal.mutation.executable.terminateExecutable,
+      {
+        executableId: args.executableId,
+      },
+    );
+
+    if (res.success) {
+      await ctx.runAction(internal.action.executable.trackActiveJobsRemoved, {
+        organizationId: executable.organization,
+      });
+    }
+  },
+});
 export const checkActiveJobsLimit = internalAction({
   args: {
     organizationId: v.id('organizations'),
@@ -119,9 +150,18 @@ export const checkActiveJobsLimit = internalAction({
     allowed: boolean;
     reason: string | null;
   }> => {
-    const result = await autumn.check(ctx, {
-      featureId: 'concurrent_jobs',
-    });
+    const organization = await ctx.runQuery(
+      internal.query.organization.getOrganizationAutumnDataByOrganizationId,
+      {
+        organizationId: _args.organizationId,
+      },
+    );
+    const result = await autumn.check(
+      { custom: organization },
+      {
+        featureId: 'concurrent_jobs',
+      },
+    );
 
     if (result.error || !result.data?.allowed) {
       throw new Error('Active jobs limit exceeded');
@@ -138,10 +178,19 @@ export const trackActiveJobsRemoved = internalAction({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, _args) => {
-    const result = await autumn.track(ctx, {
-      featureId: 'concurrent_jobs',
-      value: -1,
-    });
+    const organization = await ctx.runQuery(
+      internal.query.organization.getOrganizationAutumnDataByOrganizationId,
+      {
+        organizationId: _args.organizationId,
+      },
+    );
+    const result = await autumn.track(
+      { custom: organization },
+      {
+        featureId: 'concurrent_jobs',
+        value: -1,
+      },
+    );
 
     if (result.error) {
       throw new Error(
@@ -158,10 +207,13 @@ export const trackActiveJobsAdded = internalAction({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx) => {
-    const result = await autumn.track(ctx, {
-      featureId: 'concurrent_jobs',
-      value: 1,
-    });
+    const result = await autumn.track(
+      { ctx },
+      {
+        featureId: 'concurrent_jobs',
+        value: 1,
+      },
+    );
 
     if (result.error) {
       throw new Error(
@@ -188,9 +240,20 @@ export const checkExecutionsLimit = internalAction({
     allowed: boolean;
     reason: string | null;
   }> => {
-    const result = await autumn.check(ctx, {
-      featureId: 'executions_limit',
-    });
+    const organization = await ctx.runQuery(
+      internal.query.organization.getOrganizationAutumnDataByOrganizationId,
+      {
+        organizationId: _args.organizationId,
+      },
+    );
+    const result = await autumn.check(
+      {
+        custom: organization,
+      },
+      {
+        featureId: 'executions_limit',
+      },
+    );
 
     if (result.error) {
       throw new Error(result.error.message);
@@ -209,35 +272,25 @@ export const checkExecutionsLimit = internalAction({
     };
   },
 });
-export const trackExecutionsRemoved = internalAction({
-  args: {
-    organizationId: v.id('organizations'),
-  },
-  handler: async (ctx, _args) => {
-    const result = await autumn.track(ctx, {
-      featureId: 'executions_limit',
-      value: -1,
-    });
-
-    if (result.error) {
-      throw new Error(
-        `Failed to track executions removal: ${result.error.message || 'Unknown error'}`,
-      );
-    }
-
-    return result.data;
-  },
-});
 
 export const trackExecutionsAdded = internalAction({
   args: {
     organizationId: v.id('organizations'),
   },
-  handler: async (ctx) => {
-    const result = await autumn.track(ctx, {
-      featureId: 'executions_limit',
-      value: 1,
-    });
+  handler: async (ctx, args) => {
+    const organization = await ctx.runQuery(
+      internal.query.organization.getOrganizationAutumnDataByOrganizationId,
+      {
+        organizationId: args.organizationId,
+      },
+    );
+    const result = await autumn.track(
+      { custom: organization },
+      {
+        featureId: 'executions_limit',
+        value: 1,
+      },
+    );
 
     if (result.error) {
       throw new Error(

@@ -2,7 +2,7 @@ import { getAuthUserId } from '@convex-dev/auth/server';
 import { Crons } from '@convex-dev/crons';
 import { v } from 'convex/values';
 import { components, internal } from '../_generated/api';
-import { internalMutation, mutation } from '../_generated/server';
+import { internalMutation } from '../_generated/server';
 
 const crons = new Crons(components.crons);
 
@@ -134,7 +134,7 @@ export const createExecutable = internalMutation({
   },
 });
 
-export const terminateExecutable = mutation({
+export const terminateExecutable = internalMutation({
   args: {
     executableId: v.id('executables'),
   },

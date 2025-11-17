@@ -1,3 +1,4 @@
+import { getAuthUserId } from '@convex-dev/auth/server';
 import { Autumn } from '@useautumn/convex';
 import { api, components } from './_generated/api';
 import type { Id } from './_generated/dataModel';
@@ -5,15 +6,30 @@ import type { ActionCtx, QueryCtx } from './_generated/server';
 
 export const autumn = new Autumn(components.autumn, {
   secretKey: process.env.AUTUMN_SECRET_KEY ?? '',
-  identify: async (ctx: QueryCtx | ActionCtx) => {
-    const user = await ctx.auth.getUserIdentity();
+  identify: async (ctx: {
+    ctx: QueryCtx | ActionCtx;
+    custom: {
+      customerId: Id<'organizations'>;
+      customerData: {
+        name: string;
+      };
+    };
+  }) => {
+    if (ctx.custom) {
+      return ctx.custom;
+    }
 
-    if (!user) {
+    const checkedCtx = ctx.ctx
+      ? (ctx.ctx as QueryCtx | ActionCtx)
+      : (ctx as unknown as QueryCtx | ActionCtx);
+    const userId = await getAuthUserId(checkedCtx);
+
+    if (!userId) {
       return null;
     }
 
-    const settings = await ctx.runQuery(api.query.user.getUserSettings, {
-      userId: user.subject.split('|')[0] as Id<'users'>,
+    const settings = await checkedCtx.runQuery(api.query.user.getUserSettings, {
+      userId: userId,
     });
 
     const organizationId = settings?.currentOrganizationId;
@@ -22,7 +38,7 @@ export const autumn = new Autumn(components.autumn, {
       return null;
     }
 
-    const organization = await ctx.runQuery(
+    const organization = await checkedCtx.runQuery(
       api.query.organization.getOrganizationById,
       {
         organizationId: organizationId,

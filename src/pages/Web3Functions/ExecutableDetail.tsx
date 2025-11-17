@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import {
   Calendar,
@@ -90,8 +90,8 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
   const logs = useQuery(api.query.executable.getExecutableLogs, {
     executableId: executableId as any,
   });
-  const terminateExecutable = useMutation(
-    api.mutation.executable.terminateExecutable,
+  const terminateExecutable = useAction(
+    api.action.executable.terminateExecutable,
   );
 
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);

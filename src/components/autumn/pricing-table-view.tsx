@@ -13,7 +13,14 @@ export default function PricingTableView({
   productDetails?: ProductDetails[];
 }) {
   const [isAnnual, setIsAnnual] = useState(false);
-  const { products, isLoading, error } = usePricingTable({ productDetails });
+  const {
+    products: productsData,
+    isLoading,
+    error,
+  } = usePricingTable({ productDetails });
+  const products = productsData?.filter(
+    (p) => p.id.includes('internal_') === false,
+  );
 
   if (isLoading) {
     return (

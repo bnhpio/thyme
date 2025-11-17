@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import {
   ChevronDown,
   Filter,
@@ -90,9 +90,7 @@ function formatDate(timestamp: number): string {
 
 function getNetworkColor(chainId: number): string {
   // Red dot for mainnet, yellow dot for testnet
-  return isMainnet(chainId)
-    ? 'bg-destructive'
-    : 'bg-warning';
+  return isMainnet(chainId) ? 'bg-destructive' : 'bg-warning';
 }
 
 function getStatusBadgeVariant(
@@ -114,8 +112,8 @@ function getStatusBadgeVariant(
 
 export function ExecutablesList({ organizationId }: ExecutablesListProps) {
   const navigate = useNavigate();
-  const terminateExecutable = useMutation(
-    api.mutation.executable.terminateExecutable,
+  const terminateExecutable = useAction(
+    api.action.executable.terminateExecutable,
   );
   const [statusFilter, setStatusFilter] = useState<
     'active' | 'paused' | 'finished' | 'failed' | 'all'

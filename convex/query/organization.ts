@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import type { Id } from '../_generated/dataModel';
-import { query } from '../_generated/server';
+import { internalQuery, query } from '../_generated/server';
 
 export const getOrganizationById = query({
   args: {
@@ -156,5 +156,21 @@ export const getOrganizationInvites = query({
     }
 
     return invitesWithDetails;
+  },
+});
+
+export const getOrganizationAutumnDataByOrganizationId = internalQuery({
+  args: {
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, args) => {
+    const organization = await ctx.db.get(args.organizationId);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+    return {
+      customerId: organization._id,
+      customerData: { name: organization.name },
+    };
   },
 });

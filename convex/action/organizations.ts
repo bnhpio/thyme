@@ -18,9 +18,12 @@ export const checkMemberLimit = internalAction({
     allowed: boolean;
     reason: string | null;
   }> => {
-    const result = await autumn.check(ctx, {
-      featureId: 'members',
-    });
+    const result = await autumn.check(
+      { ctx },
+      {
+        featureId: 'members',
+      },
+    );
 
     if (result.error || !result.data?.allowed) {
       throw new Error('Member limit exceeded');
@@ -37,10 +40,13 @@ export const trackMemberRemoved = internalAction({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, _args) => {
-    const result = await autumn.track(ctx, {
-      featureId: 'members',
-      value: -1,
-    });
+    const result = await autumn.track(
+      { ctx },
+      {
+        featureId: 'members',
+        value: -1,
+      },
+    );
 
     if (result.error) {
       throw new Error(
@@ -57,10 +63,13 @@ export const trackMemberAdded = internalAction({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx) => {
-    const result = await autumn.track(ctx, {
-      featureId: 'members',
-      value: 1,
-    });
+    const result = await autumn.track(
+      { ctx },
+      {
+        featureId: 'members',
+        value: 1,
+      },
+    );
 
     if (result.error) {
       throw new Error(

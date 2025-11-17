@@ -21,7 +21,15 @@ export default function PricingTable({
   const { customer, checkout } = useCustomer({ errorOnNotFound: false });
 
   const [isAnnual, setIsAnnual] = useState(false);
-  const { products, isLoading, error } = usePricingTable({ productDetails });
+  const {
+    products: productsData,
+    isLoading,
+    error,
+  } = usePricingTable({ productDetails });
+
+  const products = productsData?.filter(
+    (p) => p.id.includes('internal_') === false,
+  );
 
   if (isLoading) {
     return (
@@ -287,13 +295,16 @@ export const PricingFeatureList = ({
   everythingFrom?: string;
   className?: string;
 }) => {
+  const filteredInternalItems = items.filter(
+    (item) => item.feature_id?.includes('internal_') === false,
+  );
   return (
     <div className={cn('flex-grow', className)}>
       {everythingFrom && (
         <p className="text-sm mb-4">Everything from {everythingFrom}, plus:</p>
       )}
       <div className="space-y-3">
-        {items.map((item, index) => (
+        {filteredInternalItems.map((item, index) => (
           <div key={index} className="flex items-start gap-2 text-sm">
             {/* {showIcon && (
               <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />

@@ -7,18 +7,11 @@ export const getExecutablesByOrganization = query({
     organizationId: v.id('organizations'),
     filters: v.optional(
       v.object({
-        status: v.optional(
-          v.union(
-            v.literal('active'),
-            v.literal('paused'),
-            v.literal('finished'),
-            v.literal('failed'),
-          ),
-        ),
+        status: v.optional(v.union(v.literal('active'), v.literal('paused'))),
         chainId: v.optional(v.id('chains')),
         profileId: v.optional(v.id('profiles')),
         triggerType: v.optional(
-          v.union(v.literal('single'), v.literal('cron')),
+          v.union(v.literal('interval'), v.literal('cron')),
         ),
       }),
     ),
@@ -36,12 +29,7 @@ export const getExecutablesByOrganization = query({
           name: v.string(),
         }),
       ),
-      status: v.union(
-        v.literal('active'),
-        v.literal('paused'),
-        v.literal('finished'),
-        v.literal('failed'),
-      ),
+      status: v.union(v.literal('active'), v.literal('paused')),
       chain: v.object({
         id: v.id('chains'),
         chainId: v.number(),
@@ -55,13 +43,11 @@ export const getExecutablesByOrganization = query({
         v.object({
           type: v.literal('cron'),
           schedule: v.string(),
-          withRetry: v.boolean(),
-          until: v.optional(v.number()),
         }),
         v.object({
-          type: v.literal('single'),
-          timestamp: v.number(),
-          withRetry: v.boolean(),
+          type: v.literal('interval'),
+          interval: v.number(),
+          startAt: v.optional(v.number()),
         }),
       ),
     }),
@@ -140,8 +126,6 @@ export const getExecutableStats = query({
     total: v.number(),
     active: v.number(),
     paused: v.number(),
-    finished: v.number(),
-    failed: v.number(),
     mainnet: v.number(),
     testnet: v.number(),
   }),
@@ -158,12 +142,14 @@ export const getExecutableStats = query({
     const statusCounts = {
       active: 0,
       paused: 0,
-      finished: 0,
-      failed: 0,
     };
 
     for (const executable of executables) {
-      statusCounts[executable.status]++;
+      if (executable.status === 'active') {
+        statusCounts.active++;
+      } else {
+        statusCounts.paused++;
+      }
 
       const chain = await ctx.db.get(executable.chain);
       if (chain) {
@@ -181,8 +167,6 @@ export const getExecutableStats = query({
       total: executables.length,
       active: statusCounts.active,
       paused: statusCounts.paused,
-      finished: statusCounts.finished,
-      failed: statusCounts.failed,
       mainnet,
       testnet,
     };
@@ -206,12 +190,7 @@ export const getExecutableById = query({
           name: v.string(),
         }),
       ),
-      status: v.union(
-        v.literal('active'),
-        v.literal('paused'),
-        v.literal('finished'),
-        v.literal('failed'),
-      ),
+      status: v.union(v.literal('active'), v.literal('paused')),
       chain: v.object({
         id: v.id('chains'),
         chainId: v.number(),
@@ -225,13 +204,11 @@ export const getExecutableById = query({
         v.object({
           type: v.literal('cron'),
           schedule: v.string(),
-          withRetry: v.boolean(),
-          until: v.optional(v.number()),
         }),
         v.object({
-          type: v.literal('single'),
-          timestamp: v.number(),
-          withRetry: v.boolean(),
+          type: v.literal('interval'),
+          interval: v.number(),
+          startAt: v.optional(v.number()),
         }),
       ),
     }),

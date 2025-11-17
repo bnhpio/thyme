@@ -1,12 +1,4 @@
-import {
-  Activity,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Pause,
-  Play,
-  XCircle,
-} from 'lucide-react';
+import { Activity, Clock, Pause, Play } from 'lucide-react';
 import type { Id } from '@/../convex/_generated/dataModel';
 import {
   Card,
@@ -21,8 +13,6 @@ interface OverviewCardsProps {
     totalExecutables: number;
     activeExecutables: number;
     pausedExecutables: number;
-    finishedExecutables: number;
-    failedExecutables: number;
     recentlyCreated: number;
     recentlyUpdated: number;
   };
@@ -55,26 +45,6 @@ export function OverviewCards({ data }: OverviewCardsProps) {
       valueClassName: 'text-warning',
     },
     {
-      title: 'Finished',
-      value: data.finishedExecutables,
-      description: 'Completed executables',
-      icon: CheckCircle2,
-      className: 'border-muted',
-      valueClassName: 'text-muted-foreground',
-    },
-    {
-      title: 'Failed',
-      value: data.failedExecutables,
-      description: 'Failed executables',
-      icon: XCircle,
-      className:
-        data.failedExecutables > 0
-          ? 'border-destructive/20 bg-destructive/5'
-          : 'border-muted',
-      valueClassName:
-        data.failedExecutables > 0 ? 'text-destructive' : 'text-muted-foreground',
-    },
-    {
       title: 'Recently Created',
       value: data.recentlyCreated,
       description: 'Created in the last 7 days',
@@ -88,7 +58,10 @@ export function OverviewCards({ data }: OverviewCardsProps) {
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <Card key={card.title} className={`${card.className} w-full overflow-hidden min-w-0`}>
+          <Card
+            key={card.title}
+            className={`${card.className} w-full overflow-hidden min-w-0`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium">
                 {card.title}
@@ -104,12 +77,6 @@ export function OverviewCards({ data }: OverviewCardsProps) {
               <CardDescription className="text-xs mt-1">
                 {card.description}
               </CardDescription>
-              {card.title === 'Failed' && data.failedExecutables > 0 && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-destructive">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>Action required</span>
-                </div>
-              )}
             </CardContent>
           </Card>
         );
@@ -117,4 +84,3 @@ export function OverviewCards({ data }: OverviewCardsProps) {
     </div>
   );
 }
-

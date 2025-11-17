@@ -67,10 +67,7 @@ export function getErrorMessage(
     };
 
     rawMessage =
-      err.message ||
-      err.data?.message ||
-      err.cause?.message ||
-      err.error;
+      err.message || err.data?.message || err.cause?.message || err.error;
   }
 
   if (rawMessage) {

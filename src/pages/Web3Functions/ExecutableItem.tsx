@@ -1,25 +1,11 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useAction, useMutation } from 'convex/react';
-import { Calendar, Clock, Copy, Play, User } from 'lucide-react';
+import { api } from 'convex/_generated/api';
+import { useAction } from 'convex/react';
+import { Calendar, Copy, Play, Repeat, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface Executable {
   id: Id<'executables'>;
@@ -31,7 +17,7 @@ interface Executable {
     id: Id<'users'>;
     name: string;
   };
-  status: 'active' | 'paused' | 'finished' | 'failed';
+  status: 'active' | 'paused';
   chain: {
     id: Id<'chains'>;
     chainId: number;
@@ -45,13 +31,11 @@ interface Executable {
     | {
         type: 'cron';
         schedule: string;
-        withRetry: boolean;
-        until?: number;
       }
     | {
-        type: 'single';
-        timestamp: number;
-        withRetry: boolean;
+        type: 'interval';
+        interval: number;
+        startAt?: number;
       };
 }
 
@@ -92,36 +76,17 @@ function formatDate(timestamp: number): string {
   });
 }
 
-function getStatusColor(status: string): {
-  className: string;
-} {
-  switch (status) {
-    case 'active':
-      return {
-        className:
-          'px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success-foreground',
-      };
-    case 'paused':
-      return {
-        className:
-          'px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning-foreground',
-      };
-    case 'finished':
-      return {
-        className:
-          'px-2 py-0.5 rounded text-xs font-medium text-muted-foreground bg-muted',
-      };
-    case 'failed':
-      return {
-        className:
-          'px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive-foreground',
-      };
-    default:
-      return {
-        className:
-          'px-2 py-0.5 rounded text-xs font-medium text-muted-foreground bg-muted',
-      };
+function getStatusColor(status: 'active' | 'paused'): { className: string } {
+  if (status === 'active') {
+    return {
+      className:
+        'px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success-foreground',
+    };
   }
+  return {
+    className:
+      'px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning-foreground',
+  };
 }
 
 export function ExecutableItem({ executable }: ExecutableItemProps) {
@@ -130,8 +95,6 @@ export function ExecutableItem({ executable }: ExecutableItemProps) {
     api.action.executable.terminateExecutable,
   );
   const [copied, setCopied] = useState(false);
-  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
-  const [isTerminating, setIsTerminating] = useState(false);
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -139,24 +102,6 @@ export function ExecutableItem({ executable }: ExecutableItemProps) {
     setCopied(true);
     toast.success('Executable ID copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleTerminate = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsTerminating(true);
-    try {
-      await terminateExecutable({ executableId: executable.id });
-      toast.success('Executable terminated successfully');
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to terminate executable',
-      );
-    } finally {
-      setIsTerminating(false);
-      setShowTerminateDialog(false);
-    }
   };
 
   return (
@@ -199,30 +144,25 @@ export function ExecutableItem({ executable }: ExecutableItemProps) {
           </div>
           <div className="flex items-center gap-1">
             <span>
-              Type:{' '}
-              {executable.trigger.type === 'single' ? 'Single Run' : 'Cron'}
+              Type:
+              {executable.trigger.type === 'interval' ? 'Interval' : 'Cron'}
             </span>
           </div>
-          {executable.trigger.type === 'single' ? (
+          {executable.trigger.type === 'interval' ? (
             <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>Runs: {formatDate(executable.trigger.timestamp)}</span>
+              <Repeat className="h-3 w-3" />
+              <span>Every {executable.trigger.interval}s</span>
+              {executable.trigger.startAt && (
+                <span className="ml-2">
+                  Starts: {formatDate(executable.trigger.startAt)}
+                </span>
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               <span>Cron: {executable.trigger.schedule}</span>
-              {executable.trigger.until && (
-                <span className="ml-2">
-                  Until: {formatDate(executable.trigger.until)}
-                </span>
-              )}
             </div>
-          )}
-          {executable.trigger.withRetry && (
-            <span className="text-xs px-2 py-0.5 rounded bg-info/10 text-info">
-              Retry enabled
-            </span>
           )}
         </div>
         <div className="text-xs text-muted-foreground">

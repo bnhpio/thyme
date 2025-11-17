@@ -15,7 +15,9 @@ export function getRoleIcon(role: string) {
   }
 }
 
-export function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' {
+export function getRoleBadgeVariant(
+  role: string,
+): 'default' | 'secondary' | 'outline' {
   switch (role) {
     case 'admin':
       return 'default';
@@ -27,4 +29,3 @@ export function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'ou
       return 'secondary';
   }
 }
-

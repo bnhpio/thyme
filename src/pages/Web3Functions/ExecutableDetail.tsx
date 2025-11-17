@@ -2,12 +2,11 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useAction, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import {
-  Calendar,
   ChevronLeft,
-  Clock,
   Copy,
   MoreVertical,
   Pause,
+  Repeat,
   Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -41,20 +40,9 @@ function getChainName(chainId: number): string {
 }
 
 function getStatusBadgeVariant(
-  status: string,
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (status) {
-    case 'active':
-      return 'default';
-    case 'paused':
-      return 'secondary';
-    case 'finished':
-      return 'outline';
-    case 'failed':
-      return 'destructive';
-    default:
-      return 'secondary';
-  }
+  status: 'active' | 'paused',
+): 'default' | 'secondary' {
+  return status === 'active' ? 'default' : 'secondary';
 }
 
 function formatCronSchedule(schedule: string): string {
@@ -302,37 +290,28 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
                   </span>
                 ) : (
                   <>
-                    <Clock className="h-4 w-4" />
+                    <Repeat className="h-4 w-4" />
                     <span className="font-medium">
-                      Single Run:{' '}
-                      {format(new Date(executable.trigger.timestamp), 'PPP p')}
+                      Interval: Every {executable.trigger.interval} seconds
+                      {executable.trigger.startAt && (
+                        <span className="ml-2">
+                          (starts{' '}
+                          {format(
+                            new Date(executable.trigger.startAt),
+                            'PPP p',
+                          )}
+                          )
+                        </span>
+                      )}
                     </span>
                   </>
                 )}
               </div>
             </div>
             {executable.trigger.type === 'cron' && (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  {formatCronSchedule(executable.trigger.schedule)}
-                </p>
-                {executable.trigger.until && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Until:{' '}
-                      {format(new Date(executable.trigger.until), 'PPP p')}
-                    </span>
-                  </div>
-                )}
-              </>
-            )}
-            {executable.trigger.withRetry && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-0.5 rounded bg-info/10 text-info">
-                  Retry enabled (max 5 attempts)
-                </span>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                {formatCronSchedule(executable.trigger.schedule)}
+              </p>
             )}
           </div>
         </CardContent>
@@ -464,7 +443,7 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
                                 {format(new Date(log.createdAt), 'PPpp')}
                               </span>
                             </div>
-                            <pre className="text-sm whitespace-pre-wrap break-words font-mono">
+                            <pre className="text-sm whitespace-pre-wrap wrap-break-word font-mono">
                               {typeof log.log === 'string'
                                 ? log.log
                                 : JSON.stringify(log.log, null, 2)}

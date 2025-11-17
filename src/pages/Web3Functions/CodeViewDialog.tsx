@@ -77,7 +77,7 @@ export function CodeViewDialog({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -86,7 +86,7 @@ export function CodeViewDialog({
               : 'View the code for this function'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden space-y-4">
+        <div className="flex-1 min-h-0 space-y-4 overflow-scroll">
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
@@ -99,7 +99,7 @@ export function CodeViewDialog({
             <CodeBlock
               data={codeData}
               defaultValue={language}
-              className="h-full"
+              className="flex h-full min-h-0 flex-col"
             >
               <CodeBlockHeader>
                 <CodeBlockFiles>
@@ -115,9 +115,13 @@ export function CodeViewDialog({
                 <div className="ml-auto" />
                 <CodeBlockCopyButton />
               </CodeBlockHeader>
-              <CodeBlockBody>
+              <CodeBlockBody className="flex-1 min-h-0 overflow-hidden">
                 {(item) => (
-                  <CodeBlockItem key={item.language} value={item.language}>
+                  <CodeBlockItem
+                    key={item.language}
+                    value={item.language}
+                    className="h-full overflow-auto"
+                  >
                     <CodeBlockContent
                       language={item.language as BundledLanguage}
                     >

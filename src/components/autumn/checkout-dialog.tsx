@@ -61,7 +61,7 @@ export default function CheckoutDialog(params: CheckoutDialogProps) {
   const [loading, setLoading] = useState(false);
 
   if (!checkoutResult) {
-    return <></>;
+    return null;
   }
 
   const { open, setOpen } = params;
@@ -211,7 +211,7 @@ function ProductItems({
               <PrepaidItem
                 key={index}
                 item={item}
-                checkoutResult={checkoutResult!}
+                checkoutResult={checkoutResult}
                 setCheckoutResult={setCheckoutResult}
               />
             );
@@ -325,9 +325,12 @@ const PrepaidItem = ({
             quantity: option.quantity,
           };
         });
+      if (!item.feature_id) {
+        return;
+      }
 
       newOptions.push({
-        featureId: item.feature_id!,
+        featureId: item.feature_id,
         quantity: Number(quantityInput) * billingUnits,
       });
 
@@ -341,7 +344,7 @@ const PrepaidItem = ({
         console.error(error);
         return;
       }
-      setCheckoutResult(data!);
+      setCheckoutResult(data);
     } catch (error) {
       console.error(error);
     } finally {

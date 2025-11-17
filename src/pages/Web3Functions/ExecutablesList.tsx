@@ -1,13 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useAction, useQuery } from 'convex/react';
-import {
-  ChevronDown,
-  Filter,
-  MoreVertical,
-  Play,
-  Search,
-  Trash2,
-} from 'lucide-react';
+import { Filter, MoreVertical, Play, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import * as viemChains from 'viem/chains';
@@ -15,7 +8,7 @@ import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -94,20 +87,10 @@ function getNetworkColor(chainId: number): string {
 }
 
 function getStatusBadgeVariant(
-  status: string,
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (status) {
-    case 'active':
-      return 'default';
-    case 'paused':
-      return 'secondary';
-    case 'finished':
-      return 'outline';
-    case 'failed':
-      return 'destructive';
-    default:
-      return 'secondary';
-  }
+  status: 'active' | 'paused',
+): 'default' | 'secondary' {
+  if (status === 'active') return 'default';
+  return 'secondary';
 }
 
 export function ExecutablesList({ organizationId }: ExecutablesListProps) {
@@ -115,12 +98,12 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
   const terminateExecutable = useAction(
     api.action.executable.terminateExecutable,
   );
-  const [statusFilter, setStatusFilter] = useState<
-    'active' | 'paused' | 'finished' | 'failed' | 'all'
-  >('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'paused' | 'all'>(
+    'all',
+  );
   const [chainFilter, setChainFilter] = useState<Id<'chains'> | 'all'>('all');
   const [profileFilter] = useState<Id<'profiles'> | 'all'>('all');
-  const [triggerTypeFilter] = useState<'single' | 'cron' | 'all'>('all');
+  const [triggerTypeFilter] = useState<'interval' | 'cron' | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [terminatingId, setTerminatingId] = useState<Id<'executables'> | null>(
     null,
@@ -131,9 +114,6 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
     name: string;
   } | null>(null);
 
-  const stats = useQuery(api.query.executable.getExecutableStats, {
-    organizationId,
-  });
   const chains = useQuery(api.query.chain.getAllChains);
 
   const executables = useQuery(
@@ -183,50 +163,6 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">
-                Executables stats & performance
-              </CardTitle>
-            </div>
-            <Button variant="ghost" size="icon">
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {stats ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Mainnet tasks</p>
-                <p className="text-lg font-semibold">{stats.mainnet} active</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Testnet tasks</p>
-                <p className="text-lg font-semibold">{stats.testnet} active</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Total executables
-                </p>
-                <p className="text-lg font-semibold">{stats.total}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-lg font-semibold">{stats.active}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              Loading stats...
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Filters and Search */}
       <Card>
         <CardContent className="pt-6">
@@ -282,8 +218,6 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="finished">Finished</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -365,16 +299,16 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
                         <span className="text-sm">
                           {executable.trigger.type === 'cron'
                             ? 'Cron'
-                            : 'Single'}
+                            : 'Interval'}
                         </span>
                         {executable.trigger.type === 'cron' && (
                           <span className="text-xs text-muted-foreground font-mono">
                             {executable.trigger.schedule}
                           </span>
                         )}
-                        {executable.trigger.type === 'single' && (
+                        {executable.trigger.type === 'interval' && (
                           <span className="text-xs text-muted-foreground">
-                            {formatDate(executable.trigger.timestamp)}
+                            Every {executable.trigger.interval}s
                           </span>
                         )}
                       </div>

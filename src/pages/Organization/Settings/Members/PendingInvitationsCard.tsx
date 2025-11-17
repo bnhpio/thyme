@@ -151,7 +151,11 @@ export function PendingInvitationsCard({
   const cancelledInvites = invites.filter(
     (invite) => invite.status === 'cancelled',
   );
-  const allInvites = [...pendingInvites, ...expiredInvites, ...cancelledInvites];
+  const allInvites = [
+    ...pendingInvites,
+    ...expiredInvites,
+    ...cancelledInvites,
+  ];
 
   if (allInvites.length === 0) {
     return null;

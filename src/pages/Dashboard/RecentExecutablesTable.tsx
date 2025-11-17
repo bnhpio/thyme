@@ -22,7 +22,7 @@ import {
 interface Executable {
   id: Id<'executables'>;
   name: string;
-  status: 'active' | 'paused' | 'finished' | 'failed';
+  status: 'active' | 'paused';
   updatedAt: number;
   createdAt: number;
   chain: {
@@ -39,13 +39,11 @@ interface Executable {
     | {
         type: 'cron';
         schedule: string;
-        withRetry: boolean;
-        until?: number;
       }
     | {
-        type: 'single';
-        timestamp: number;
-        withRetry: boolean;
+        type: 'interval';
+        interval: number;
+        startAt?: number;
       };
 }
 
@@ -54,32 +52,18 @@ interface RecentExecutablesTableProps {
 }
 
 function getStatusBadge(status: Executable['status']) {
-  switch (status) {
-    case 'active':
-      return (
-        <Badge className="bg-success/10 text-success-foreground hover:bg-success/20">
-          Active
-        </Badge>
-      );
-    case 'paused':
-      return (
-        <Badge className="bg-warning/10 text-warning-foreground hover:bg-warning/20">
-          Paused
-        </Badge>
-      );
-    case 'finished':
-      return (
-        <Badge variant="secondary" className="bg-muted">
-          Finished
-        </Badge>
-      );
-    case 'failed':
-      return (
-        <Badge className="bg-destructive/10 text-destructive-foreground hover:bg-destructive/20">
-          Failed
-        </Badge>
-      );
+  if (status === 'active') {
+    return (
+      <Badge className="bg-success/10 text-success-foreground hover:bg-success/20">
+        Active
+      </Badge>
+    );
   }
+  return (
+    <Badge className="bg-warning/10 text-warning-foreground hover:bg-warning/20">
+      Paused
+    </Badge>
+  );
 }
 
 export function RecentExecutablesTable({
@@ -131,7 +115,9 @@ export function RecentExecutablesTable({
             <TableBody>
               {executables.map((executable) => (
                 <TableRow key={executable.id}>
-                  <TableCell className="font-medium">{executable.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {executable.name}
+                  </TableCell>
                   <TableCell>{getStatusBadge(executable.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -150,7 +136,7 @@ export function RecentExecutablesTable({
                   </TableCell>
                   <TableCell>
                     <span className="text-sm">
-                      {executable.trigger.type === 'cron' ? 'Cron' : 'Single'}
+                      {executable.trigger.type === 'cron' ? 'Cron' : 'Interval'}
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -235,4 +221,3 @@ export function RecentExecutablesTable({
     </Card>
   );
 }
-

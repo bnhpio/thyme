@@ -24,7 +24,9 @@ import type * as email_templates_InvitationEmail from "../email/templates/Invita
 import type * as email_templates_SupportEmail from "../email/templates/SupportEmail.js";
 import type * as email_templates_WelcomeEmail from "../email/templates/WelcomeEmail.js";
 import type * as http from "../http.js";
+import type * as http_organization_list from "../http/organization/list.js";
 import type * as http_task_upload from "../http/task/upload.js";
+import type * as http_utils from "../http/utils.js";
 import type * as mutation_customToken from "../mutation/customToken.js";
 import type * as mutation_executable from "../mutation/executable.js";
 import type * as mutation_log from "../mutation/log.js";
@@ -78,7 +80,9 @@ declare const fullApi: ApiFromModules<{
   "email/templates/SupportEmail": typeof email_templates_SupportEmail;
   "email/templates/WelcomeEmail": typeof email_templates_WelcomeEmail;
   http: typeof http;
+  "http/organization/list": typeof http_organization_list;
   "http/task/upload": typeof http_task_upload;
+  "http/utils": typeof http_utils;
   "mutation/customToken": typeof mutation_customToken;
   "mutation/executable": typeof mutation_executable;
   "mutation/log": typeof mutation_log;

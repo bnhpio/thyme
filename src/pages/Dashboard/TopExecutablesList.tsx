@@ -14,7 +14,7 @@ import {
 interface Executable {
   id: Id<'executables'>;
   name: string;
-  status: 'active' | 'paused' | 'finished' | 'failed';
+  status: 'active' | 'paused';
   updatedAt: number;
   chain: {
     id: Id<'chains'>;
@@ -26,13 +26,11 @@ interface Executable {
     | {
         type: 'cron';
         schedule: string;
-        withRetry: boolean;
-        until?: number;
       }
     | {
-        type: 'single';
-        timestamp: number;
-        withRetry: boolean;
+        type: 'interval';
+        interval: number;
+        startAt?: number;
       };
 }
 
@@ -41,32 +39,18 @@ interface TopExecutablesListProps {
 }
 
 function getStatusBadge(status: Executable['status']) {
-  switch (status) {
-    case 'active':
-      return (
-        <Badge className="bg-success/10 text-success-foreground hover:bg-success/20">
-          Active
-        </Badge>
-      );
-    case 'paused':
-      return (
-        <Badge className="bg-warning/10 text-warning-foreground hover:bg-warning/20">
-          Paused
-        </Badge>
-      );
-    case 'finished':
-      return (
-        <Badge variant="secondary" className="bg-muted">
-          Finished
-        </Badge>
-      );
-    case 'failed':
-      return (
-        <Badge className="bg-destructive/10 text-destructive-foreground hover:bg-destructive/20">
-          Failed
-        </Badge>
-      );
+  if (status === 'active') {
+    return (
+      <Badge className="bg-success/10 text-success-foreground hover:bg-success/20">
+        Active
+      </Badge>
+    );
   }
+  return (
+    <Badge className="bg-warning/10 text-warning-foreground hover:bg-warning/20">
+      Paused
+    </Badge>
+  );
 }
 
 export function TopExecutablesList({ executables }: TopExecutablesListProps) {
@@ -75,9 +59,7 @@ export function TopExecutablesList({ executables }: TopExecutablesListProps) {
       <Card>
         <CardHeader>
           <CardTitle>Top Executables</CardTitle>
-          <CardDescription>
-            Most recently updated executables
-          </CardDescription>
+          <CardDescription>Most recently updated executables</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
@@ -132,7 +114,7 @@ export function TopExecutablesList({ executables }: TopExecutablesListProps) {
                     </Badge>
                     <span>•</span>
                     <span>
-                      {executable.trigger.type === 'cron' ? 'Cron' : 'Single'}
+                      {executable.trigger.type === 'cron' ? 'Cron' : 'Interval'}
                     </span>
                   </div>
                 </div>
@@ -161,4 +143,3 @@ export function TopExecutablesList({ executables }: TopExecutablesListProps) {
     </Card>
   );
 }
-

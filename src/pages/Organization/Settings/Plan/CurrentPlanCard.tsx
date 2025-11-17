@@ -1,5 +1,7 @@
 import { useCustomer, usePricingTable } from 'autumn-js/react';
 import { Calendar, CreditCard } from 'lucide-react';
+import type { Id } from '@/../convex/_generated/dataModel';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -7,10 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import type { Id } from '@/../convex/_generated/dataModel';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CurrentPlanCardProps {
   organizationId: Id<'organizations'>;
@@ -20,12 +20,18 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
   // organizationId will be used when needed
   void organizationId;
 
-  const { customer, isLoading: customerLoading, error: customerError } =
-    useCustomer({
-      errorOnNotFound: false,
-    });
-  const { products, isLoading: productsLoading, error: productsError } =
-    usePricingTable({});
+  const {
+    customer,
+    isLoading: customerLoading,
+    error: customerError,
+  } = useCustomer({
+    errorOnNotFound: false,
+  });
+  const {
+    products,
+    isLoading: productsLoading,
+    error: productsError,
+  } = usePricingTable({});
 
   const isLoading = customerLoading || productsLoading;
   const error = customerError || productsError;
@@ -66,7 +72,9 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
       ? (customer.subscriptions as any[])
       : [];
   const hasActivePaidSubscription = subscriptions.length > 0;
-  const activeSubscription = hasActivePaidSubscription ? subscriptions[0] : null;
+  const activeSubscription = hasActivePaidSubscription
+    ? subscriptions[0]
+    : null;
 
   // Check for active plan from pricing table (both free and paid)
   // The pricing table shows the current plan with scenario === 'active'
@@ -160,7 +168,8 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
                     {currentPlan.source === 'pricing_table'
                       ? currentPlan.data.name
                       : (currentPlan.data as any)?.product?.name ||
-                          (currentPlan.data as any)?.name || 'Unknown Plan'}
+                        (currentPlan.data as any)?.name ||
+                        'Unknown Plan'}
                   </h3>
                   {currentPlan.source === 'pricing_table' ? (
                     <Badge variant="default">Active</Badge>
@@ -260,9 +269,7 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
                 <p className="text-sm text-destructive font-medium">
                   Plan will cancel on{' '}
                   {(currentPlan.data as any)?.current_period_end
-                    ? formatDate(
-                        (currentPlan.data as any).current_period_end,
-                      )
+                    ? formatDate((currentPlan.data as any).current_period_end)
                     : 'end of billing period'}
                 </p>
               </div>
@@ -273,4 +280,3 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
     </Card>
   );
 }
-

@@ -1,4 +1,4 @@
-import { type CheckoutResult } from "autumn-js";
+import type { CheckoutResult } from 'autumn-js';
 
 export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
   const { product, current_product, next_cycle } = checkoutResult;
@@ -23,7 +23,7 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
     };
   }
 
-  if (scenario == "active" && updateable) {
+  if (scenario === 'active' && updateable) {
     if (updateable) {
       return {
         title: <p>Update Plan</p>,
@@ -42,7 +42,7 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
       title: <p>Start trial for {productName}</p>,
       message: (
         <p>
-          By clicking confirm, you will start a free trial of {productName}{" "}
+          By clicking confirm, you will start a free trial of {productName}{' '}
           which ends on {nextCycleAtStr}.
         </p>
       ),
@@ -50,7 +50,7 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
   }
 
   switch (scenario) {
-    case "scheduled":
+    case 'scheduled':
       return {
         title: <p>{productName} product already scheduled</p>,
         message: (
@@ -61,13 +61,13 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
         ),
       };
 
-    case "active":
+    case 'active':
       return {
         title: <p>Product already active</p>,
         message: <p>You are already subscribed to this product.</p>,
       };
 
-    case "new":
+    case 'new':
       if (is_free) {
         return {
           title: <p>Enable {productName}</p>,
@@ -88,18 +88,18 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
           </p>
         ),
       };
-    case "renew":
+    case 'renew':
       return {
         title: <p>Renew</p>,
         message: (
           <p>
-            By clicking confirm, you will renew your subscription to{" "}
+            By clicking confirm, you will renew your subscription to{' '}
             {productName}.
           </p>
         ),
       };
 
-    case "upgrade":
+    case 'upgrade':
       return {
         title: <p>Upgrade to {productName}</p>,
         message: (
@@ -110,24 +110,24 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
         ),
       };
 
-    case "downgrade":
+    case 'downgrade':
       return {
         title: <p>Downgrade to {productName}</p>,
         message: (
           <p>
-            By clicking confirm, your current subscription to{" "}
-            {current_product.name} will be cancelled and a new subscription to{" "}
+            By clicking confirm, your current subscription to{' '}
+            {current_product.name} will be cancelled and a new subscription to{' '}
             {productName} will begin on {nextCycleAtStr}.
           </p>
         ),
       };
 
-    case "cancel":
+    case 'cancel':
       return {
         title: <p>Cancel</p>,
         message: (
           <p>
-            By clicking confirm, your subscription to {current_product.name}{" "}
+            By clicking confirm, your subscription to {current_product.name}{' '}
             will end on {nextCycleAtStr}.
           </p>
         ),

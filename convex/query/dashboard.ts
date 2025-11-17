@@ -7,7 +7,7 @@ const MAINNET_CHAIN_IDS = [1, 137, 42161, 10, 8453, 56, 43114, 250, 130];
 const CHAIN_NAMES: Record<number, string> = {
   1: 'Ethereum Mainnet',
   5: 'Goerli',
-  11155111: 'Sepolia',
+  11155111: 'Ethereum Sepolia',
   137: 'Polygon',
   42161: 'Arbitrum One',
   421613: 'Arbitrum Goerli',
@@ -33,8 +33,6 @@ export const getDashboardOverview = query({
     totalExecutables: v.number(),
     activeExecutables: v.number(),
     pausedExecutables: v.number(),
-    finishedExecutables: v.number(),
-    failedExecutables: v.number(),
     recentlyCreated: v.number(),
     recentlyUpdated: v.number(),
   }),
@@ -52,15 +50,17 @@ export const getDashboardOverview = query({
     const statusCounts = {
       active: 0,
       paused: 0,
-      finished: 0,
-      failed: 0,
     };
 
     let recentlyCreated = 0;
     let recentlyUpdated = 0;
 
     for (const executable of executables) {
-      statusCounts[executable.status]++;
+      if (executable.status === 'active') {
+        statusCounts.active++;
+      } else {
+        statusCounts.paused++;
+      }
 
       if (executable.createdAt >= sevenDaysAgo) {
         recentlyCreated++;
@@ -75,8 +75,6 @@ export const getDashboardOverview = query({
       totalExecutables: executables.length,
       activeExecutables: statusCounts.active,
       pausedExecutables: statusCounts.paused,
-      finishedExecutables: statusCounts.finished,
-      failedExecutables: statusCounts.failed,
       recentlyCreated,
       recentlyUpdated,
     };
@@ -157,12 +155,7 @@ export const getRecentExecutables = query({
     v.object({
       id: v.id('executables'),
       name: v.string(),
-      status: v.union(
-        v.literal('active'),
-        v.literal('paused'),
-        v.literal('finished'),
-        v.literal('failed'),
-      ),
+      status: v.union(v.literal('active'), v.literal('paused')),
       updatedAt: v.number(),
       createdAt: v.number(),
       chain: v.object({
@@ -179,13 +172,11 @@ export const getRecentExecutables = query({
         v.object({
           type: v.literal('cron'),
           schedule: v.string(),
-          withRetry: v.boolean(),
-          until: v.optional(v.number()),
         }),
         v.object({
-          type: v.literal('single'),
-          timestamp: v.number(),
-          withRetry: v.boolean(),
+          type: v.literal('interval'),
+          interval: v.number(),
+          startAt: v.optional(v.number()),
         }),
       ),
     }),
@@ -253,12 +244,7 @@ export const getTopExecutables = query({
     v.object({
       id: v.id('executables'),
       name: v.string(),
-      status: v.union(
-        v.literal('active'),
-        v.literal('paused'),
-        v.literal('finished'),
-        v.literal('failed'),
-      ),
+      status: v.union(v.literal('active'), v.literal('paused')),
       updatedAt: v.number(),
       chain: v.object({
         id: v.id('chains'),
@@ -270,13 +256,11 @@ export const getTopExecutables = query({
         v.object({
           type: v.literal('cron'),
           schedule: v.string(),
-          withRetry: v.boolean(),
-          until: v.optional(v.number()),
         }),
         v.object({
-          type: v.literal('single'),
-          timestamp: v.number(),
-          withRetry: v.boolean(),
+          type: v.literal('interval'),
+          interval: v.number(),
+          startAt: v.optional(v.number()),
         }),
       ),
     }),

@@ -79,31 +79,12 @@ export const _runTask = internalAction({
 
     // Check if executable is still active
     if (executable.status !== 'active') {
-      // Executable is paused, finished, or failed - don't run
+      // Executable is paused - don't run
       return;
-    }
-
-    // Check if cron has expired (until timestamp)
-    if (executable.trigger.type === 'cron' && executable.trigger.until) {
-      const now = Date.now();
-      if (now > executable.trigger.until) {
-        // Cron has expired, mark as finished and stop
-        await ctx.runMutation(internal.mutation.executable.markFinished, {
-          executableId: args.executableId,
-        });
-        return;
-      }
     }
 
     // All checks passed, execute the task
     await executeTask(ctx, executable);
-
-    // For single-run executables, mark as finished after execution
-    if (executable.trigger.type === 'single') {
-      await ctx.runMutation(internal.mutation.executable.markFinished, {
-        executableId: args.executableId,
-      });
-    }
   },
 });
 
@@ -314,13 +295,11 @@ export const createExecutable = action({
       v.object({
         type: v.literal('cron'),
         schedule: v.string(),
-        withRetry: v.boolean(),
-        until: v.optional(v.number()),
       }),
       v.object({
-        type: v.literal('single'),
-        timestamp: v.number(),
-        withRetry: v.boolean(),
+        type: v.literal('interval'),
+        interval: v.number(),
+        startAt: v.optional(v.number()),
       }),
     ),
   },

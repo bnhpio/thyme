@@ -14,6 +14,7 @@ import {
 import { useRef } from 'react';
 import PricingTableView from '@/components/autumn/pricing-table-view';
 import { Button } from '@/components/ui/button';
+import { RollingText } from '@/components/ui/shadcn-io/rolling-text';
 import { HomeLayout } from '@/layouts/HomeLayout';
 import { CHAINS } from '@/lib/chains';
 
@@ -41,15 +42,14 @@ function RouteComponent() {
               </span>
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
-              <span
+              <RollingText
+                text="Web3 Automation"
                 className="bg-clip-text text-transparent bg-size-[200%_auto] animate-[gradient_3s_ease_infinite] drop-shadow-lg"
                 style={{
                   backgroundImage:
                     'linear-gradient(to right, var(--primary-light), var(--accent-secondary-light), var(--accent-light))',
                 }}
-              >
-                Web3 Automation
-              </span>
+              />
               <br />
               <span className="text-foreground">Made Simple</span>
             </h1>

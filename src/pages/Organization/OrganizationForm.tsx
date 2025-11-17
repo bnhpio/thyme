@@ -1,5 +1,6 @@
+import { useForm } from '@tanstack/react-form';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -29,11 +30,9 @@ export function OrganizationForm({
   isModal = false,
 }: OrganizationFormProps) {
   const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    description: '',
-  });
+  const nameId = useId();
+  const slugId = useId();
+  const descriptionId = useId();
 
   // Get current user info
   const currentUser = useQuery(api.query.user.getCurrentUser);
@@ -57,42 +56,42 @@ export function OrganizationForm({
   );
   const acceptInvite = useMutation(api.mutation.organizations.acceptInvite);
 
-  const handleCreateOrganization = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm({
+    defaultValues: {
+      name: '',
+      slug: '',
+      description: '',
+    },
+    onSubmit: async ({ value }) => {
+      if (!currentUser) return;
 
-    if (!currentUser) return;
+      setIsCreating(true);
+      try {
+        await createOrganization({
+          name: value.name,
+          slug: value.slug,
+          description: value.description,
+        });
 
-    setIsCreating(true);
-    try {
-      await createOrganization({
-        name: formData.name,
-        slug: formData.slug,
-        description: formData.description,
-      });
+        form.reset();
+        toast.success('Organization created successfully');
+        onSuccess?.();
+      } catch (error) {
+        const errorMessage = getErrorMessage(
+          error,
+          'Failed to create organization. Please try again.',
+        );
 
-      // Reset form
-      setFormData({ name: '', slug: '', description: '' });
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to create organization:', error);
+        }
 
-      toast.success('Organization created successfully');
-      // Call success callback
-      onSuccess?.();
-    } catch (error) {
-      // Extract and display error message
-      const errorMessage = getErrorMessage(
-        error,
-        'Failed to create organization. Please try again.',
-      );
-
-      // Only log to console in development, toast will show to user
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to create organization:', error);
+        toast.error(errorMessage);
+      } finally {
+        setIsCreating(false);
       }
-
-      toast.error(errorMessage);
-    } finally {
-      setIsCreating(false);
-    }
-  };
+    },
+  });
 
   const handleAcceptInvite = async (token: string) => {
     if (!currentUser) return;
@@ -115,17 +114,155 @@ export function OrganizationForm({
   const isFirstOrganization =
     !userOrganizations || userOrganizations.length === 0;
 
-  return (
-    <div
-      className={
-        isModal
-          ? 'space-y-6'
-          : 'min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 p-4'
-      }
+  // Primitive form content
+  const formContent = (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.handleSubmit();
+      }}
+      className="space-y-4"
     >
-      <div className={isModal ? 'space-y-6' : 'w-full max-w-2xl space-y-6'}>
-        {/* Pending Invites */}
-        {showPendingInvites && pendingInvites && pendingInvites.length > 0 && (
+      <form.Field
+        name="name"
+        validators={{
+          onChange: ({ value }) => {
+            if (!value || !value.trim()) {
+              return 'Organization name is required';
+            }
+            return undefined;
+          },
+        }}
+      >
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={nameId}>Organization Name</Label>
+            <Input
+              id={nameId}
+              data-1p-ignore
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              placeholder="My Awesome Organization"
+            />
+            {field.state.meta.errors && (
+              <p className="text-sm text-destructive mt-1">
+                {field.state.meta.errors[0]}
+              </p>
+            )}
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field
+        name="slug"
+        validators={{
+          onChange: ({ value }) => {
+            if (!value || !value.trim()) {
+              return 'Organization slug is required';
+            }
+            if (!/^[a-z0-9-]+$/.test(value)) {
+              return 'Slug can only contain lowercase letters, numbers, and hyphens';
+            }
+            return undefined;
+          },
+        }}
+      >
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={slugId}>Organization Slug</Label>
+            <Input
+              id={slugId}
+              data-1p-ignore
+              value={field.state.value}
+              onChange={(e) =>
+                field.handleChange(
+                  e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                )
+              }
+              onBlur={field.handleBlur}
+              placeholder="my-awesome-org"
+            />
+            {field.state.meta.errors && (
+              <p className="text-sm text-destructive mt-1">
+                {field.state.meta.errors[0]}
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">
+              This will be used in your organization URL
+            </p>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="description">
+        {(field) => (
+          <div className="space-y-2">
+            <Label htmlFor={descriptionId}>Description (Optional)</Label>
+            <Textarea
+              id={descriptionId}
+              data-1p-ignore
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              placeholder="Tell us about your organization..."
+              rows={3}
+            />
+          </div>
+        )}
+      </form.Field>
+
+      <div className="flex gap-2">
+        {isModal && onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
+          type="submit"
+          disabled={isCreating || !form.state.canSubmit}
+          className={isModal ? 'flex-1' : 'w-full'}
+        >
+          {isCreating ? 'Creating Organization...' : 'Create Organization'}
+        </Button>
+      </div>
+    </form>
+  );
+
+  // Pending invites content
+  const pendingInvitesContent =
+    showPendingInvites && pendingInvites && pendingInvites.length > 0 ? (
+      <div className={isModal ? 'space-y-4' : ''}>
+        {isModal ? (
+          <div className="space-y-4">
+            {pendingInvites.map((invite: any) => (
+              <div
+                key={invite._id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div>
+                  <h3 className="font-semibold">{invite.organization?.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Role: {invite.role} • Invited by{' '}
+                    {invite.inviter?.email || invite.inviter?.name || 'Unknown'}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => handleAcceptInvite(invite.token)}
+                  size="sm"
+                >
+                  Accept Invite
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
           <Card>
             <CardHeader>
               <CardTitle>You have pending invitations</CardTitle>
@@ -161,8 +298,23 @@ export function OrganizationForm({
             </CardContent>
           </Card>
         )}
+      </div>
+    ) : null;
 
-        {/* Create Organization */}
+  // Render based on modal vs card mode
+  if (isModal) {
+    return (
+      <div className="space-y-6">
+        {pendingInvitesContent}
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center ">
+      <div className="w-full max-w-2xl space-y-6">
+        {pendingInvitesContent}
         <Card>
           <CardHeader>
             <CardTitle>
@@ -176,75 +328,7 @@ export function OrganizationForm({
                 : 'Create a new organization to manage your projects'}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateOrganization} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Organization Name</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="My Awesome Organization"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="slug">Organization Slug</Label>
-                <Input
-                  value={formData.slug}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      slug: e.target.value
-                        .toLowerCase()
-                        .replace(/[^a-z0-9-]/g, ''),
-                    })
-                  }
-                  placeholder="my-awesome-org"
-                  required
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  This will be used in your organization URL
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Tell us about your organization..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                {isModal && onCancel && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                )}
-                <Button
-                  type="submit"
-                  disabled={isCreating}
-                  className={isModal ? 'flex-1' : 'w-full'}
-                >
-                  {isCreating
-                    ? 'Creating Organization...'
-                    : 'Create Organization'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
+          <CardContent>{formContent}</CardContent>
         </Card>
       </div>
     </div>

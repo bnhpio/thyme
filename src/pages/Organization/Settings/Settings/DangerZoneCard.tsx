@@ -74,7 +74,7 @@ export function DangerZoneCard({
       }
 
       // Navigate to root
-      navigate({ to: '/' });
+      navigate({ to: '/dashboard' });
     } catch (error) {
       console.error('Failed to delete organization:', error);
       toast.error(getErrorMessage(error, 'Failed to delete organization'));

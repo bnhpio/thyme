@@ -26,40 +26,35 @@ export function ThemeProvider({
   storageKey = 'vite-ui-theme',
   ...props
 }: ThemeProviderProps) {
-  // Start with defaultTheme to avoid SSR hydration mismatch
-  // Will read from localStorage after mount (client-side only)
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-  const [mounted, setMounted] = useState(false);
-
-  // Read from localStorage after mount (client-side only)
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem(storageKey) as Theme | null;
-    if (stored && ['dark', 'light', 'system'].includes(stored)) {
-      setTheme(stored);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return defaultTheme;
+    try {
+      const stored = localStorage.getItem(storageKey) as Theme | null;
+      return stored && ['dark', 'light', 'system'].includes(stored)
+        ? stored
+        : defaultTheme;
+    } catch {
+      return defaultTheme;
     }
-  }, [storageKey]);
+  });
 
-  // Apply theme to document
+  // Apply theme immediately on mount
   useEffect(() => {
-    if (!mounted) return; // Don't apply theme until after hydration
-
     const root = window.document.documentElement;
+    const targetTheme =
+      theme === 'system'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : theme;
 
-    root.classList.remove('light', 'dark');
-
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-
-      root.classList.add(systemTheme);
-      return;
+    // Only update if different to avoid unnecessary reflows
+    const hasTarget = root.classList.contains(targetTheme);
+    if (!hasTarget) {
+      root.classList.remove('light', 'dark');
+      root.classList.add(targetTheme);
     }
-
-    root.classList.add(theme);
-  }, [theme, mounted]);
+  }, [theme]);
 
   const value = {
     theme,

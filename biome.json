@@ -9,7 +9,8 @@
       "**/index.html",
       "**/vite.config.js",
       "!**/src/routeTree.gen.ts",
-      "!**/src/styles.css"
+      "!**/src/styles.css",
+      "!!convex/_generated"
     ]
   },
   "assist": {
@@ -55,6 +56,7 @@
       "correctness": {
         "useExhaustiveDependencies": "off",
         "useHookAtTopLevel": "off",
+        "useUniqueElementIds": "off",
         "noNestedComponentDefinitions": "off"
       },
       "recommended": true,

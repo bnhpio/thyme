@@ -1,6 +1,7 @@
 import { httpRouter } from 'convex/server';
 
 import { auth } from './auth';
+import { listOrganizations } from './http/organization/list';
 import { uploadTask } from './http/task/upload';
 
 const http = httpRouter();
@@ -11,5 +12,11 @@ http.route({
   path: '/api/task/upload',
   method: 'POST',
   handler: uploadTask,
+});
+
+http.route({
+  path: '/api/organization/list',
+  method: 'GET',
+  handler: listOrganizations,
 });
 export default http;

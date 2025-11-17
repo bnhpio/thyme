@@ -24,7 +24,9 @@ import type * as email_templates_InvitationEmail from "../email/templates/Invita
 import type * as email_templates_SupportEmail from "../email/templates/SupportEmail.js";
 import type * as email_templates_WelcomeEmail from "../email/templates/WelcomeEmail.js";
 import type * as http from "../http.js";
+import type * as http_organization_list from "../http/organization/list.js";
 import type * as http_task_upload from "../http/task/upload.js";
+import type * as http_utils from "../http/utils.js";
 import type * as mutation_customToken from "../mutation/customToken.js";
 import type * as mutation_executable from "../mutation/executable.js";
 import type * as mutation_log from "../mutation/log.js";
@@ -49,6 +51,7 @@ import type * as schemas_organization_organizationMember from "../schemas/organi
 import type * as schemas_profile_index from "../schemas/profile/index.js";
 import type * as schemas_profile_profile from "../schemas/profile/profile.js";
 import type * as schemas_task_executable from "../schemas/task/executable.js";
+import type * as schemas_task_history from "../schemas/task/history.js";
 import type * as schemas_task_index from "../schemas/task/index.js";
 import type * as schemas_task_log from "../schemas/task/log.js";
 import type * as schemas_task_task from "../schemas/task/task.js";
@@ -78,7 +81,9 @@ declare const fullApi: ApiFromModules<{
   "email/templates/SupportEmail": typeof email_templates_SupportEmail;
   "email/templates/WelcomeEmail": typeof email_templates_WelcomeEmail;
   http: typeof http;
+  "http/organization/list": typeof http_organization_list;
   "http/task/upload": typeof http_task_upload;
+  "http/utils": typeof http_utils;
   "mutation/customToken": typeof mutation_customToken;
   "mutation/executable": typeof mutation_executable;
   "mutation/log": typeof mutation_log;
@@ -103,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   "schemas/profile/index": typeof schemas_profile_index;
   "schemas/profile/profile": typeof schemas_profile_profile;
   "schemas/task/executable": typeof schemas_task_executable;
+  "schemas/task/history": typeof schemas_task_history;
   "schemas/task/index": typeof schemas_task_index;
   "schemas/task/log": typeof schemas_task_log;
   "schemas/task/task": typeof schemas_task_task;

@@ -1,7 +1,7 @@
 import { useForm } from '@tanstack/react-form';
 import { useAction, useQuery } from 'convex/react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, Repeat } from 'lucide-react';
+import { Calendar as CalendarIcon, Repeat } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import * as viemChains from 'viem/chains';
@@ -297,13 +297,13 @@ export function CreateExecutableDialog({
   const form = useForm({
     defaultValues: {
       name: '' as string,
-      triggerType: 'single' as 'single' | 'cron',
+      triggerType: 'interval' as 'interval' | 'cron',
       selectedChainId: '' as Id<'chains'> | '',
       selectedProfileId: '' as Id<'profiles'> | '',
       args: getInitialArgs(),
-      withRetry: false,
-      singleRunDate: getDefaultDate() as Date | undefined,
-      singleRunTime: getDefaultTime(),
+      intervalSeconds: 60,
+      intervalStartDate: getDefaultDate() as Date | undefined,
+      intervalStartTime: getDefaultTime(),
       cronSchedule: '',
       cronUntilDate: undefined as Date | undefined,
       cronUntilTime: '',
@@ -326,81 +326,59 @@ export function CreateExecutableDialog({
 
       let trigger:
         | {
-            type: 'single';
-            timestamp: number;
-            withRetry: boolean;
+            type: 'interval';
+            interval: number;
+            startAt?: number;
           }
         | {
             type: 'cron';
             schedule: string;
-            withRetry: boolean;
-            until?: number;
           };
 
-      if (value.triggerType === 'single') {
-        if (!value.singleRunDate || !value.singleRunTime) {
-          toast.error('Please specify when the function should run');
+      if (value.triggerType === 'interval') {
+        if (!value.intervalSeconds || value.intervalSeconds <= 0) {
+          toast.error('Please specify a valid interval in seconds');
           return;
         }
 
-        const [hours, minutes, seconds] = value.singleRunTime.split(':');
-        // Create UTC date/time from the selected date and UTC time
-        const dateTime = new Date(
-          Date.UTC(
-            value.singleRunDate.getFullYear(),
-            value.singleRunDate.getMonth(),
-            value.singleRunDate.getDate(),
-            Number.parseInt(hours, 10),
-            Number.parseInt(minutes, 10),
-            Number.parseInt(seconds || '0', 10),
-          ),
-        );
+        let startAt: number | undefined;
+        if (value.intervalStartDate && value.intervalStartTime) {
+          const [hours, minutes, seconds] = value.intervalStartTime.split(':');
+          // Create UTC date/time from the selected date and UTC time
+          const dateTime = new Date(
+            Date.UTC(
+              value.intervalStartDate.getFullYear(),
+              value.intervalStartDate.getMonth(),
+              value.intervalStartDate.getDate(),
+              Number.parseInt(hours, 10),
+              Number.parseInt(minutes, 10),
+              Number.parseInt(seconds || '0', 10),
+            ),
+          );
 
-        const timestamp = dateTime.getTime();
+          const timestamp = dateTime.getTime();
 
-        if (timestamp < Date.now()) {
-          toast.error('The specified time must be in the future');
-          return;
+          if (timestamp < Date.now()) {
+            toast.error('The start time must be in the future');
+            return;
+          }
+
+          startAt = timestamp;
         }
 
         trigger = {
-          type: 'single',
-          timestamp,
-          withRetry: value.withRetry,
+          type: 'interval',
+          interval: value.intervalSeconds,
+          startAt,
         };
       } else {
         if (!value.cronSchedule.trim()) {
           toast.error('Please enter a cron schedule');
           return;
         }
-
-        let until: number | undefined;
-        if (value.cronUntilDate && value.cronUntilTime) {
-          const [hours, minutes, seconds] = value.cronUntilTime.split(':');
-          // Create UTC date/time from the selected date and UTC time
-          const untilDateTime = new Date(
-            Date.UTC(
-              value.cronUntilDate.getFullYear(),
-              value.cronUntilDate.getMonth(),
-              value.cronUntilDate.getDate(),
-              Number.parseInt(hours, 10),
-              Number.parseInt(minutes, 10),
-              Number.parseInt(seconds || '0', 10),
-            ),
-          );
-          until = untilDateTime.getTime();
-
-          if (until < Date.now()) {
-            toast.error('The "until" date must be in the future');
-            return;
-          }
-        }
-
         trigger = {
           type: 'cron',
           schedule: value.cronSchedule.trim(),
-          withRetry: value.withRetry,
-          until,
         };
       }
 
@@ -456,8 +434,9 @@ export function CreateExecutableDialog({
   useEffect(() => {
     if (isOpen) {
       form.reset();
-      form.setFieldValue('singleRunDate', getDefaultDate());
-      form.setFieldValue('singleRunTime', getDefaultTime());
+      form.setFieldValue('intervalStartDate', getDefaultDate());
+      form.setFieldValue('intervalStartTime', getDefaultTime());
+      form.setFieldValue('intervalSeconds', 60);
       form.setFieldValue('cronUntilDate', undefined);
       form.setFieldValue('cronUntilTime', '');
       form.setFieldValue('args', getInitialArgs());
@@ -535,21 +514,19 @@ export function CreateExecutableDialog({
                   <div className="grid grid-cols-2 gap-4">
                     <Card
                       className={`cursor-pointer transition-all hover:border-primary ${
-                        field.state.value === 'single'
+                        field.state.value === 'interval'
                           ? 'border-primary bg-primary/5'
                           : ''
                       }`}
-                      onClick={() => field.handleChange('single')}
+                      onClick={() => field.handleChange('interval')}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                          <Clock className="h-5 w-5" />
-                          <CardTitle className="text-base">
-                            Single Run
-                          </CardTitle>
+                          <Repeat className="h-5 w-5" />
+                          <CardTitle className="text-base">Interval</CardTitle>
                         </div>
                         <CardDescription className="text-xs">
-                          Execute the function once at a specific time
+                          Execute the function at regular intervals
                         </CardDescription>
                       </CardHeader>
                     </Card>
@@ -563,7 +540,7 @@ export function CreateExecutableDialog({
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
-                          <Repeat className="h-5 w-5" />
+                          <CalendarIcon className="h-5 w-5" />
                           <CardTitle className="text-base">
                             Cron Schedule
                           </CardTitle>
@@ -581,14 +558,39 @@ export function CreateExecutableDialog({
             {/* Trigger Configuration */}
             <form.Subscribe selector={(state) => state.values.triggerType}>
               {(triggerType) =>
-                triggerType === 'single' ? (
+                triggerType === 'interval' ? (
                   <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                     <h3 className="text-sm font-semibold">
-                      Single Run Configuration
+                      Interval Configuration
                     </h3>
-                    <form.Field name="singleRunDate">
+                    <form.Field name="intervalSeconds">
                       {(field) => (
-                        <form.Field name="singleRunTime">
+                        <div className="space-y-2.5">
+                          <Label className="text-sm font-medium">
+                            Interval (seconds)
+                            <span className="text-destructive ml-1">*</span>
+                          </Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={field.state.value}
+                            onChange={(e) =>
+                              field.handleChange(
+                                Number.parseInt(e.target.value, 10) || 1,
+                              )
+                            }
+                            placeholder="e.g., 60 (every minute)"
+                            className="h-10"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            How often the function should execute (in seconds)
+                          </p>
+                        </div>
+                      )}
+                    </form.Field>
+                    <form.Field name="intervalStartDate">
+                      {(field) => (
+                        <form.Field name="intervalStartTime">
                           {(timeField) => {
                             const isPast = isDateTimeInPast(
                               field.state.value,
@@ -597,7 +599,7 @@ export function CreateExecutableDialog({
                             return (
                               <div className="space-y-2.5">
                                 <Label className="text-sm font-medium">
-                                  Run Date
+                                  Start Date (optional)
                                 </Label>
                                 <Popover>
                                   <PopoverTrigger asChild>
@@ -614,7 +616,7 @@ export function CreateExecutableDialog({
                                       ) ? (
                                         format(field.state.value, 'PPP')
                                       ) : (
-                                        <span>Pick a date</span>
+                                        <span>Pick a date (optional)</span>
                                       )}
                                     </Button>
                                   </PopoverTrigger>
@@ -669,9 +671,9 @@ export function CreateExecutableDialog({
                         </form.Field>
                       )}
                     </form.Field>
-                    <form.Field name="singleRunDate">
+                    <form.Field name="intervalStartDate">
                       {(dateField) => (
-                        <form.Field name="singleRunTime">
+                        <form.Field name="intervalStartTime">
                           {(field) => {
                             const localTimeDisplay = getLocalTimeFromUTC(
                               dateField.state.value,
@@ -684,7 +686,7 @@ export function CreateExecutableDialog({
                             return (
                               <div className="space-y-2.5">
                                 <Label className="text-sm font-medium">
-                                  Run Time (UTC)
+                                  Start Time (UTC) (optional)
                                 </Label>
                                 <TimePickerPopover
                                   value={field.state.value}
@@ -704,7 +706,7 @@ export function CreateExecutableDialog({
                                       );
                                     }
                                   }}
-                                  placeholder="Pick a time"
+                                  placeholder="Pick a time (optional)"
                                 />
                                 {localTimeDisplay && (
                                   <p className="text-xs text-muted-foreground">
@@ -716,6 +718,9 @@ export function CreateExecutableDialog({
                                     The selected date and time is in the past
                                   </p>
                                 )}
+                                <p className="text-xs text-muted-foreground">
+                                  Leave empty to start immediately
+                                </p>
                               </div>
                             );
                           }}
@@ -747,130 +752,6 @@ export function CreateExecutableDialog({
                         </div>
                       )}
                     </form.Field>
-                    <form.Field name="cronUntilDate">
-                      {(field) => (
-                        <form.Field name="cronUntilTime">
-                          {(timeField) => {
-                            const localTimeDisplay = getLocalTimeFromUTC(
-                              field.state.value,
-                              timeField.state.value || '00:00:00',
-                            );
-                            const isPast = isDateTimeInPast(
-                              field.state.value,
-                              timeField.state.value || '00:00:00',
-                            );
-                            return (
-                              <div className="space-y-2.5">
-                                <Label className="text-sm font-medium">
-                                  Run Until (Optional)
-                                </Label>
-                                <div className="flex gap-2">
-                                  <div className="flex-1">
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          className="w-full justify-start text-left font-normal h-10"
-                                        >
-                                          <CalendarIcon className="mr-2 h-4 w-4" />
-                                          {field.state.value &&
-                                          field.state.value instanceof Date &&
-                                          !Number.isNaN(
-                                            field.state.value.getTime(),
-                                          ) ? (
-                                            format(field.state.value, 'PPP')
-                                          ) : (
-                                            <span>Pick a date</span>
-                                          )}
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent
-                                        className="w-auto p-0"
-                                        align="start"
-                                      >
-                                        <Calendar
-                                          mode="single"
-                                          selected={
-                                            field.state.value &&
-                                            field.state.value instanceof Date &&
-                                            !Number.isNaN(
-                                              field.state.value.getTime(),
-                                            )
-                                              ? field.state.value
-                                              : undefined
-                                          }
-                                          onSelect={(date) => {
-                                            field.handleChange(date);
-                                            // Check if combined date+time is in past
-                                            if (
-                                              date &&
-                                              timeField.state.value &&
-                                              isDateTimeInPast(
-                                                date,
-                                                timeField.state.value,
-                                              )
-                                            ) {
-                                              toast.error(
-                                                'The selected date and time must be in the future',
-                                              );
-                                            }
-                                          }}
-                                          disabled={(date) => {
-                                            const today = new Date();
-                                            today.setHours(0, 0, 0, 0);
-                                            return date < today;
-                                          }}
-                                          initialFocus
-                                        />
-                                      </PopoverContent>
-                                    </Popover>
-                                  </div>
-                                  <div className="flex-1">
-                                    <TimePickerPopover
-                                      value={
-                                        timeField.state.value || '00:00:00'
-                                      }
-                                      onChange={(value) => {
-                                        timeField.handleChange(value);
-                                        // Check if combined date+time is in past
-                                        if (
-                                          field.state.value &&
-                                          value &&
-                                          isDateTimeInPast(
-                                            field.state.value,
-                                            value,
-                                          )
-                                        ) {
-                                          toast.error(
-                                            'The selected date and time must be in the future',
-                                          );
-                                        }
-                                      }}
-                                      placeholder="Pick a time (UTC)"
-                                    />
-                                  </div>
-                                </div>
-                                {localTimeDisplay && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {localTimeDisplay}
-                                  </p>
-                                )}
-                                {isPast && (
-                                  <p className="text-xs text-destructive">
-                                    The selected date and time is in the past
-                                  </p>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                  If specified, the function will stop running
-                                  after this date and time
-                                </p>
-                              </div>
-                            );
-                          }}
-                        </form.Field>
-                      )}
-                    </form.Field>
                   </div>
                 )
               }
@@ -879,79 +760,126 @@ export function CreateExecutableDialog({
             <Separator />
 
             {/* Chain and Profile */}
-            <div className="grid grid-cols-2 gap-4">
-              <form.Field name="selectedChainId">
-                {(field) => (
-                  <div className="space-y-2.5">
-                    <Label className="text-sm font-medium">Chain</Label>
-                    {chains === undefined ? (
-                      <div className="h-10 flex items-center text-sm text-muted-foreground">
-                        Loading chains...
-                      </div>
-                    ) : chains.length === 0 ? (
-                      <div className="h-10 flex items-center text-sm text-muted-foreground">
-                        No chains available
-                      </div>
-                    ) : (
-                      <Select
-                        value={field.state.value}
-                        onValueChange={(value) =>
-                          field.handleChange(value as Id<'chains'>)
-                        }
-                      >
-                        <SelectTrigger className="w-full h-10">
-                          <SelectValue placeholder="Select a chain" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {chains
-                            .sort((a, b) => a.chainId - b.chainId)
-                            .map((chain) => (
-                              <SelectItem key={chain._id} value={chain._id}>
-                                {getChainName(chain.chainId)} ({chain.chainId})
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                )}
-              </form.Field>
+            <form.Subscribe selector={(state) => state.values.selectedChainId}>
+              {(selectedChainId) => {
+                const filteredProfiles = profiles
+                  ? selectedChainId
+                    ? profiles.filter(
+                        (profile) => profile.chain === selectedChainId,
+                      )
+                    : profiles
+                  : [];
 
-              <form.Field name="selectedProfileId">
-                {(field) => (
-                  <div className="space-y-2.5">
-                    <Label className="text-sm font-medium">Profile</Label>
-                    {profiles === undefined ? (
-                      <div className="h-10 flex items-center text-sm text-muted-foreground">
-                        Loading profiles...
-                      </div>
-                    ) : profiles.length === 0 ? (
-                      <div className="h-10 flex items-center text-sm text-muted-foreground">
-                        No profiles available
-                      </div>
-                    ) : (
-                      <Select
-                        value={field.state.value}
-                        onValueChange={(value) =>
-                          field.handleChange(value as Id<'profiles'>)
-                        }
-                      >
-                        <SelectTrigger className="w-full h-10">
-                          <SelectValue placeholder="Select a profile" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {profiles.map((profile) => (
-                            <SelectItem key={profile._id} value={profile._id}>
-                              {profile.alias} (Chain {profile.chainId})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                return (
+                  <div className="grid grid-cols-2 gap-4">
+                    <form.Field name="selectedChainId">
+                      {(field) => (
+                        <div className="space-y-2.5">
+                          <Label className="text-sm font-medium">Chain</Label>
+                          {chains === undefined ? (
+                            <div className="h-10 flex items-center text-sm text-muted-foreground">
+                              Loading chains...
+                            </div>
+                          ) : chains.length === 0 ? (
+                            <div className="h-10 flex items-center text-sm text-muted-foreground">
+                              No chains available
+                            </div>
+                          ) : (
+                            <Select
+                              value={field.state.value}
+                              onValueChange={(value) => {
+                                field.handleChange(value as Id<'chains'>);
+                                // Clear profile if it doesn't match the new chain
+                                const currentProfileId =
+                                  form.getFieldValue('selectedProfileId');
+                                if (currentProfileId) {
+                                  const currentProfile = profiles?.find(
+                                    (p) => p._id === currentProfileId,
+                                  );
+                                  if (
+                                    currentProfile &&
+                                    currentProfile.chain !== value
+                                  ) {
+                                    form.setFieldValue('selectedProfileId', '');
+                                  }
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="w-full h-10">
+                                <SelectValue placeholder="Select a chain" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {chains
+                                  .sort((a, b) => a.chainId - b.chainId)
+                                  .map((chain) => (
+                                    <SelectItem
+                                      key={chain._id}
+                                      value={chain._id}
+                                    >
+                                      {getChainName(chain.chainId)} (
+                                      {chain.chainId})
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+                    </form.Field>
+
+                    <form.Field name="selectedProfileId">
+                      {(field) => (
+                        <div className="space-y-2.5">
+                          <Label className="text-sm font-medium">Profile</Label>
+                          {profiles === undefined ? (
+                            <div className="h-10 flex items-center text-sm text-muted-foreground">
+                              Loading profiles...
+                            </div>
+                          ) : filteredProfiles.length === 0 ? (
+                            <div className="h-10 flex items-center text-sm text-muted-foreground">
+                              {selectedChainId
+                                ? 'No profiles available for selected chain'
+                                : 'No profiles available'}
+                            </div>
+                          ) : (
+                            <Select
+                              value={field.state.value}
+                              onValueChange={(value) => {
+                                field.handleChange(value as Id<'profiles'>);
+                                // Auto-fill chain when profile is selected
+                                const selectedProfile = profiles?.find(
+                                  (p) => p._id === value,
+                                );
+                                if (selectedProfile) {
+                                  form.setFieldValue(
+                                    'selectedChainId',
+                                    selectedProfile.chain,
+                                  );
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="w-full h-10">
+                                <SelectValue placeholder="Select a profile" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {filteredProfiles.map((profile) => (
+                                  <SelectItem
+                                    key={profile._id}
+                                    value={profile._id}
+                                  >
+                                    {profile.alias} (Chain {profile.chainId})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+                    </form.Field>
                   </div>
-                )}
-              </form.Field>
-            </div>
+                );
+              }}
+            </form.Subscribe>
 
             <Separator />
 
@@ -1017,30 +945,6 @@ export function CreateExecutableDialog({
                 </p>
               </div>
             )}
-
-            <Separator />
-
-            {/* Retry on Failure - Moved to bottom */}
-            <form.Field name="withRetry">
-              {(field) => (
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">
-                      Retry on Failure
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Automatically retry if the function execution fails. The
-                      function will be retried up to 5 times, then marked as
-                      failed if it doesn't run successfully.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={field.state.value}
-                    onCheckedChange={field.handleChange}
-                  />
-                </div>
-              )}
-            </form.Field>
           </div>
           <DialogFooter>
             <Button
@@ -1057,8 +961,7 @@ export function CreateExecutableDialog({
                 selectedChainId: state.values.selectedChainId,
                 selectedProfileId: state.values.selectedProfileId,
                 triggerType: state.values.triggerType,
-                singleRunDate: state.values.singleRunDate,
-                singleRunTime: state.values.singleRunTime,
+                intervalSeconds: state.values.intervalSeconds,
                 cronSchedule: state.values.cronSchedule,
               })}
             >
@@ -1068,8 +971,7 @@ export function CreateExecutableDialog({
                 selectedChainId,
                 selectedProfileId,
                 triggerType,
-                singleRunDate,
-                singleRunTime,
+                intervalSeconds,
                 cronSchedule,
               }) => (
                 <Button
@@ -1080,8 +982,8 @@ export function CreateExecutableDialog({
                     !name.trim() ||
                     !selectedChainId ||
                     !selectedProfileId ||
-                    (triggerType === 'single' &&
-                      (!singleRunDate || !singleRunTime)) ||
+                    (triggerType === 'interval' &&
+                      (!intervalSeconds || intervalSeconds <= 0)) ||
                     (triggerType === 'cron' &&
                       (!cronSchedule || !cronSchedule.trim()))
                   }

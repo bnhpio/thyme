@@ -38,10 +38,20 @@ export const checkMemberLimit = internalAction({
 export const trackMemberRemoved = internalAction({
   args: {
     organizationId: v.id('organizations'),
+    custom: v.optional(
+      v.object({
+        customerId: v.id('organizations'),
+        customerData: v.optional(
+          v.object({
+            name: v.string(),
+          }),
+        ),
+      }),
+    ),
   },
   handler: async (ctx, _args) => {
     const result = await autumn.track(
-      { ctx },
+      { ctx, custom: _args.custom },
       {
         featureId: 'members',
         value: -1,
@@ -133,7 +143,9 @@ export const cancelInvite = action({
         inviteId: args.inviteId,
       },
     );
-
+    await ctx.runMutation(internal.mutation.organizations.deleteInvite, {
+      inviteId: args.inviteId,
+    });
     if (result.shouldRemoveMember) {
       await ctx.runAction(internal.action.organizations.trackMemberRemoved, {
         organizationId: result.organizationId,

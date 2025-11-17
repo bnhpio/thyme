@@ -11,7 +11,6 @@
 import type * as action_auth from "../action/auth.js";
 import type * as action_email from "../action/email.js";
 import type * as action_executable from "../action/executable.js";
-import type * as action_logger from "../action/logger.js";
 import type * as action_node_createSmartAccount from "../action/node/createSmartAccount.js";
 import type * as action_node_customToken from "../action/node/customToken.js";
 import type * as action_node_utils from "../action/node/utils.js";
@@ -51,6 +50,7 @@ import type * as schemas_organization_organizationMember from "../schemas/organi
 import type * as schemas_profile_index from "../schemas/profile/index.js";
 import type * as schemas_profile_profile from "../schemas/profile/profile.js";
 import type * as schemas_task_executable from "../schemas/task/executable.js";
+import type * as schemas_task_execution from "../schemas/task/execution.js";
 import type * as schemas_task_history from "../schemas/task/history.js";
 import type * as schemas_task_index from "../schemas/task/index.js";
 import type * as schemas_task_log from "../schemas/task/log.js";
@@ -68,7 +68,6 @@ declare const fullApi: ApiFromModules<{
   "action/auth": typeof action_auth;
   "action/email": typeof action_email;
   "action/executable": typeof action_executable;
-  "action/logger": typeof action_logger;
   "action/node/createSmartAccount": typeof action_node_createSmartAccount;
   "action/node/customToken": typeof action_node_customToken;
   "action/node/utils": typeof action_node_utils;
@@ -108,6 +107,7 @@ declare const fullApi: ApiFromModules<{
   "schemas/profile/index": typeof schemas_profile_index;
   "schemas/profile/profile": typeof schemas_profile_profile;
   "schemas/task/executable": typeof schemas_task_executable;
+  "schemas/task/execution": typeof schemas_task_execution;
   "schemas/task/history": typeof schemas_task_history;
   "schemas/task/index": typeof schemas_task_index;
   "schemas/task/log": typeof schemas_task_log;

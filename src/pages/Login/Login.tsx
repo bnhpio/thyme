@@ -24,7 +24,6 @@ export function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('redirecting to dashboard', isAuthenticated);
       navigate({
         to: '/dashboard',
       });

@@ -7,29 +7,6 @@ import { internalMutation, type MutationCtx } from '../_generated/server';
 
 const crons = new Crons(components.crons);
 
-async function ensureOrganizationMembership(
-  ctx: any,
-  userId: string,
-  organizationId: Id<'organizations'>,
-) {
-  const membership = await ctx.db
-    .query('organizationMembers')
-    .withIndex('by_user', (q: any) => q.eq('userId', userId))
-    .filter((q: any) =>
-      q.and(
-        q.eq(q.field('organizationId'), organizationId),
-        q.eq(q.field('status'), 'active'),
-      ),
-    )
-    .first();
-
-  if (!membership) {
-    throw new Error('User is not a member of this organization');
-  }
-
-  return membership;
-}
-
 async function appendHistoryEntry(
   ctx: any,
   params: {
@@ -321,6 +298,10 @@ export const terminateExecutable = internalMutation({
   args: {
     executableId: v.id('executables'),
   },
+  returns: v.object({
+    success: v.boolean(),
+    reason: v.optional(v.string()),
+  }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -333,7 +314,23 @@ export const terminateExecutable = internalMutation({
       throw new Error('Executable not found');
     }
 
-    await ensureOrganizationMembership(ctx, userId, executable.organization);
+    const hasWriteAccess = await ctx.runQuery(
+      internal.query.organization.hasWriteAccessToOrganization,
+      {
+        organizationId: executable.organization,
+        userId,
+      },
+    );
+    if (!hasWriteAccess) {
+      throw new Error('User does not have write access to this organization');
+    }
+
+    if (executable.status !== 'paused') {
+      return {
+        success: false,
+        reason: 'Pause the executable before terminating it',
+      };
+    }
 
     await stopExecutableJobs(ctx, args.executableId, executable);
 
@@ -362,7 +359,16 @@ export const pauseExecutable = internalMutation({
       throw new Error('Executable not found');
     }
 
-    await ensureOrganizationMembership(ctx, userId, executable.organization);
+    const hasWriteAccess = await ctx.runQuery(
+      internal.query.organization.hasWriteAccessToOrganization,
+      {
+        organizationId: executable.organization,
+        userId,
+      },
+    );
+    if (!hasWriteAccess) {
+      throw new Error('User does not have write access to this organization');
+    }
 
     if (executable.status === 'paused') {
       return { success: false };
@@ -400,7 +406,16 @@ export const resumeExecutable = internalMutation({
       throw new Error('Executable not found');
     }
 
-    await ensureOrganizationMembership(ctx, userId, executable.organization);
+    const hasWriteAccess = await ctx.runQuery(
+      internal.query.organization.hasWriteAccessToOrganization,
+      {
+        organizationId: executable.organization,
+        userId,
+      },
+    );
+    if (!hasWriteAccess) {
+      throw new Error('User does not have write access to this organization');
+    }
 
     if (executable.status === 'active') {
       return { success: false };
@@ -421,6 +436,46 @@ export const resumeExecutable = internalMutation({
       executableId: args.executableId,
       userId,
       change: 'resume',
+    });
+
+    return { success: true };
+  },
+});
+
+export const renameExecutable = internalMutation({
+  args: {
+    executableId: v.id('executables'),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const executable = await ctx.db.get(args.executableId);
+    if (!executable) {
+      throw new Error('Executable not found');
+    }
+
+    const hasWriteAccess = await ctx.runQuery(
+      internal.query.organization.hasWriteAccessToOrganization,
+      {
+        organizationId: executable.organization,
+        userId,
+      },
+    );
+    if (!hasWriteAccess) {
+      throw new Error('User does not have write access to this organization');
+    }
+
+    if (!args.name || !args.name.trim()) {
+      throw new Error('Name cannot be empty');
+    }
+
+    await ctx.db.patch(args.executableId, {
+      name: args.name.trim(),
+      updatedAt: Date.now(),
     });
 
     return { success: true };
@@ -467,5 +522,219 @@ export const markFinished = internalMutation({
         updatedAt: Date.now(),
       });
     }
+  },
+});
+
+export const createExecution = internalMutation({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.object({
+    executionId: v.id('taskExecutions'),
+  }),
+  handler: async (ctx, args) => {
+    const executionId = await ctx.db.insert('taskExecutions', {
+      executableId: args.executableId,
+      timestamp: Date.now(),
+      status: 'pending',
+      transactionHashes: [],
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+      cost: {
+        gas: '0',
+        gasPrice: '0',
+        price: '0',
+        userPrice: '0',
+      },
+    });
+    return { executionId };
+  },
+});
+
+export const startSimulation = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'simulation_pending',
+      updatedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const failUnknownError = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+    errorReason: v.string(),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'failed',
+      updatedAt: Date.now(),
+      finishedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const failSimulation = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+    errorReason: v.string(),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'simulation_failed',
+      updatedAt: Date.now(),
+      finishedAt: Date.now(),
+      errorReason: args.errorReason,
+    });
+    return { success: true };
+  },
+});
+
+export const skipSimulation = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+    errorReason: v.string(),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'skipped',
+      errorReason: args.errorReason,
+      updatedAt: Date.now(),
+      finishedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const startSending = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'sending',
+      updatedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const startValidating = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'validating',
+      updatedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const successSending = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+    transactionHashes: v.array(v.string()),
+    cost: v.object({
+      gas: v.string(),
+      gasPrice: v.string(),
+      price: v.string(),
+      userPrice: v.string(),
+    }),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'success',
+      updatedAt: Date.now(),
+      finishedAt: Date.now(),
+      transactionHashes: args.transactionHashes,
+      cost: args.cost,
+    });
+    return { success: true };
+  },
+});
+
+export const failSending = internalMutation({
+  args: {
+    executionId: v.id('taskExecutions'),
+    transactionHashes: v.array(v.string()),
+    cost: v.object({
+      gas: v.string(),
+      gasPrice: v.string(),
+      price: v.string(),
+      userPrice: v.string(),
+    }),
+  },
+  returns: v.object({
+    success: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const execution = await ctx.db.get(args.executionId);
+    if (!execution) {
+      throw new Error('Execution not found');
+    }
+    await ctx.db.patch(args.executionId, {
+      status: 'sending_failed',
+      updatedAt: Date.now(),
+      finishedAt: Date.now(),
+      transactionHashes: args.transactionHashes,
+      cost: args.cost,
+    });
+    return { success: true };
   },
 });

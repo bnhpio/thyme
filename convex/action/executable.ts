@@ -1,13 +1,18 @@
 'use node';
 
+import type { SmartWalletClient } from '@account-kit/wallet-client';
+import { simulateCalls } from '@bnhpio/thyme-sdk/onchain';
 import { sandbox } from '@bnhpio/thyme-sdk/sandbox';
 import { v } from 'convex/values';
 import {
+  type Address,
   type Call,
   createPublicClient,
   type Hex,
   http,
   keccak256,
+  type PublicClient,
+  parseUnits,
   toHex,
 } from 'viem';
 import { internal } from '../_generated/api';
@@ -83,8 +88,29 @@ export const _runTask = internalAction({
       return;
     }
 
+    const { executionId } = await ctx.runMutation(
+      internal.mutation.executable.createExecution,
+      {
+        executableId: executable._id,
+      },
+    );
+    try {
+      await executeTask(ctx, {
+        executableId: executable._id,
+        taskId: executable.taskId,
+        chain: executable.chain,
+        profile: executable.profile,
+        args: executable.args,
+        executionId,
+      });
+    } catch (error) {
+      await ctx.runMutation(internal.mutation.executable.failUnknownError, {
+        executionId,
+        errorReason: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
     // All checks passed, execute the task
-    await executeTask(ctx, executable);
   },
 });
 
@@ -109,11 +135,15 @@ export const terminateExecutable = action({
       },
     );
 
-    if (res.success) {
-      await ctx.runAction(internal.action.executable.trackActiveJobsRemoved, {
-        organizationId: executable.organization,
-      });
+    if (!res.success) {
+      throw new Error(
+        res.reason ?? 'Executable must be paused before termination',
+      );
     }
+
+    await ctx.runAction(internal.action.executable.trackActiveJobsRemoved, {
+      organizationId: executable.organization,
+    });
   },
 });
 
@@ -153,6 +183,19 @@ export const pauseExecutable = action({
     }
 
     return result;
+  },
+});
+
+export const renameExecutable = action({
+  args: {
+    executableId: v.id('executables'),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.mutation.executable.renameExecutable, {
+      executableId: args.executableId,
+      name: args.name,
+    });
   },
 });
 
@@ -407,6 +450,8 @@ async function executeTask(
     taskId: Id<'tasks'>;
     chain: Id<'chains'>;
     profile: Id<'profiles'>;
+    executableId: Id<'executables'>;
+    executionId: Id<'taskExecutions'>;
     args: string;
   },
 ) {
@@ -484,8 +529,51 @@ async function executeTask(
       secrets: {},
     },
   });
+  try {
+    await ctx.runMutation(internal.mutation.log.log, {
+      executableId: executable.executableId,
+      executionId: executable.executionId,
+      log: result.logs.reverse(),
+    });
+  } catch (error) {
+    console.error('Error adding logs to the execution:', error);
+  }
+  // add logs to the execution
+  // start simulation
+  const simulationResult = await ctx.runMutation(
+    internal.mutation.executable.startSimulation,
+    {
+      executionId: executable.executionId,
+    },
+  );
+  if (!simulationResult.success) {
+    throw new Error('Failed to start simulation');
+  }
+
+  // actual simulate
+
+  try {
+    await simulateCalls({
+      calls: result.result.calls,
+      options: {
+        rpcUrl: chain.rpcUrls[0],
+        account: profile.address as Address,
+      },
+    });
+  } catch (error) {
+    console.error('Error simulating calls:', error);
+    await ctx.runMutation(internal.mutation.executable.failSimulation, {
+      executionId: executable.executionId,
+      errorReason: error instanceof Error ? error.message : 'Simulation failed',
+    });
+    return;
+  }
+
   if (result.result.canExec) {
-    const txs = await sendAlchemyCalls({
+    await ctx.runMutation(internal.mutation.executable.startSending, {
+      executionId: executable.executionId,
+    });
+    const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
       calls: result.result.calls,
       options: {
         privateKey: privateKey as Hex,
@@ -498,7 +586,72 @@ async function executeTask(
         },
       },
     });
-    console.log('txs', txs);
+    const gasPrice = await publicClient.getGasPrice();
+    await ctx.runMutation(internal.mutation.executable.startValidating, {
+      executionId: executable.executionId,
+    });
+
+    const callsStatuses = await Promise.all(
+      preparedCallIds.map(async (preparedCallId) => {
+        return client.waitForCallsStatus({
+          id: preparedCallId,
+        });
+      }),
+    );
+    const hashes: Hex[] = [];
+    for (const callStatus of callsStatuses) {
+      hashes.push(
+        ...(callStatus.receipts?.map((receipt) => receipt.transactionHash) ??
+          []),
+      );
+    }
+    const isFailed = callsStatuses.some(
+      (callStatus) => callStatus.status === 'failure',
+    );
+    const executionCoef = parseUnits('1', 18); // @todo
+    const gasUsed = callsStatuses.reduce(
+      (acc, callStatus) =>
+        acc +
+        (callStatus.receipts?.reduce(
+          (acc, receipt) => acc + receipt.gasUsed,
+          0n,
+        ) ?? 0n),
+      0n,
+    );
+    if (isFailed) {
+      await ctx.runMutation(internal.mutation.executable.failSending, {
+        executionId: executable.executionId,
+        transactionHashes: hashes,
+        cost: {
+          gas: gasUsed.toString(),
+          gasPrice: gasPrice.toString(),
+          price: (gasUsed * gasPrice).toString(),
+          userPrice: (
+            (gasUsed * gasPrice * executionCoef) /
+            parseUnits('1', 18)
+          ).toString(),
+        },
+      });
+    } else {
+      await ctx.runMutation(internal.mutation.executable.successSending, {
+        executionId: executable.executionId,
+        transactionHashes: hashes,
+        cost: {
+          gas: gasUsed.toString(),
+          gasPrice: gasPrice.toString(),
+          price: (gasUsed * gasPrice).toString(),
+          userPrice: (
+            (gasUsed * gasPrice * executionCoef) /
+            parseUnits('1', 18)
+          ).toString(),
+        },
+      });
+    }
+  } else {
+    await ctx.runMutation(internal.mutation.executable.skipSimulation, {
+      executionId: executable.executionId,
+      errorReason: result.result.message || 'Simulation skipped',
+    });
   }
 }
 
@@ -511,9 +664,11 @@ export interface SendCallsAlchemyOptions {
   };
 }
 
-export async function sendAlchemyCalls(
-  args: SendCallsAlchemyOptions,
-): Promise<Hex[]> {
+export async function sendAlchemyCalls(args: SendCallsAlchemyOptions): Promise<{
+  preparedCallIds: Hex[];
+  client: SmartWalletClient;
+  publicClient: PublicClient;
+}> {
   const publicClient = createPublicClient({
     transport: http(args.options.rpcUrl),
   });
@@ -539,15 +694,7 @@ export async function sendAlchemyCalls(
   try {
     const signedCalls = await client.signPreparedCalls(preparedCalls);
     const result = await client.sendPreparedCalls(signedCalls);
-    const callsStatus = await client.waitForCallsStatus({
-      id: result.preparedCallIds[0],
-    });
-    const tsx =
-      callsStatus.receipts?.map((receipt) => receipt.transactionHash) || [];
-    if (callsStatus.status !== 'success') {
-      throw new Error('Failed to send alchemy calls');
-    }
-    return tsx;
+    return { preparedCallIds: result.preparedCallIds, client, publicClient };
   } catch (error) {
     console.error('Error sending alchemy calls:', error);
     throw error;

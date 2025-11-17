@@ -7,17 +7,13 @@ export const Route = createFileRoute(
 )({
   component: RouteComponent,
   loader: ({ params }) => {
-    console.log('Route loader called with params:', params);
     return { executableId: params.executableId };
   },
 });
 
 function RouteComponent() {
-  console.log('RouteComponent rendering');
   try {
     const params = Route.useParams();
-    console.log('Route params:', params);
-    console.log('ExecutableId:', params.executableId);
     return (
       <DashboardLayout>
         <ExecutableDetail executableId={params.executableId} />

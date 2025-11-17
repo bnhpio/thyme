@@ -29,6 +29,21 @@ export const getAllChains = query({
     return chains.map((chain) => ({
       _id: chain._id,
       chainId: chain.chainId,
+      explorerUrl: chain.explorerUrl,
     }));
+  },
+});
+
+export const getExplorerUrlByChainId = query({
+  args: {
+    chainId: v.number(),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const chain = await ctx.db
+      .query('chains')
+      .withIndex('by_chain_id', (q) => q.eq('chainId', args.chainId))
+      .first();
+    return chain?.explorerUrl ?? null;
   },
 });

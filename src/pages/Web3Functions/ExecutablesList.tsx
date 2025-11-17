@@ -112,6 +112,7 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
   const [selectedExecutable, setSelectedExecutable] = useState<{
     id: Id<'executables'>;
     name: string;
+    status: 'active' | 'paused';
   } | null>(null);
 
   const chains = useQuery(api.query.chain.getAllChains);
@@ -144,6 +145,10 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
 
   const handleTerminate = async () => {
     if (!selectedExecutable) return;
+    if (selectedExecutable.status !== 'paused') {
+      toast.error('Pause this executable before terminating it');
+      return;
+    }
     setTerminatingId(selectedExecutable.id);
     try {
       await terminateExecutable({ executableId: selectedExecutable.id });
@@ -259,7 +264,6 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
                     key={executable.id}
                     className="cursor-pointer hover:bg-accent/50"
                     onClick={() => {
-                      console.log('Navigating to:', executable.id);
                       navigate({
                         to: '/executables/$executableId',
                         params: { executableId: executable.id as string },
@@ -341,6 +345,7 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
                               setSelectedExecutable({
                                 id: executable.id,
                                 name: executable.name,
+                                status: executable.status,
                               });
                               setShowTerminateDialog(true);
                             }}
@@ -365,9 +370,9 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
           <DialogHeader>
             <DialogTitle>Terminate Executable</DialogTitle>
             <DialogDescription>
-              Are you sure you want to terminate "{selectedExecutable?.name}"?
-              This will stop the cron job (if running) and permanently delete
-              the executable. This action cannot be undone.
+              {selectedExecutable?.status !== 'paused'
+                ? 'Pause the executable before terminating it. Termination is only allowed for paused executables.'
+                : `Are you sure you want to terminate "${selectedExecutable?.name}"? This will stop the cron job (if running) and permanently delete the executable. This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -384,7 +389,10 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
             <Button
               variant="destructive"
               onClick={handleTerminate}
-              disabled={terminatingId !== null}
+              disabled={
+                terminatingId !== null ||
+                selectedExecutable?.status !== 'paused'
+              }
             >
               {terminatingId ? 'Terminating...' : 'Terminate'}
             </Button>

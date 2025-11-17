@@ -1,16 +1,13 @@
-import { TanStackDevtools } from '@tanstack/react-devtools';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   createRootRouteWithContext,
   HeadContent,
   Scripts,
 } from '@tanstack/react-router';
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { api } from 'convex/_generated/api';
 import { NotFound } from '@/components/base/NotFound/NotFound';
 import { AutumnWrapper } from '@/integrations/autumn/provider';
 import ConvexProvider, { convex } from '../integrations/convex/provider';
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools';
 import appCss from '../styles.css?url';
 
 interface MyRouterContext {
@@ -64,9 +61,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ConvexProvider>
           <AutumnWrapper>
             {children}
-            <TanStackDevtools
+            {/* <TanStackDevtools
               config={{
                 position: 'bottom-right',
+
               }}
               plugins={[
                 {
@@ -75,7 +73,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 },
                 TanStackQueryDevtools,
               ]}
-            />
+            /> */}
           </AutumnWrapper>
         </ConvexProvider>
         <Scripts />

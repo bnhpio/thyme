@@ -33,11 +33,14 @@ export const getExecutablesByOrganization = query({
       chain: v.object({
         id: v.id('chains'),
         chainId: v.number(),
+        explorerUrl: v.optional(v.string()),
       }),
       args: v.string(),
+      taskStorageId: v.optional(v.id('_storage')),
       profile: v.object({
         id: v.id('profiles'),
         alias: v.string(),
+        address: v.optional(v.string()),
       }),
       trigger: v.union(
         v.object({
@@ -89,6 +92,7 @@ export const getExecutablesByOrganization = query({
         const user = await ctx.db.get(executable.createdBy);
         const chain = await ctx.db.get(executable.chain);
         const profile = await ctx.db.get(executable.profile);
+        const task = await ctx.db.get(executable.taskId);
         return {
           id: executable._id,
           taskId: executable.taskId,
@@ -105,11 +109,14 @@ export const getExecutablesByOrganization = query({
           chain: {
             id: chain?._id ?? (executable.chain as any),
             chainId: chain?.chainId ?? 0,
+            explorerUrl: chain?.explorerUrl,
           },
           args: executable.args,
+          taskStorageId: task?.hash,
           profile: {
             id: profile?._id ?? (executable.profile as any),
             alias: profile?.alias ?? 'Unknown',
+            address: profile?.address,
           },
           trigger: executable.trigger,
         };
@@ -194,11 +201,14 @@ export const getExecutableById = query({
       chain: v.object({
         id: v.id('chains'),
         chainId: v.number(),
+        explorerUrl: v.optional(v.string()),
       }),
       args: v.string(),
+      taskStorageId: v.optional(v.id('_storage')),
       profile: v.object({
         id: v.id('profiles'),
         alias: v.string(),
+        address: v.optional(v.string()),
       }),
       trigger: v.union(
         v.object({
@@ -223,6 +233,7 @@ export const getExecutableById = query({
     const user = await ctx.db.get(executable.createdBy);
     const chain = await ctx.db.get(executable.chain);
     const profile = await ctx.db.get(executable.profile);
+    const task = await ctx.db.get(executable.taskId);
 
     return {
       id: executable._id,
@@ -240,11 +251,14 @@ export const getExecutableById = query({
       chain: {
         id: chain?._id ?? (executable.chain as any),
         chainId: chain?.chainId ?? 0,
+        explorerUrl: chain?.explorerUrl,
       },
       args: executable.args,
+      taskStorageId: task?.hash,
       profile: {
         id: profile?._id ?? (executable.profile as any),
         alias: profile?.alias ?? 'Unknown',
+        address: profile?.address,
       },
       trigger: executable.trigger,
     };
@@ -281,6 +295,7 @@ export const getExecutableByIdInternal = internalQuery({
 export const getExecutableLogs = query({
   args: {
     executableId: v.id('executables'),
+    executionId: v.optional(v.id('taskExecutions')),
   },
   returns: v.array(
     v.object({
@@ -288,7 +303,6 @@ export const getExecutableLogs = query({
       taskExecutableId: v.id('executables'),
       log: v.any(),
       createdAt: v.number(),
-      type: v.union(v.literal('info'), v.literal('warn'), v.literal('error')),
     }),
   ),
   handler: async (ctx, args) => {
@@ -319,21 +333,36 @@ export const getExecutableLogs = query({
       throw new Error('User is not a member of this organization');
     }
 
-    // Get logs for this executable
-    const logs = await ctx.db
-      .query('taskLogs')
-      .withIndex('by_executable', (q) =>
-        q.eq('taskExecutableId', args.executableId),
-      )
-      .order('desc')
-      .collect();
+    // Get logs for this executable, optionally filtered by execution
+    let logs: Array<{
+      _id: any;
+      taskExecutableId: any;
+      executionId?: any;
+      log: any;
+      createdAt: number;
+    }>;
+    if (args.executionId) {
+      logs = await ctx.db
+        .query('taskLogs')
+        .withIndex('by_execution', (q) => q.eq('executionId', args.executionId))
+        .filter((q) => q.eq(q.field('taskExecutableId'), args.executableId))
+        .order('desc')
+        .collect();
+    } else {
+      logs = await ctx.db
+        .query('taskLogs')
+        .withIndex('by_executable', (q) =>
+          q.eq('taskExecutableId', args.executableId),
+        )
+        .order('desc')
+        .collect();
+    }
 
     return logs.map((log) => ({
       id: log._id,
       taskExecutableId: log.taskExecutableId,
       log: log.log,
       createdAt: log.createdAt,
-      type: log.type,
     }));
   },
 });
@@ -409,5 +438,58 @@ export const getExecutableHistory = query({
         };
       }),
     );
+  },
+});
+
+export const getExecutionsByExecutableId = query({
+  args: {
+    executableId: v.id('executables'),
+  },
+  returns: v.array(
+    v.object({
+      id: v.id('taskExecutions'),
+      status: v.union(
+        v.literal('pending'),
+        v.literal('skipped'),
+        v.literal('simulation_pending'),
+        v.literal('simulation_failed'),
+        v.literal('sending'),
+        v.literal('validating'),
+        v.literal('success'),
+        v.literal('sending_failed'),
+        v.literal('failed'),
+      ),
+      transactionHashes: v.array(v.string()),
+      startedAt: v.number(),
+      updatedAt: v.number(),
+      finishedAt: v.optional(v.number()),
+      errorReason: v.optional(v.string()),
+      cost: v.object({
+        gas: v.string(),
+        gasPrice: v.string(),
+        price: v.string(),
+        userPrice: v.string(),
+      }),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const executions = await ctx.db
+      .query('taskExecutions')
+      .withIndex('by_executable', (q) =>
+        q.eq('executableId', args.executableId),
+      )
+      .collect();
+    return executions
+      .map((execution) => ({
+        id: execution._id,
+        status: execution.status,
+        transactionHashes: execution.transactionHashes,
+        startedAt: execution.startedAt,
+        updatedAt: execution.updatedAt,
+        finishedAt: execution.finishedAt,
+        errorReason: execution.errorReason,
+        cost: execution.cost,
+      }))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });

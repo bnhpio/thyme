@@ -5,4 +5,5 @@ export default defineTable({
   chainId: v.number(),
   rpcUrls: v.array(v.string()),
   baseUrl: v.optional(v.string()),
+  explorerUrl: v.optional(v.string()),
 }).index('by_chain_id', ['chainId']);

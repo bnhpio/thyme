@@ -1,5 +1,6 @@
 import { useForm } from '@tanstack/react-form';
 import { useAction, useQuery } from 'convex/react';
+import cronstrue from 'cronstrue';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Repeat } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -7,6 +8,7 @@ import { toast } from 'sonner';
 import * as viemChains from 'viem/chains';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -57,6 +59,19 @@ function getChainName(chainId: number): string {
     (c: any) => c.id === chainId,
   ) as any;
   return chain?.name || `Chain ${chainId}`;
+}
+
+function formatCronSchedule(schedule: string): string | null {
+  if (!schedule || !schedule.trim()) return null;
+  try {
+    return cronstrue.toString(schedule.trim(), {
+      throwExceptionOnParseError: false,
+      verbose: false,
+      use24HourTimeFormat: false,
+    });
+  } catch {
+    return null;
+  }
 }
 
 function getDefaultDate() {
@@ -297,7 +312,7 @@ export function CreateExecutableDialog({
   const form = useForm({
     defaultValues: {
       name: '' as string,
-      triggerType: 'interval' as 'interval' | 'cron',
+      triggerType: 'cron' as 'interval' | 'cron',
       selectedChainId: '' as Id<'chains'> | '',
       selectedProfileId: '' as Id<'profiles'> | '',
       args: getInitialArgs(),
@@ -513,17 +528,22 @@ export function CreateExecutableDialog({
                   <Label className="text-sm font-medium">Trigger Type</Label>
                   <div className="grid grid-cols-2 gap-4">
                     <Card
-                      className={`cursor-pointer transition-all hover:border-primary ${
-                        field.state.value === 'interval'
-                          ? 'border-primary bg-primary/5'
-                          : ''
-                      }`}
-                      onClick={() => field.handleChange('interval')}
+                      className={'transition-all opacity-50 cursor-not-allowed'}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
                           <Repeat className="h-5 w-5" />
                           <CardTitle className="text-base">Interval</CardTitle>
+                          <Badge
+                            variant="secondary"
+                            className="ml-auto text-xs"
+                          >
+                            Coming soon
+                          </Badge>
                         </div>
                         <CardDescription className="text-xs">
                           Execute the function at regular intervals
@@ -734,23 +754,36 @@ export function CreateExecutableDialog({
                       Cron Schedule Configuration
                     </h3>
                     <form.Field name="cronSchedule">
-                      {(field) => (
-                        <div className="space-y-2.5">
-                          <Label className="text-sm font-medium">
-                            Cron Schedule
-                          </Label>
-                          <Input
-                            placeholder="e.g., 0 0 * * * (daily at midnight)"
-                            value={field.state.value}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className="h-10"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Use standard cron format: minute hour day month
-                            weekday
-                          </p>
-                        </div>
-                      )}
+                      {(field) => {
+                        const humanReadable = formatCronSchedule(
+                          field.state.value,
+                        );
+                        return (
+                          <div className="space-y-2.5">
+                            <Label className="text-sm font-medium">
+                              Cron Schedule
+                            </Label>
+                            <Input
+                              placeholder="e.g., 0 0 * * * (daily at midnight)"
+                              value={field.state.value}
+                              onChange={(e) =>
+                                field.handleChange(e.target.value)
+                              }
+                              className="h-10"
+                            />
+                            {humanReadable ? (
+                              <p className="text-xs text-primary font-medium">
+                                {humanReadable}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                Use standard cron format: minute hour day month
+                                weekday
+                              </p>
+                            )}
+                          </div>
+                        );
+                      }}
                     </form.Field>
                   </div>
                 )

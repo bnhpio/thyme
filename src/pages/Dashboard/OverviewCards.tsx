@@ -1,4 +1,4 @@
-import { Activity, Clock, Pause, Play } from 'lucide-react';
+import { Activity, Pause, Play } from 'lucide-react';
 import type { Id } from '@/../convex/_generated/dataModel';
 import {
   Card,
@@ -43,13 +43,6 @@ export function OverviewCards({ data }: OverviewCardsProps) {
       icon: Pause,
       className: 'border-warning/20 bg-warning/5',
       valueClassName: 'text-warning',
-    },
-    {
-      title: 'Recently Created',
-      value: data.recentlyCreated,
-      description: 'Created in the last 7 days',
-      icon: Clock,
-      className: 'border-primary/20',
     },
   ];
 

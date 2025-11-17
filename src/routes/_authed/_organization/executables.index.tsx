@@ -7,7 +7,6 @@ export const Route = createFileRoute('/_authed/_organization/executables/')({
 });
 
 function RouteComponent() {
-  console.log('executables index route');
   return (
     <DashboardLayout>
       <Executables />

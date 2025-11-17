@@ -31,6 +31,7 @@ import type * as mutation_log from "../mutation/log.js";
 import type * as mutation_organizations from "../mutation/organizations.js";
 import type * as mutation_profile from "../mutation/profile.js";
 import type * as mutation_task from "../mutation/task.js";
+import type * as mutation_user from "../mutation/user.js";
 import type * as query_chain from "../query/chain.js";
 import type * as query_customToken from "../query/customToken.js";
 import type * as query_dashboard from "../query/dashboard.js";
@@ -84,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   "mutation/organizations": typeof mutation_organizations;
   "mutation/profile": typeof mutation_profile;
   "mutation/task": typeof mutation_task;
+  "mutation/user": typeof mutation_user;
   "query/chain": typeof query_chain;
   "query/customToken": typeof query_customToken;
   "query/dashboard": typeof query_dashboard;

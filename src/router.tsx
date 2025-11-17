@@ -21,7 +21,7 @@ export const getRouter = () => {
     Wrap: (props: { children: React.ReactNode }) => {
       return (
         <TanstackQuery.Provider {...rqContext}>
-          <ThemeProvider defaultTheme="system" storageKey="thyme-theme">
+          <ThemeProvider defaultTheme="dark" storageKey="thyme-theme">
             {props.children}
           </ThemeProvider>
         </TanstackQuery.Provider>

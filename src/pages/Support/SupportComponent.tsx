@@ -6,6 +6,7 @@ import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { api } from '@/../convex/_generated/api';
+import { HomeLayout } from '@/layouts/HomeLayout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -102,8 +103,8 @@ const Contact = () => {
   });
 
   return (
-    <div className="bg-background min-h-screen">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <HomeLayout>
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 pt-32">
         <div className="grid items-start gap-16 lg:grid-cols-2">
           <div className="space-y-8">
             <div className="space-y-4">
@@ -330,18 +331,25 @@ const Contact = () => {
                 )}
               </form.Field>
 
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isSubmitting || !form.state.canSubmit}
-              >
-                {isSubmitting ? 'Sending...' : 'Send Your Message'}
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isSubmitting || !form.state.canSubmit}
+                >
+                  {isSubmitting ? 'Sending...' : 'Send Your Message'}
+                </Button>
+                <Link to="/">
+                  <Button type="button" variant="outline" size="lg">
+                    Back home
+                  </Button>
+                </Link>
+              </div>
             </form>
           </div>
         </div>
       </div>
-    </div>
+    </HomeLayout>
   );
 };
 

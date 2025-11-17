@@ -277,6 +277,58 @@ code {
   }
 }
 
+@keyframes mesh-move {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes grid-move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+@keyframes blob-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  25% {
+    transform: translate(20px, -30px) scale(1.1);
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+  }
+  75% {
+    transform: translate(30px, 10px) scale(1.05);
+    border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+  }
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes typewriter-reveal {
   0% {
     opacity: 0;
@@ -399,13 +451,33 @@ code {
   animation-delay: calc(var(--path-index, 0) * 0.4s);
 }
 
+.animate-mesh-move {
+  animation: mesh-move 20s ease infinite;
+}
+
+.animate-grid-move {
+  animation: grid-move 30s linear infinite;
+}
+
+.animate-blob-float {
+  animation: blob-float 20s ease-in-out infinite;
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 30s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-float-slow,
   .animate-pulse-glow,
   .animate-shimmer,
   .animate-scroll-left,
-  .animate-typewriter {
+  .animate-typewriter,
+  .animate-mesh-move,
+  .animate-grid-move,
+  .animate-blob-float,
+  .animate-rotate-slow {
     animation: none;
     opacity: 1;
   }

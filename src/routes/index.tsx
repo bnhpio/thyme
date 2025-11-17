@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import PricingTableView from '@/components/autumn/pricing-table-view';
+import { AnimatedBackground } from '@/components/ui/animated-background';
 import { Button } from '@/components/ui/button';
 import { RollingText } from '@/components/ui/shadcn-io/rolling-text';
 import { HomeLayout } from '@/layouts/HomeLayout';
@@ -26,6 +27,7 @@ function RouteComponent() {
     <HomeLayout>
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[600px]">
+        <AnimatedBackground variant="hero" intensity="high" />
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-8 animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 text-sm backdrop-blur-sm hover:scale-105 transition-transform duration-300 animate-pulse-glow bg-gradient-to-r from-primary/20 via-accent-secondary/20 to-accent/20">
@@ -109,8 +111,9 @@ function RouteComponent() {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 overflow-hidden">
+        <AnimatedBackground variant="section" intensity="low" />
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               How It Works
@@ -176,8 +179,9 @@ function RouteComponent() {
       </section>
 
       {/* Developer-Focused Features */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-6xl">
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <AnimatedBackground variant="section" intensity="medium" />
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Built for Developers
@@ -240,8 +244,9 @@ function RouteComponent() {
       </section>
 
       {/* Plans & Pricing */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="container mx-auto max-w-6xl">
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 overflow-hidden">
+        <AnimatedBackground variant="section" intensity="low" />
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Simple, Transparent Pricing
@@ -256,8 +261,9 @@ function RouteComponent() {
       </section>
 
       {/* Integrations / Supported Chains */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-6xl">
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <AnimatedBackground variant="section" intensity="medium" />
+        <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Supported Chains
@@ -298,14 +304,7 @@ function RouteComponent() {
 
       {/* Final CTA */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30 relative overflow-hidden">
-        <div
-          className="absolute inset-0 animate-pulse-glow"
-          style={{
-            background:
-              'linear-gradient(to right, oklch(from var(--primary) l c h / 0.2), oklch(from var(--accent-secondary) l c h / 0.2), oklch(from var(--accent) l c h / 0.2))',
-            opacity: 0.25,
-          }}
-        />
+        <AnimatedBackground variant="cta" intensity="high" />
         <div className="container mx-auto max-w-4xl text-center relative z-10">
           <div className="relative inline-block mb-6">
             <Activity className="size-16 mx-auto animate-pulse text-primary-light" />

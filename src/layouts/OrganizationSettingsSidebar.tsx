@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, CreditCard, Settings, Users } from 'lucide-react';
+import { ArrowLeft, CreditCard, Link2, Settings, Users } from 'lucide-react';
 import { api } from '@/../convex/_generated/api';
 import {
   Sidebar,
@@ -93,6 +93,20 @@ export function OrganizationSettingsSidebar({
                   <Link to="/organization/$slug/members" params={{ slug }}>
                     <Users className="h-4 w-4" />
                     <span>Members</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={
+                    location.pathname.includes('/organization/') &&
+                    location.pathname.includes('/chain-rpcs')
+                  }
+                >
+                  <Link to="/organization/$slug/chain-rpcs" params={{ slug }}>
+                    <Link2 className="h-4 w-4" />
+                    <span>Chain RPCs</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

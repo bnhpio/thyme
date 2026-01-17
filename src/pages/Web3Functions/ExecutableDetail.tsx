@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { formatUnits, zeroAddress } from 'viem';
 import * as viemChains from 'viem/chains';
 import { api } from '@/../convex/_generated/api';
+import type { Id } from '@/../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -113,19 +114,20 @@ interface ExecutableDetailProps {
 
 export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
   const navigate = useNavigate();
+  const executableIdTyped = executableId as Id<'executables'>;
   const executable = useQuery(api.query.executable.getExecutableById, {
-    executableId: executableId as any,
+    executableId: executableIdTyped,
   });
   const logs = useQuery(api.query.executable.getExecutableLogs, {
-    executableId: executableId as any,
+    executableId: executableIdTyped,
   });
   const history = useQuery(api.query.executable.getExecutableHistory, {
-    executableId: executableId as any,
+    executableId: executableIdTyped,
   });
   const executions = useQuery(
     api.query.executable.getExecutionsByExecutableId,
     {
-      executableId: executableId as any,
+      executableId: executableIdTyped,
     },
   );
   const taskCode = useAction(api.action.task.getTaskCode);

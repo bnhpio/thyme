@@ -1,8 +1,9 @@
 'use node';
 
-import { decompressFiles } from '@bnhpio/thyme-sdk/archive';
 import { v } from 'convex/values';
+import { internal } from '../_generated/api';
 import { action, internalAction } from '../_generated/server';
+import { decompressTask } from '../utils/decompress';
 
 export const getTaskCode = action({
   args: {
@@ -11,17 +12,13 @@ export const getTaskCode = action({
   handler: async (ctx, args) => {
     const blob = await ctx.storage.get(args.storageId);
     if (!blob) {
-      throw new Error('Task code not found');
+      throw new Error('Task not found');
     }
 
     const arrayBuffer = await blob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const result = await decompressFiles(uint8Array);
+    const { source } = decompressTask(arrayBuffer);
 
-    // Find the code file (typically named 'code' or 'index' or has path containing 'code')
-    const codeFile = result.files.find((file) => file.id === 'source.ts');
-
-    return codeFile?.content || '';
+    return source;
   },
 });
 
@@ -29,20 +26,27 @@ export const getTaskSchema = action({
   args: {
     storageId: v.id('_storage'),
   },
-  handler: async (ctx, args) => {
-    const blob = await ctx.storage.get(args.storageId);
-    if (!blob) {
-      throw new Error('Task schema not found');
+  handler: async (ctx, args): Promise<string> => {
+    try {
+      // Find task by storageId (hash)
+      // Type assertion needed until Convex regenerates types for getTaskByHash
+      const task = await ctx.runQuery(internal.query.task.getTaskByHash, {
+        hash: args.storageId,
+      });
+
+      if (!task) {
+        return '{}';
+      }
+
+      if (!task.schema) {
+        return '{}';
+      }
+
+      return task.schema;
+    } catch (error) {
+      console.error('Error in getTaskSchema:', error);
+      return '{}';
     }
-
-    const arrayBuffer = await blob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const result = await decompressFiles(uint8Array);
-
-    // Find the schema file (typically named 'schema.json' or has path containing 'schema')
-    const schemaFile = result.files.find((file) => file.id === 'schema.json');
-
-    return schemaFile?.content || '';
   },
 });
 
@@ -53,16 +57,12 @@ export const getTaskCodeInternal = internalAction({
   handler: async (ctx, args) => {
     const blob = await ctx.storage.get(args.storageId);
     if (!blob) {
-      throw new Error('Task code not found');
+      throw new Error('Task not found');
     }
 
     const arrayBuffer = await blob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const result = await decompressFiles(uint8Array);
+    const { bundle } = decompressTask(arrayBuffer);
 
-    // Find the code file (typically named 'code' or 'index' or has path containing 'code')
-    const codeFile = result.files.find((file) => file.id === 'index');
-
-    return codeFile?.content || '';
+    return bundle;
   },
 });

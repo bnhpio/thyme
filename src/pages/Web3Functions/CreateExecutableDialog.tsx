@@ -55,9 +55,7 @@ interface CreateExecutableDialogProps {
 }
 
 function getChainName(chainId: number): string {
-  const chain = Object.values(viemChains).find(
-    (c: any) => c.id === chainId,
-  ) as any;
+  const chain = Object.values(viemChains).find((c: any) => c.id === chainId);
   return chain?.name || `Chain ${chainId}`;
 }
 

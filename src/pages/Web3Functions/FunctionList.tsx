@@ -19,6 +19,7 @@ interface Task {
     email: string | null;
   } | null;
   _creationTime: number;
+  executableCount: number;
 }
 
 interface FunctionListProps {

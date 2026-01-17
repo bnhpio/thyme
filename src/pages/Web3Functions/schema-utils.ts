@@ -44,7 +44,7 @@ export function parseOpenAPISchema(schemaJson: string): SchemaField[] {
       }
 
       // Fallback: try to find a schema in components
-      const firstSchema = Object.values(schema.components.schemas)[0] as any;
+      const firstSchema = Object.values(schema.components.schemas)[0];
       if (firstSchema) {
         return extractSchemaFields(firstSchema, schema.components);
       }
@@ -62,13 +62,41 @@ export function parseOpenAPISchema(schemaJson: string): SchemaField[] {
   }
 }
 
-function extractSchemaFields(schema: any, components: any): SchemaField[] {
+interface JsonSchemaProperty {
+  type?: string;
+  description?: string;
+  default?: unknown;
+  enum?: string[];
+  format?: string;
+  minimum?: number;
+  maximum?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  items?: JsonSchemaProperty;
+  $ref?: string;
+}
+
+interface JsonSchema {
+  type?: string;
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+}
+
+interface Components {
+  schemas?: Record<string, JsonSchemaProperty>;
+}
+
+function extractSchemaFields(
+  schema: JsonSchema,
+  components: Components,
+): SchemaField[] {
   const fields: SchemaField[] = [];
   const required = schema.required || [];
 
   if (schema.properties) {
     for (const [name, prop] of Object.entries(schema.properties)) {
-      const property = prop as any;
+      const property: JsonSchemaProperty = prop;
       const field: SchemaField = {
         name,
         type: property.type || 'string',
@@ -105,7 +133,9 @@ function extractSchemaFields(schema: any, components: any): SchemaField[] {
       // Handle array items
       if (property.type === 'array' && property.items) {
         field.items = {
+          name: '',
           type: property.items.type || 'string',
+          required: false,
           enum: property.items.enum,
         };
       }

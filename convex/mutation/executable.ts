@@ -30,7 +30,7 @@ async function stopExecutableJobs(
 ) {
   if (executable.cronJobId) {
     try {
-      await crons.delete(ctx, { id: executable.cronJobId as any });
+      await crons.delete(ctx, { id: executable.cronJobId });
     } catch (error) {
       try {
         await crons.delete(ctx, { name: executableId.toString() });
@@ -46,7 +46,7 @@ async function stopExecutableJobs(
 
   if (executable.schedulerJobId && executable.schedulerJobId !== 'pending') {
     try {
-      await ctx.scheduler.cancel(executable.schedulerJobId as any);
+      await ctx.scheduler.cancel(executable.schedulerJobId);
     } catch (error) {
       console.error('Error canceling scheduled job:', error);
     }
@@ -75,7 +75,7 @@ async function registerExecutableSchedule(
       { executableId },
       executableId.toString(),
     );
-    const cronJob = await (ctx.db as any).get(cronJobId);
+    const cronJob = await ctx.db.get(cronJobId as Id<any>);
     await ctx.db.patch(executableId, {
       cronJobId: cronJobId.toString(),
       schedulerJobId: cronJob?.schedulerJobId?.toString(),
@@ -189,7 +189,7 @@ export const createExecutable = internalMutation({
         executable.toString(),
       );
       // Fetch cron job to get schedulerJobId for tracking
-      const cronJob = await (ctx.db as any).get(cronJobId);
+      const cronJob = await ctx.db.get(cronJobId as Id<any>);
       // Update executable with cron job ID and scheduler job ID
       await ctx.db.patch(executable, {
         cronJobId: cronJobId.toString(),
@@ -501,7 +501,7 @@ export const markFinished = internalMutation({
       if (executable.cronJobId) {
         try {
           // Try deleting by ID first (more reliable)
-          await crons.delete(ctx, { id: executable.cronJobId as any });
+          await crons.delete(ctx, { id: executable.cronJobId });
         } catch (error) {
           // If ID deletion fails, try by name as fallback
           try {

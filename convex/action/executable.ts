@@ -1,8 +1,7 @@
 'use node';
 
 import type { SmartWalletClient } from '@account-kit/wallet-client';
-import { simulateCalls } from '@bnhpio/thyme-sdk/onchain';
-import { sandbox } from '@bnhpio/thyme-sdk/sandbox';
+import { Sandbox } from '@deno/sandbox';
 import { v } from 'convex/values';
 import {
   type Address,
@@ -19,6 +18,7 @@ import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import { type ActionCtx, action, internalAction } from '../_generated/server';
 import { autumn } from '../autumn';
+import { simulateCalls } from '../utils/simulateCalls';
 import {
   type AlchemyOptions,
   createAlchemyClient,
@@ -100,6 +100,7 @@ export const _runTask = internalAction({
         taskId: executable.taskId,
         chain: executable.chain,
         profile: executable.profile,
+        organization: executable.organization,
         args: executable.args,
         executionId,
       });
@@ -452,6 +453,7 @@ async function executeTask(
     profile: Id<'profiles'>;
     executableId: Id<'executables'>;
     executionId: Id<'taskExecutions'>;
+    organization: Id<'organizations'>;
     args: string;
   },
 ) {
@@ -522,24 +524,102 @@ async function executeTask(
     throw new Error('PRIVATE_KEY environment variable is not set');
   }
 
-  const result = await sandbox({
-    file: taskCode,
-    context: {
-      userArgs: parsedArgs,
-      secrets: {},
+  // Get Deno Sandbox token
+  const denoToken = process.env.DENO_SANDBOX_TOKEN;
+  if (!denoToken) {
+    throw new Error('DENO_SANDBOX_TOKEN environment variable is not set');
+  }
+
+  // Get RPC URL from organization chain settings
+  const rpcUrl = await ctx.runQuery(
+    internal.query.organizationChainRpc.getChainRpcUrl,
+    {
+      organizationId: executable.organization,
+      chainId: chain.chainId,
+    },
+  );
+
+  // Create Deno sandbox
+  const sandbox = await Sandbox.create({
+    region: 'ams',
+    debug: true,
+    token: denoToken,
+    memoryMb: 1024,
+    env: {
+      RPC_URL: rpcUrl,
     },
   });
+
+  let result: { canExec: boolean; calls: Call[]; message?: string };
+  const logs: string[] = [];
+
+  try {
+    // Write bundled task code to sandbox
+    await sandbox.fs.writeTextFile('task.js', taskCode);
+
+    // Create execution wrapper
+    const wrapperCode = `
+import task from './task.js';
+import { createPublicClient, http } from 'npm:viem@2.44.4';
+
+const client = createPublicClient({
+  transport: http(Deno.env.get('RPC_URL'))
+});
+
+const context = {
+  args: ${JSON.stringify(parsedArgs)},
+  client
+};
+
+try {
+  const result = await task.run(context);
+  console.log('__THYME_RESULT__' + JSON.stringify(result));
+} catch (error) {
+  console.error('Task execution error:', error instanceof Error ? error.message : String(error));
+  Deno.exit(1);
+}
+`;
+
+    await sandbox.fs.writeTextFile('wrapper.js', wrapperCode);
+
+    // Execute task - write result to file since stdout capture seems unreliable
+    await sandbox.sh`deno run --allow-read --allow-write --allow-net --allow-env wrapper.js > output.txt 2>&1`;
+
+    // Read output from file
+    const stdoutText = await sandbox.fs.readTextFile('output.txt');
+
+    const lines = stdoutText.trim().split('\n');
+    let resultLine: string | undefined;
+
+    for (const line of lines) {
+      if (line.startsWith('__THYME_RESULT__')) {
+        resultLine = line.substring('__THYME_RESULT__'.length);
+      } else if (line.trim()) {
+        logs.push(line.trim());
+      }
+    }
+
+    if (!resultLine) {
+      throw new Error(`No result found in task output\nOutput:\n${stdoutText}`);
+    }
+
+    result = JSON.parse(resultLine);
+  } finally {
+    await sandbox.close();
+  }
+
+  // Add logs to the execution
   try {
     await ctx.runMutation(internal.mutation.log.log, {
       executableId: executable.executableId,
       executionId: executable.executionId,
-      log: result.logs.reverse(),
+      log: logs.reverse(),
     });
   } catch (error) {
     console.error('Error adding logs to the execution:', error);
   }
-  // add logs to the execution
-  // start simulation
+
+  // Start simulation
   const simulationResult = await ctx.runMutation(
     internal.mutation.executable.startSimulation,
     {
@@ -550,13 +630,12 @@ async function executeTask(
     throw new Error('Failed to start simulation');
   }
 
-  // actual simulate
-
+  // Simulate calls
   try {
     await simulateCalls({
-      calls: result.result.calls,
+      calls: result.calls,
       options: {
-        rpcUrl: chain.rpcUrls[0],
+        rpcUrl: rpcUrl,
         account: profile.address as Address,
       },
     });
@@ -569,15 +648,15 @@ async function executeTask(
     return;
   }
 
-  if (result.result.canExec) {
+  if (result.canExec) {
     await ctx.runMutation(internal.mutation.executable.startSending, {
       executionId: executable.executionId,
     });
     const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
-      calls: result.result.calls,
+      calls: result.calls,
       options: {
         privateKey: privateKey as Hex,
-        rpcUrl: chain.rpcUrls[0],
+        rpcUrl: rpcUrl,
         alchemyOptions: {
           apiKey: alchemyApiKey,
           policyId: alchemyPolicyId,
@@ -650,7 +729,7 @@ async function executeTask(
   } else {
     await ctx.runMutation(internal.mutation.executable.skipSimulation, {
       executionId: executable.executionId,
-      errorReason: result.result.message || 'Simulation skipped',
+      errorReason: result.message || 'Simulation skipped',
     });
   }
 }

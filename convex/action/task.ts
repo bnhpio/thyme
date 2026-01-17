@@ -18,7 +18,7 @@ export const getTaskCode = action({
     const uint8Array = new Uint8Array(arrayBuffer);
     const result = await decompressFiles(uint8Array);
 
-    // Find the code file (typically named 'code.js' or 'index.js' or has path containing 'code')
+    // Find the code file (typically named 'code' or 'index' or has path containing 'code')
     const codeFile = result.files.find((file) => file.id === 'source.ts');
 
     return codeFile?.content || '';
@@ -60,8 +60,8 @@ export const getTaskCodeInternal = internalAction({
     const uint8Array = new Uint8Array(arrayBuffer);
     const result = await decompressFiles(uint8Array);
 
-    // Find the code file (typically named 'code.js' or 'index.js' or has path containing 'code')
-    const codeFile = result.files.find((file) => file.id === 'index.js');
+    // Find the code file (typically named 'code' or 'index' or has path containing 'code')
+    const codeFile = result.files.find((file) => file.id === 'index');
 
     return codeFile?.content || '';
   },

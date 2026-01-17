@@ -19,6 +19,7 @@
     "@bnhpio/thyme-sdk": "^0.0.4",
     "@convex-dev/crons": "^0.1.9",
     "@convex-dev/react-query": "0.0.0-alpha.11",
+    "@deno/sandbox": "^0.8.0",
     "@icons-pack/react-simple-icons": "^13.8.0",
     "@netlify/vite-plugin-tanstack-start": "^1.2.0",
     "@radix-ui/react-accordion": "^1.2.12",

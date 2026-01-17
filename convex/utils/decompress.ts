@@ -1,3 +1,4 @@
+'use node';
 import { decompressTask as sdkDecompressTask } from '@thyme-sh/sdk';
 
 export interface DecompressedTask {

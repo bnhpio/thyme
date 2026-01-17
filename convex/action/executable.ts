@@ -530,37 +530,60 @@ async function executeTask(
     throw new Error('DENO_SANDBOX_TOKEN environment variable is not set');
   }
 
-  // Get RPC URL from organization chain settings
-  const rpcUrl = await ctx.runQuery(
-    internal.query.organizationChainRpc.getChainRpcUrl,
-    {
-      organizationId: executable.organization,
-      chainId: chain.chainId,
-    },
-  );
+  // Get RPC URLs:
+  // - sandboxRpcUrl: Used for Deno sandbox and simulation (profile's custom RPC or default)
+  // - defaultRpcUrl: Used for actual on-chain transactions (always default chain RPC)
+  const defaultRpcUrl =
+    chain.rpcUrls.length > 0
+      ? chain.rpcUrls[0]
+      : (() => {
+          throw new Error(
+            `No default RPC URL found for chain ${chain.chainId}`,
+          );
+        })();
 
-  // Create Deno sandbox
+  // Use profile's custom RPC for sandbox/simulation if available, otherwise use default
+  const sandboxRpcUrl = profile.customRpcUrl || defaultRpcUrl;
+
+  // Create Deno sandbox with profile's custom RPC (or default)
   const sandbox = await Sandbox.create({
     region: 'ams',
     debug: true,
     token: denoToken,
     memoryMb: 1024,
     env: {
-      RPC_URL: rpcUrl,
+      RPC_URL: sandboxRpcUrl,
     },
   });
 
   let result: { canExec: boolean; calls: Call[]; message?: string };
-  const logs: string[] = [];
+  const logs: { type: string; message: string }[] = [];
 
   try {
     // Write bundled task code to sandbox
     await sandbox.fs.writeTextFile('task.js', taskCode);
 
-    // Create execution wrapper
+    // Create execution wrapper with logger
     const wrapperCode = `
 import task from './task.js';
 import { createPublicClient, http } from 'npm:viem@2.44.4';
+
+// Logger implementation that outputs with special prefix
+class Logger {
+  static LOG_PREFIX = '__THYME_LOG__';
+  
+  info(message) {
+    console.log(Logger.LOG_PREFIX + JSON.stringify({ type: 'info', message }));
+  }
+  
+  warn(message) {
+    console.log(Logger.LOG_PREFIX + JSON.stringify({ type: 'warn', message }));
+  }
+  
+  error(message) {
+    console.log(Logger.LOG_PREFIX + JSON.stringify({ type: 'error', message }));
+  }
+}
 
 const client = createPublicClient({
   transport: http(Deno.env.get('RPC_URL'))
@@ -568,7 +591,8 @@ const client = createPublicClient({
 
 const context = {
   args: ${JSON.stringify(parsedArgs)},
-  client
+  client,
+  logger: new Logger()
 };
 
 try {
@@ -583,20 +607,53 @@ try {
     await sandbox.fs.writeTextFile('wrapper.js', wrapperCode);
 
     // Execute task - write result to file since stdout capture seems unreliable
-    await sandbox.sh`deno run --allow-read --allow-write --allow-net --allow-env wrapper.js > output.txt 2>&1`;
-
-    // Read output from file
-    const stdoutText = await sandbox.fs.readTextFile('output.txt');
+    let stdoutText = '';
+    try {
+      await sandbox.sh`deno run --allow-read --allow-write --allow-net --allow-env wrapper.js > output.txt 2>&1`;
+      // Read output from file
+      stdoutText = await sandbox.fs.readTextFile('output.txt');
+    } catch (sandboxError) {
+      // Try to read output file even on failure to get error details
+      try {
+        stdoutText = await sandbox.fs.readTextFile('output.txt');
+      } catch {
+        // Output file doesn't exist
+      }
+      const errorMessage =
+        sandboxError instanceof Error
+          ? sandboxError.message
+          : String(sandboxError);
+      throw new Error(
+        `Sandbox execution failed: ${errorMessage}\nOutput:\n${stdoutText || '(no output captured)'}`,
+      );
+    }
 
     const lines = stdoutText.trim().split('\n');
     let resultLine: string | undefined;
 
+    const LOG_PREFIX = '__THYME_LOG__';
+    const RESULT_PREFIX = '__THYME_RESULT__';
+
     for (const line of lines) {
-      if (line.startsWith('__THYME_RESULT__')) {
-        resultLine = line.substring('__THYME_RESULT__'.length);
-      } else if (line.trim()) {
-        logs.push(line.trim());
+      if (line.startsWith(RESULT_PREFIX)) {
+        resultLine = line.substring(RESULT_PREFIX.length);
+      } else if (line.startsWith(LOG_PREFIX)) {
+        // Parse structured log entry from SDK logger
+        try {
+          const logEntry = JSON.parse(line.substring(LOG_PREFIX.length)) as {
+            type: string;
+            message: string;
+          };
+          logs.push(logEntry);
+        } catch {
+          // If parsing fails, store as info log
+          logs.push({
+            type: 'info',
+            message: line.substring(LOG_PREFIX.length),
+          });
+        }
       }
+      // Ignore all other output (Deno downloads, etc.)
     }
 
     if (!resultLine) {
@@ -630,12 +687,22 @@ try {
     throw new Error('Failed to start simulation');
   }
 
-  // Simulate calls
+  // Only simulate and execute if canExec is true and calls exist
+  if (!result.canExec || !result.calls || result.calls.length === 0) {
+    // Task decided not to execute - skip simulation
+    await ctx.runMutation(internal.mutation.executable.skipSimulation, {
+      executionId: executable.executionId,
+      errorReason: result.message || 'No calls to execute',
+    });
+    return;
+  }
+
+  // Simulate calls using sandbox RPC (profile's custom RPC or default)
   try {
     await simulateCalls({
       calls: result.calls,
       options: {
-        rpcUrl: rpcUrl,
+        rpcUrl: sandboxRpcUrl,
         account: profile.address as Address,
       },
     });
@@ -648,88 +715,82 @@ try {
     return;
   }
 
-  if (result.canExec) {
-    await ctx.runMutation(internal.mutation.executable.startSending, {
+  // canExec is true and simulation passed - proceed with sending
+  await ctx.runMutation(internal.mutation.executable.startSending, {
+    executionId: executable.executionId,
+  });
+  // Use default chain RPC for actual on-chain transactions (not custom RPC)
+  const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
+    calls: result.calls,
+    options: {
+      privateKey: privateKey as Hex,
+      rpcUrl: defaultRpcUrl,
+      alchemyOptions: {
+        apiKey: alchemyApiKey,
+        policyId: alchemyPolicyId,
+        salt: keccak256(toHex(profile.salt)),
+        baseUrl: chain.baseUrl || '',
+      },
+    },
+  });
+  const gasPrice = await publicClient.getGasPrice();
+  await ctx.runMutation(internal.mutation.executable.startValidating, {
+    executionId: executable.executionId,
+  });
+
+  const callsStatuses = await Promise.all(
+    preparedCallIds.map(async (preparedCallId) => {
+      return client.waitForCallsStatus({
+        id: preparedCallId,
+      });
+    }),
+  );
+  const hashes: Hex[] = [];
+  for (const callStatus of callsStatuses) {
+    hashes.push(
+      ...(callStatus.receipts?.map((receipt) => receipt.transactionHash) ?? []),
+    );
+  }
+  const isFailed = callsStatuses.some(
+    (callStatus) => callStatus.status === 'failure',
+  );
+  const executionCoef = parseUnits('1', 18); // @todo
+  const gasUsed = callsStatuses.reduce(
+    (acc, callStatus) =>
+      acc +
+      (callStatus.receipts?.reduce(
+        (acc, receipt) => acc + receipt.gasUsed,
+        0n,
+      ) ?? 0n),
+    0n,
+  );
+  if (isFailed) {
+    await ctx.runMutation(internal.mutation.executable.failSending, {
       executionId: executable.executionId,
-    });
-    const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
-      calls: result.calls,
-      options: {
-        privateKey: privateKey as Hex,
-        rpcUrl: rpcUrl,
-        alchemyOptions: {
-          apiKey: alchemyApiKey,
-          policyId: alchemyPolicyId,
-          salt: keccak256(toHex(profile.salt)),
-          baseUrl: chain.baseUrl || '',
-        },
+      transactionHashes: hashes,
+      cost: {
+        gas: gasUsed.toString(),
+        gasPrice: gasPrice.toString(),
+        price: (gasUsed * gasPrice).toString(),
+        userPrice: (
+          (gasUsed * gasPrice * executionCoef) /
+          parseUnits('1', 18)
+        ).toString(),
       },
     });
-    const gasPrice = await publicClient.getGasPrice();
-    await ctx.runMutation(internal.mutation.executable.startValidating, {
-      executionId: executable.executionId,
-    });
-
-    const callsStatuses = await Promise.all(
-      preparedCallIds.map(async (preparedCallId) => {
-        return client.waitForCallsStatus({
-          id: preparedCallId,
-        });
-      }),
-    );
-    const hashes: Hex[] = [];
-    for (const callStatus of callsStatuses) {
-      hashes.push(
-        ...(callStatus.receipts?.map((receipt) => receipt.transactionHash) ??
-          []),
-      );
-    }
-    const isFailed = callsStatuses.some(
-      (callStatus) => callStatus.status === 'failure',
-    );
-    const executionCoef = parseUnits('1', 18); // @todo
-    const gasUsed = callsStatuses.reduce(
-      (acc, callStatus) =>
-        acc +
-        (callStatus.receipts?.reduce(
-          (acc, receipt) => acc + receipt.gasUsed,
-          0n,
-        ) ?? 0n),
-      0n,
-    );
-    if (isFailed) {
-      await ctx.runMutation(internal.mutation.executable.failSending, {
-        executionId: executable.executionId,
-        transactionHashes: hashes,
-        cost: {
-          gas: gasUsed.toString(),
-          gasPrice: gasPrice.toString(),
-          price: (gasUsed * gasPrice).toString(),
-          userPrice: (
-            (gasUsed * gasPrice * executionCoef) /
-            parseUnits('1', 18)
-          ).toString(),
-        },
-      });
-    } else {
-      await ctx.runMutation(internal.mutation.executable.successSending, {
-        executionId: executable.executionId,
-        transactionHashes: hashes,
-        cost: {
-          gas: gasUsed.toString(),
-          gasPrice: gasPrice.toString(),
-          price: (gasUsed * gasPrice).toString(),
-          userPrice: (
-            (gasUsed * gasPrice * executionCoef) /
-            parseUnits('1', 18)
-          ).toString(),
-        },
-      });
-    }
   } else {
-    await ctx.runMutation(internal.mutation.executable.skipSimulation, {
+    await ctx.runMutation(internal.mutation.executable.successSending, {
       executionId: executable.executionId,
-      errorReason: result.message || 'Simulation skipped',
+      transactionHashes: hashes,
+      cost: {
+        gas: gasUsed.toString(),
+        gasPrice: gasPrice.toString(),
+        price: (gasUsed * gasPrice).toString(),
+        userPrice: (
+          (gasUsed * gasPrice * executionCoef) /
+          parseUnits('1', 18)
+        ).toString(),
+      },
     });
   }
 }

@@ -859,53 +859,70 @@ export function CreateExecutableDialog({
                     </form.Field>
 
                     <form.Field name="selectedProfileId">
-                      {(field) => (
-                        <div className="space-y-2.5">
-                          <Label className="text-sm font-medium">Profile</Label>
-                          {profiles === undefined ? (
-                            <div className="h-10 flex items-center text-sm text-muted-foreground">
-                              Loading profiles...
-                            </div>
-                          ) : filteredProfiles.length === 0 ? (
-                            <div className="h-10 flex items-center text-sm text-muted-foreground">
-                              {selectedChainId
-                                ? 'No profiles available for selected chain'
-                                : 'No profiles available'}
-                            </div>
-                          ) : (
-                            <Select
-                              value={field.state.value}
-                              onValueChange={(value) => {
-                                field.handleChange(value as Id<'profiles'>);
-                                // Auto-fill chain when profile is selected
-                                const selectedProfile = profiles?.find(
-                                  (p) => p._id === value,
-                                );
-                                if (selectedProfile) {
-                                  form.setFieldValue(
-                                    'selectedChainId',
-                                    selectedProfile.chain,
+                      {(field) => {
+                        const selectedProfile = profiles?.find(
+                          (p) => p._id === field.state.value,
+                        );
+                        return (
+                          <div className="space-y-2.5">
+                            <Label className="text-sm font-medium">
+                              Profile
+                            </Label>
+                            {profiles === undefined ? (
+                              <div className="h-10 flex items-center text-sm text-muted-foreground">
+                                Loading profiles...
+                              </div>
+                            ) : filteredProfiles.length === 0 ? (
+                              <div className="h-10 flex items-center text-sm text-muted-foreground">
+                                {selectedChainId
+                                  ? 'No profiles available for selected chain'
+                                  : 'No profiles available'}
+                              </div>
+                            ) : (
+                              <Select
+                                value={field.state.value}
+                                onValueChange={(value) => {
+                                  field.handleChange(value as Id<'profiles'>);
+                                  // Auto-fill chain when profile is selected
+                                  const profile = profiles?.find(
+                                    (p) => p._id === value,
                                   );
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="w-full h-10">
-                                <SelectValue placeholder="Select a profile" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {filteredProfiles.map((profile) => (
-                                  <SelectItem
-                                    key={profile._id}
-                                    value={profile._id}
-                                  >
-                                    {profile.alias} (Chain {profile.chainId})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      )}
+                                  if (profile) {
+                                    form.setFieldValue(
+                                      'selectedChainId',
+                                      profile.chain,
+                                    );
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="w-full h-10">
+                                  <SelectValue placeholder="Select a profile" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {filteredProfiles.map((profile) => (
+                                    <SelectItem
+                                      key={profile._id}
+                                      value={profile._id}
+                                    >
+                                      {profile.alias} (Chain {profile.chainId})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            {selectedProfile?.customRpcUrl && (
+                              <p className="text-xs text-muted-foreground">
+                                Custom RPC:{' '}
+                                <span className="font-mono">
+                                  {selectedProfile.customRpcUrl.length > 50
+                                    ? `${selectedProfile.customRpcUrl.substring(0, 50)}...`
+                                    : selectedProfile.customRpcUrl}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      }}
                     </form.Field>
                   </div>
                 );

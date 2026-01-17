@@ -14,6 +14,7 @@ export function Profiles() {
   );
 
   const deleteProfile = useMutation(api.mutation.profile.deleteProfile);
+  const updateProfile = useMutation(api.mutation.profile.updateProfile);
 
   const handleDeleteProfile = async (profileId: Id<'profiles'>) => {
     try {
@@ -24,6 +25,13 @@ export function Profiles() {
         error instanceof Error ? error.message : 'Failed to delete profile',
       );
     }
+  };
+
+  const handleUpdateProfile = async (
+    profileId: Id<'profiles'>,
+    customRpcUrl: string | undefined,
+  ) => {
+    await updateProfile({ profileId, customRpcUrl });
   };
 
   const handleRefresh = () => {
@@ -61,6 +69,7 @@ export function Profiles() {
       <ProfileList
         profiles={profiles || []}
         onDelete={handleDeleteProfile}
+        onUpdate={handleUpdateProfile}
         onRefresh={handleRefresh}
         organizationId={currentOrgId}
       />

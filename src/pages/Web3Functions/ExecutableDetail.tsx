@@ -20,7 +20,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { toast } from 'sonner';
-import { formatUnits, zeroAddress } from 'viem';
+import { zeroAddress } from 'viem';
 import * as viemChains from 'viem/chains';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
@@ -597,7 +597,6 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
                           <TableHead>Started</TableHead>
                           <TableHead>Updated</TableHead>
                           <TableHead>Duration</TableHead>
-                          <TableHead>Gas Used</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -675,9 +674,6 @@ export function ExecutableDetail({ executableId }: ExecutableDetailProps) {
                                 startedAt={execution.startedAt}
                                 finishedAt={execution.finishedAt}
                               />
-                            </TableCell>
-                            <TableCell className="text-sm font-mono">
-                              {formatGasUnits(execution.cost.price)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1104,38 +1100,56 @@ function formatDurationMs(durationMs: number): string {
   return `${(durationMs / 1000).toFixed(2)} s`;
 }
 
-function formatGasUnits(value?: string): string {
-  if (!value) return '0';
-  try {
-    return formatUnits(BigInt(value), 18);
-  } catch {
-    return value;
-  }
-}
-
-function parseLogEntry(entry: string): {
+interface LogEntryObject {
   type: 'info' | 'warn' | 'error';
   message: string;
-} {
-  const logMatch = entry.match(/^\[LOG\]\s*(.*)$/i);
-  const warnMatch = entry.match(/^\[WARN\]\s*(.*)$/i);
-  const errorMatch = entry.match(/^\[ERROR\]\s*(.*)$/i);
+}
 
-  if (errorMatch) {
-    return { type: 'error', message: errorMatch[1] };
-  }
-  if (warnMatch) {
-    return { type: 'warn', message: warnMatch[1] };
-  }
-  if (logMatch) {
-    return { type: 'info', message: logMatch[1] };
+function isLogEntryObject(entry: unknown): entry is LogEntryObject {
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    'type' in entry &&
+    'message' in entry &&
+    typeof (entry as LogEntryObject).message === 'string' &&
+    ['info', 'warn', 'error'].includes((entry as LogEntryObject).type)
+  );
+}
+
+function parseLogEntry(entry: string | LogEntryObject): LogEntryObject {
+  // Handle structured log objects (new format from SDK logger)
+  if (isLogEntryObject(entry)) {
+    return entry;
   }
 
-  return { type: 'info', message: entry };
+  // Handle string entries (legacy format)
+  if (typeof entry === 'string') {
+    const logMatch = entry.match(/^\[LOG\]\s*(.*)$/i);
+    const infoMatch = entry.match(/^\[INFO\]\s*(.*)$/i);
+    const warnMatch = entry.match(/^\[WARN\]\s*(.*)$/i);
+    const errorMatch = entry.match(/^\[ERROR\]\s*(.*)$/i);
+
+    if (errorMatch) {
+      return { type: 'error', message: errorMatch[1] };
+    }
+    if (warnMatch) {
+      return { type: 'warn', message: warnMatch[1] };
+    }
+    if (logMatch) {
+      return { type: 'info', message: logMatch[1] };
+    }
+    if (infoMatch) {
+      return { type: 'info', message: infoMatch[1] };
+    }
+
+    return { type: 'info', message: entry };
+  }
+
+  return { type: 'info', message: String(entry) };
 }
 
 function flattenLogs(
-  logs: Array<{ id: string; log: any; createdAt: number }>,
+  logs: Array<{ id: string; log: unknown; createdAt: number }>,
 ): Array<{
   id: string;
   type: 'info' | 'warn' | 'error';
@@ -1151,14 +1165,21 @@ function flattenLogs(
 
   logs.forEach((log) => {
     if (Array.isArray(log.log)) {
-      log.log.forEach((entry: string) => {
-        const parsed = parseLogEntry(entry);
+      log.log.forEach((entry: unknown) => {
+        const parsed = parseLogEntry(entry as string | LogEntryObject);
         flattened.push({
           id: `${log.id}-${flattened.length}`,
           type: parsed.type,
           message: parsed.message,
           createdAt: log.createdAt,
         });
+      });
+    } else if (isLogEntryObject(log.log)) {
+      flattened.push({
+        id: log.id,
+        type: log.log.type,
+        message: log.log.message,
+        createdAt: log.createdAt,
       });
     } else if (typeof log.log === 'string') {
       const parsed = parseLogEntry(log.log);

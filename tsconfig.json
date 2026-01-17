@@ -23,6 +23,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@bnhpio/thyme-sdk/*": ["./thyme-sdk/dist/*"]
     }
   }
 }

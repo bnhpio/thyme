@@ -18,7 +18,11 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": "..",
+    "paths": {
+      "@bnhpio/thyme-sdk/*": ["./thyme-sdk/dist/*"]
+    }
   },
   "include": ["./**/*"],
   "exclude": ["./_generated"]

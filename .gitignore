@@ -16,3 +16,6 @@ todos.json
 .netlify
 
 TODO.md
+
+# Explicitly include thyme-sdk (exclude from dist pattern above)
+!thyme-sdk/dist

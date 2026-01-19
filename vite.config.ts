@@ -8,7 +8,7 @@ const config = defineConfig({
   plugins: [
   nitro(
     // nitro config goes here, e.g.
-    { preset: 'node-server' }
+    // { preset: 'node-server' }
   ),
    
     // this is the plugin that enables path aliases

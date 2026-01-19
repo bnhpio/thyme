@@ -1,14 +1,15 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { api } from '@/../convex/_generated/api';
-import { convex } from '@/integrations/convex/provider';
+import { getServerConvex } from '@/lib/tanstack-auth/server';
 import { OrganizationForm } from '@/pages/Organization/OrganizationForm';
 
 export const Route = createFileRoute('/organization-setup')({
   component: OrganizationSetupComponent,
   loader: async () => {
+    const convex = await getServerConvex();
     const user = await convex.query(api.query.user.getCurrentUser);
     if (!user) {
-      throw redirect({ to: '/login' });
+      throw redirect({ to: '/docs' });
     }
     const organization = await convex.query(
       api.query.user.getUserOrganizations,
@@ -16,7 +17,7 @@ export const Route = createFileRoute('/organization-setup')({
     );
 
     if (organization.length > 0) {
-      throw redirect({ to: '/dashboard' });
+      throw redirect({ to: '/docs' });
     }
   },
 });

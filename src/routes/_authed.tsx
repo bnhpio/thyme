@@ -1,16 +1,15 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
-import { api } from 'convex/_generated/api';
-import { convex } from '@/integrations/convex/provider';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { Login } from '@/pages/Login/Login';
 
 export const Route = createFileRoute('/_authed')({
   component: RouteComponent,
-  ssr: false,
 
   beforeLoad: async () => {
-    const isAuthenticated = await convex.query(api.auth.isAuthenticated);
-    if (!isAuthenticated) {
-      throw new Error('Not authenticated');
+    console.log('beforeLoad');
+    const { isAuthenticated } = await import('@/lib/tanstack-auth/server');
+    const authed = await isAuthenticated();
+    if (!authed) {
+      throw redirect({ to: '/docs' });
     }
   },
   errorComponent: ({ error }) => {

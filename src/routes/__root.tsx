@@ -4,10 +4,16 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router';
-import { api } from 'convex/_generated/api';
+import { ConvexReactClient } from 'convex/react';
 import { NotFound } from '@/components/base/NotFound/NotFound';
 import { AutumnWrapper } from '@/integrations/autumn/provider';
-import ConvexProvider, { convex } from '../integrations/convex/provider';
+import { ConvexAuthTanstackProvider } from '@/lib/tanstack-auth';
+import {
+  getAuthState,
+  refreshTokenAction,
+  signInAction,
+  signOutAction,
+} from '@/lib/tanstack-auth/server';
 import appCss from '../styles.css?url';
 
 interface MyRouterContext {
@@ -15,12 +21,9 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  beforeLoad: async () => {
-    const isAuthenticated = await convex.query(api.auth.isAuthenticated);
-
-    return {
-      isAuthenticated,
-    };
+  loader: async () => {
+    const serverState = await getAuthState();
+    return { serverState };
   },
   head: () => ({
     meta: [
@@ -46,25 +49,34 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
     ],
   }),
-  ssr: false,
   shellComponent: RootDocument,
+  ssr: true,
   notFoundComponent: () => <NotFound />,
 });
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const { serverState } = Route.useLoaderData();
+
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <ConvexProvider>
+        <ConvexAuthTanstackProvider
+          client={convex}
+          serverState={serverState}
+          signInAction={(args) => signInAction({ data: args })}
+          signOutAction={() => signOutAction()}
+          refreshTokenAction={() => refreshTokenAction()}
+          verbose
+        >
           <AutumnWrapper>
             {children}
             {/* <TanStackDevtools
               config={{
                 position: 'bottom-right',
-
               }}
               plugins={[
                 {
@@ -75,7 +87,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               ]}
             /> */}
           </AutumnWrapper>
-        </ConvexProvider>
+        </ConvexAuthTanstackProvider>
         <Scripts />
       </body>
     </html>

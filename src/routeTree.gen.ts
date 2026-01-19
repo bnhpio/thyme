@@ -17,8 +17,11 @@ import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocsIndexRouteImport } from './routes/docs/index'
+import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/_settings'
 import { Route as AuthedOrganizationRouteImport } from './routes/_authed/_organization'
+import { Route as AuthSigninProviderRouteImport } from './routes/auth/signin.$provider'
 import { Route as AuthedOrganizationWeb3FunctionsRouteImport } from './routes/_authed/_organization/web3-functions'
 import { Route as AuthedOrganizationProfilesRouteImport } from './routes/_authed/_organization/profiles'
 import { Route as AuthedOrganizationExecutablesRouteImport } from './routes/_authed/_organization/executables'
@@ -70,6 +73,16 @@ const DocsIndexRoute = DocsIndexRouteImport.update({
   path: '/docs/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthSignoutRoute = AuthSignoutRouteImport.update({
+  id: '/auth/signout',
+  path: '/auth/signout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/_settings',
   getParentRoute: () => AuthedRoute,
@@ -77,6 +90,11 @@ const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
 const AuthedOrganizationRoute = AuthedOrganizationRouteImport.update({
   id: '/_organization',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthSigninProviderRoute = AuthSigninProviderRouteImport.update({
+  id: '/auth/signin/$provider',
+  path: '/auth/signin/$provider',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedOrganizationWeb3FunctionsRoute =
   AuthedOrganizationWeb3FunctionsRouteImport.update({
@@ -152,11 +170,14 @@ export interface FileRoutesByFullPath {
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/signout': typeof AuthSignoutRoute
   '/docs': typeof DocsIndexRoute
   '/dashboard': typeof AuthedOrganizationDashboardRoute
   '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
+  '/auth/signin/$provider': typeof AuthSigninProviderRoute
   '/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
@@ -172,10 +193,13 @@ export interface FileRoutesByTo {
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/signout': typeof AuthSignoutRoute
   '/docs': typeof DocsIndexRoute
   '/dashboard': typeof AuthedOrganizationDashboardRoute
   '/profiles': typeof AuthedOrganizationProfilesRoute
   '/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
+  '/auth/signin/$provider': typeof AuthSigninProviderRoute
   '/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
@@ -195,11 +219,14 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/_authed/_organization': typeof AuthedOrganizationRouteWithChildren
   '/_authed/_settings': typeof AuthedSettingsRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/signout': typeof AuthSignoutRoute
   '/docs/': typeof DocsIndexRoute
   '/_authed/_organization/dashboard': typeof AuthedOrganizationDashboardRoute
   '/_authed/_organization/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/_authed/_organization/profiles': typeof AuthedOrganizationProfilesRoute
   '/_authed/_organization/web3-functions': typeof AuthedOrganizationWeb3FunctionsRoute
+  '/auth/signin/$provider': typeof AuthSigninProviderRoute
   '/_authed/_organization/executables/$executableId': typeof AuthedOrganizationExecutablesExecutableIdRoute
   '/_authed/_settings/settings/api-keys': typeof AuthedSettingsSettingsApiKeysRoute
   '/_authed/_settings/settings/settings': typeof AuthedSettingsSettingsSettingsRoute
@@ -217,11 +244,14 @@ export interface FileRouteTypes {
     | '/organization-setup'
     | '/privacy-policy'
     | '/support'
+    | '/auth/callback'
+    | '/auth/signout'
     | '/docs'
     | '/dashboard'
     | '/executables'
     | '/profiles'
     | '/web3-functions'
+    | '/auth/signin/$provider'
     | '/executables/$executableId'
     | '/settings/api-keys'
     | '/settings/settings'
@@ -237,10 +267,13 @@ export interface FileRouteTypes {
     | '/organization-setup'
     | '/privacy-policy'
     | '/support'
+    | '/auth/callback'
+    | '/auth/signout'
     | '/docs'
     | '/dashboard'
     | '/profiles'
     | '/web3-functions'
+    | '/auth/signin/$provider'
     | '/executables/$executableId'
     | '/settings/api-keys'
     | '/settings/settings'
@@ -259,11 +292,14 @@ export interface FileRouteTypes {
     | '/support'
     | '/_authed/_organization'
     | '/_authed/_settings'
+    | '/auth/callback'
+    | '/auth/signout'
     | '/docs/'
     | '/_authed/_organization/dashboard'
     | '/_authed/_organization/executables'
     | '/_authed/_organization/profiles'
     | '/_authed/_organization/web3-functions'
+    | '/auth/signin/$provider'
     | '/_authed/_organization/executables/$executableId'
     | '/_authed/_settings/settings/api-keys'
     | '/_authed/_settings/settings/settings'
@@ -281,7 +317,10 @@ export interface RootRouteChildren {
   OrganizationSetupRoute: typeof OrganizationSetupRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   SupportRoute: typeof SupportRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthSignoutRoute: typeof AuthSignoutRoute
   DocsIndexRoute: typeof DocsIndexRoute
+  AuthSigninProviderRoute: typeof AuthSigninProviderRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -342,6 +381,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/signout': {
+      id: '/auth/signout'
+      path: '/auth/signout'
+      fullPath: '/auth/signout'
+      preLoaderRoute: typeof AuthSignoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/_settings': {
       id: '/_authed/_settings'
       path: ''
@@ -355,6 +408,13 @@ declare module '@tanstack/react-router' {
       fullPath: ''
       preLoaderRoute: typeof AuthedOrganizationRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/auth/signin/$provider': {
+      id: '/auth/signin/$provider'
+      path: '/auth/signin/$provider'
+      fullPath: '/auth/signin/$provider'
+      preLoaderRoute: typeof AuthSigninProviderRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/_organization/web3-functions': {
       id: '/_authed/_organization/web3-functions'
@@ -516,7 +576,10 @@ const rootRouteChildren: RootRouteChildren = {
   OrganizationSetupRoute: OrganizationSetupRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   SupportRoute: SupportRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthSignoutRoute: AuthSignoutRoute,
   DocsIndexRoute: DocsIndexRoute,
+  AuthSigninProviderRoute: AuthSigninProviderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

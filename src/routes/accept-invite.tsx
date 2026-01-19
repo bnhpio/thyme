@@ -25,7 +25,7 @@ export const Route = createFileRoute('/accept-invite')({
     const isAuthenticated = await convex.query(api.auth.isAuthenticated);
     if (!isAuthenticated) {
       throw redirect({
-        to: '/login',
+        to: '/docs',
         search: {
           redirect: `/accept-invite?token=${search.token || ''}`,
         },

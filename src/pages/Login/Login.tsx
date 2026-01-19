@@ -1,6 +1,4 @@
-import { useAuthActions } from '@convex-dev/auth/react';
 import { Link, useRouter } from '@tanstack/react-router';
-import { useConvexAuth } from 'convex/react';
 import { Github } from 'lucide-react';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -11,32 +9,27 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useAuthActions, useIsAuthenticated } from '@/lib/tanstack-auth';
 
 export function Login() {
   const { signIn } = useAuthActions();
-  const { isLoading, isAuthenticated } = useConvexAuth();
+  const isAuthenticated = useIsAuthenticated();
   const { navigate } = useRouter();
   const handleGitHubSignIn = () => {
-    signIn('github', {
-      redirectTo: '/dashboard',
-    });
+    signIn('github');
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate({
-        to: '/dashboard',
-      });
-    }
-  }, [isAuthenticated, navigate]);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     navigate({
+  //       to: '/dashboard',
+  //     });
+  //   }
+  // }, [isAuthenticated, navigate]);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isAuthenticated) {
-    return <div>Redirecting to home...</div>;
-  }
+  // if (isAuthenticated) {
+  //   return <div>Redirecting to home...</div>;
+  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -48,7 +41,6 @@ export function Login() {
         <CardContent className="space-y-4">
           <Button
             onClick={handleGitHubSignIn}
-            disabled={isLoading}
             variant="outline"
             className="w-full h-12 text-base font-medium"
           >

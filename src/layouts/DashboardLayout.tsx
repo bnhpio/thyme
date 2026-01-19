@@ -1,4 +1,3 @@
-import { useAuthActions } from '@convex-dev/auth/react';
 import { useNavigate } from '@tanstack/react-router';
 import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useAuthActions } from '@/lib/tanstack-auth';
 import { AppSidebar } from './AppSidebar';
 
 interface DashboardLayoutProps {

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import {
   Activity,
   ArrowRight,
@@ -21,6 +21,23 @@ import { CHAINS } from '@/lib/chains';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: search.code as string | undefined,
+    error: search.error as string | undefined,
+  }),
+
+  loaderDeps: ({ search }) => ({ code: search.code, error: search.error }),
+
+  loader: async ({ deps }) => {
+    // If there's an OAuth code, redirect to the callback handler
+    if (deps.code) {
+      throw redirect({
+        to: '/auth/callback',
+        search: { code: deps.code, error: deps.error },
+      });
+    }
+    return {};
+  },
 });
 
 function RouteComponent() {

@@ -568,6 +568,16 @@ async function executeTask(
 import task from './task.js';
 import { createPublicClient, http } from 'npm:viem@2.44.4';
 
+// BigInt-safe JSON.stringify - override globally so user code can use JSON.stringify with BigInt
+const originalStringify = JSON.stringify;
+JSON.stringify = (value, replacer, space) => {
+  const bigIntReplacer = (key, val) => typeof val === 'bigint' ? val.toString() : val;
+  const combinedReplacer = replacer 
+    ? (key, val) => bigIntReplacer(key, typeof replacer === 'function' ? replacer(key, val) : val)
+    : bigIntReplacer;
+  return originalStringify(value, combinedReplacer, space);
+};
+
 // Logger implementation that outputs with special prefix
 class Logger {
   static LOG_PREFIX = '__THYME_LOG__';
@@ -720,8 +730,14 @@ try {
     executionId: executable.executionId,
   });
   // Use default chain RPC for actual on-chain transactions (not custom RPC)
+  // Use executableId as nonceKey to enable parallel transactions for different executables
+  // sharing the same profile (7702 account). Each executable gets its own nonce lane.
+  // Nonce key must be <= 2^152, so we truncate the hash to 19 bytes (152 bits)
+  const fullHash = keccak256(toHex(executable.executableId));
+  const nonceKey = fullHash.slice(0, 2 + 38) as Hex; // 0x + 38 hex chars = 19 bytes = 152 bits
   const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
     calls: result.calls,
+    nonceKey,
     options: {
       privateKey: privateKey as Hex,
       rpcUrl: defaultRpcUrl,
@@ -797,6 +813,7 @@ try {
 
 export interface SendCallsAlchemyOptions {
   calls: Call[];
+  nonceKey: Hex;
   options: {
     privateKey: Hex;
     rpcUrl: string;
@@ -823,11 +840,13 @@ export async function sendAlchemyCalls(args: SendCallsAlchemyOptions): Promise<{
       to: call.to,
       data: call.data,
     })),
-
     from: account,
     capabilities: {
       paymasterService: {
         policyId: args.options.alchemyOptions.policyId,
+      },
+      nonceOverride: {
+        nonceKey: args.nonceKey,
       },
     },
   });

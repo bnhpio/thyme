@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
-import { useConvexAuth } from 'convex/react';
 import { useEffect, useState } from 'react';
 import { LogoSigned } from '@/components/base/Logo/LogoSigned';
 import { Button } from '@/components/ui/button';
+import { useIsAuthenticated } from '@/lib/tanstack-auth';
 
 interface HomeLayoutProps {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ interface HomeLayoutProps {
 
 export function HomeLayout({ children }: HomeLayoutProps) {
   const [scrollY, setScrollY] = useState(0);
-  const { isAuthenticated } = useConvexAuth();
+  const isAuthenticated = useIsAuthenticated();
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);

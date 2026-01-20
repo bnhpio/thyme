@@ -311,16 +311,3 @@ async function refreshTokensInternal(
     return null;
   }
 }
-
-export async function getServerConvex(): Promise<ConvexHttpClient> {
-  const { getCookie } = await import('@tanstack/react-start/server');
-
-  const token = getCookie('__convexAuthJWT') ?? undefined;
-  const client = new ConvexHttpClient(getConvexUrl());
-
-  if (token) {
-    client.setAuth(token);
-  }
-
-  return client;
-}

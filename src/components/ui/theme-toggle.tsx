@@ -1,3 +1,5 @@
+import { api } from 'convex/_generated/api';
+import { useMutation } from 'convex/react';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -6,10 +8,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useTheme } from '@/components/ui/theme-provider';
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const updateUserTheme = useMutation(api.mutation.user.updateUserTheme);
 
   return (
     <DropdownMenu>
@@ -21,13 +22,13 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
+        <DropdownMenuItem onClick={() => updateUserTheme({ theme: 'light' })}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
+        <DropdownMenuItem onClick={() => updateUserTheme({ theme: 'dark' })}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
+        <DropdownMenuItem onClick={() => updateUserTheme({ theme: 'system' })}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

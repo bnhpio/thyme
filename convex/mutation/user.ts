@@ -35,3 +35,36 @@ export const updateUserName = mutation({
     return { success: true };
   },
 });
+
+export const updateUserTheme = mutation({
+  args: {
+    theme: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    // Find existing user settings
+    const existingSettings = await ctx.db
+      .query('userSettings')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .unique();
+
+    if (!existingSettings) {
+      throw Error("Settings doesn't exist");
+    }
+    const now = Date.now();
+    // Update existing settings - merge preferences to preserve other fields
+    await ctx.db.patch(existingSettings._id, {
+      preferences: {
+        ...existingSettings.preferences,
+        theme: args.theme,
+      },
+      updatedAt: now,
+    });
+
+    return { success: true };
+  },
+});

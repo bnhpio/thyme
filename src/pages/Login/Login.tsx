@@ -1,6 +1,5 @@
-import { Link, useRouter } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { Github } from 'lucide-react';
-import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,12 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuthActions, useIsAuthenticated } from '@/lib/tanstack-auth';
+import { useAuthActions } from '@/lib/tanstack-auth';
 
 export function Login() {
   const { signIn } = useAuthActions();
-  const isAuthenticated = useIsAuthenticated();
-  const { navigate } = useRouter();
   const handleGitHubSignIn = () => {
     signIn('github');
   };

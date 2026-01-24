@@ -259,6 +259,7 @@ export function AuthProvider({
         const url = new URL(result.redirect);
 
         console.log(url, 'url');
+        // biome-ignore lint/style/noNonNullAssertion: todo
         await storageSet(VERIFIER_STORAGE_KEY, result.verifier!);
         // Redirect in browser (not React Native)
         if (

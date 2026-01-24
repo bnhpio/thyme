@@ -1,44 +1,21 @@
-import { useNavigate } from '@tanstack/react-router';
-import { useAction, useQuery } from 'convex/react';
-import { Filter, MoreVertical, Play, Search, Trash2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import * as viemChains from 'viem/chains';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  ExecutablesFilters,
+  type ExecutablesFiltersState,
+} from './ExecutablesFilters';
+import { ExecutablesTable } from './ExecutablesTable';
 
 interface ExecutablesListProps {
   organizationId: Id<'organizations'>;
@@ -49,87 +26,32 @@ function getChainName(chainId: number): string {
   return chain?.name || `Chain ${chainId}`;
 }
 
-function isMainnet(chainId: number): boolean {
-  const chain = Object.values(viemChains).find((c: any) => c.id === chainId);
-  // viem chains have a `testnet` property that is false for mainnet chains
-  // If testnet is undefined or false, it's mainnet
-  return Boolean(chain && chain.testnet !== true);
-}
-
-function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-  const diffWeeks = Math.floor(diffDays / 7);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffWeeks < 4) return `${diffWeeks}w ago`;
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function getNetworkColor(chainId: number): string {
-  // Red dot for mainnet, yellow dot for testnet
-  return isMainnet(chainId) ? 'bg-destructive' : 'bg-warning';
-}
-
-function getStatusBadgeVariant(
-  status: 'active' | 'paused',
-): 'default' | 'secondary' {
-  if (status === 'active') return 'default';
-  return 'secondary';
-}
-
 export function ExecutablesList({ organizationId }: ExecutablesListProps) {
-  const navigate = useNavigate();
-  const terminateExecutable = useAction(
-    api.action.executable.terminateExecutable,
-  );
-  const [statusFilter, setStatusFilter] = useState<'active' | 'paused' | 'all'>(
-    'all',
-  );
-  const [chainFilter, setChainFilter] = useState<Id<'chains'> | 'all'>('all');
-  const [profileFilter] = useState<Id<'profiles'> | 'all'>('all');
-  const [triggerTypeFilter] = useState<'interval' | 'cron' | 'all'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [terminatingId, setTerminatingId] = useState<Id<'executables'> | null>(
-    null,
-  );
-  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
-  const [selectedExecutable, setSelectedExecutable] = useState<{
-    id: Id<'executables'>;
-    name: string;
-    status: 'active' | 'paused';
-  } | null>(null);
-
-  const chains = useQuery(api.query.chain.getAllChains);
+  const [filters, setFilters] = useState<ExecutablesFiltersState>({
+    status: 'all',
+    chain: 'all',
+    profile: 'all',
+    triggerType: 'all',
+    searchQuery: '',
+  });
 
   const executables = useQuery(
     api.query.executable.getExecutablesByOrganization,
     {
       organizationId,
       filters: {
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        chainId: chainFilter !== 'all' ? chainFilter : undefined,
-        profileId: profileFilter !== 'all' ? profileFilter : undefined,
+        status: filters.status !== 'all' ? filters.status : undefined,
+        chainId: filters.chain !== 'all' ? filters.chain : undefined,
+        profileId: filters.profile !== 'all' ? filters.profile : undefined,
         triggerType:
-          triggerTypeFilter !== 'all' ? triggerTypeFilter : undefined,
+          filters.triggerType !== 'all' ? filters.triggerType : undefined,
       },
     },
   );
 
   const filteredExecutables = executables?.filter((executable) => {
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
       return (
         executable.name.toLowerCase().includes(query) ||
         executable.profile.alias.toLowerCase().includes(query) ||
@@ -139,262 +61,17 @@ export function ExecutablesList({ organizationId }: ExecutablesListProps) {
     return true;
   });
 
-  const handleTerminate = async () => {
-    if (!selectedExecutable) return;
-    if (selectedExecutable.status !== 'paused') {
-      toast.error('Pause this executable before terminating it');
-      return;
-    }
-    setTerminatingId(selectedExecutable.id);
-    try {
-      await terminateExecutable({ executableId: selectedExecutable.id });
-      toast.success('Executable terminated successfully');
-      setShowTerminateDialog(false);
-      setSelectedExecutable(null);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to terminate executable',
-      );
-    } finally {
-      setTerminatingId(null);
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filters:</span>
-            </div>
-            <div className="min-w-[150px]">
-              <Select
-                value={chainFilter}
-                onValueChange={(value) =>
-                  setChainFilter(value as typeof chainFilter)
-                }
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="All Networks" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Networks</SelectItem>
-                  {chains
-                    ?.sort((a, b) => a.chainId - b.chainId)
-                    .map((chain) => (
-                      <SelectItem key={chain._id} value={chain._id}>
-                        {getChainName(chain.chainId)}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="min-w-[150px]">
-              <Select
-                value={statusFilter}
-                onValueChange={(value) =>
-                  setStatusFilter(value as typeof statusFilter)
-                }
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Creation date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="pt-6">
-          {filteredExecutables === undefined ? (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-sm text-muted-foreground">Loading...</p>
-            </div>
-          ) : filteredExecutables.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Play className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground">
-                No executables found
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[300px]">
-                    Status / Task name
-                  </TableHead>
-                  <TableHead>Network</TableHead>
-                  <TableHead>Profile</TableHead>
-                  <TableHead>Trigger</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead className="w-[50px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredExecutables.map((executable) => (
-                  <TableRow
-                    key={executable.id}
-                    className="cursor-pointer hover:bg-accent/50"
-                    onClick={() => {
-                      navigate({
-                        to: '/executables/$executableId',
-                        params: { executableId: executable.id as string },
-                      });
-                    }}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`h-2 w-2 rounded-full ${getNetworkColor(executable.chain.chainId)}`}
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{executable.name}</span>
-                          <Badge
-                            variant={getStatusBadgeVariant(executable.status)}
-                            className="text-xs w-fit mt-1"
-                          >
-                            {executable.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">
-                          {getChainName(executable.chain.chainId)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {executable.profile.alias}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm">
-                          {executable.trigger.type === 'cron'
-                            ? 'Cron'
-                            : 'Interval'}
-                        </span>
-                        {executable.trigger.type === 'cron' && (
-                          <span className="text-xs text-muted-foreground font-mono">
-                            {executable.trigger.schedule}
-                          </span>
-                        )}
-                        {executable.trigger.type === 'interval' && (
-                          <span className="text-xs text-muted-foreground">
-                            Every {executable.trigger.interval}s
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm">
-                          {formatDate(executable.updatedAt)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          Created {formatDate(executable.createdAt)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => {
-                              setSelectedExecutable({
-                                id: executable.id,
-                                name: executable.name,
-                                status: executable.status,
-                              });
-                              setShowTerminateDialog(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Terminate
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Terminate Confirmation Dialog */}
-      <Dialog open={showTerminateDialog} onOpenChange={setShowTerminateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Terminate Executable</DialogTitle>
-            <DialogDescription>
-              {selectedExecutable?.status !== 'paused'
-                ? 'Pause the executable before terminating it. Termination is only allowed for paused executables.'
-                : `Are you sure you want to terminate "${selectedExecutable?.name}"? This will stop the cron job (if running) and permanently delete the executable. This action cannot be undone.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowTerminateDialog(false);
-                setSelectedExecutable(null);
-              }}
-              disabled={terminatingId !== null}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleTerminate}
-              disabled={
-                terminatingId !== null ||
-                selectedExecutable?.status !== 'paused'
-              }
-            >
-              {terminatingId ? 'Terminating...' : 'Terminate'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Executables</CardTitle>
+        <CardDescription>Search and filter your executables</CardDescription>
+        <Separator className="my-2" />
+        <ExecutablesFilters filters={filters} onFiltersChange={setFilters} />
+      </CardHeader>
+      <CardContent className="px-0">
+        <ExecutablesTable executables={filteredExecutables} />
+      </CardContent>
+    </Card>
   );
 }

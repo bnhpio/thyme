@@ -122,7 +122,6 @@ export const signInAction = createServerFn({ method: 'POST' })
         refreshToken?: string;
         code?: string;
       };
-
       const convexUrl = getConvexUrl();
       const client = new ConvexHttpClient(convexUrl);
       const cookieOptions = getCookieOptions(!isLocalhost());

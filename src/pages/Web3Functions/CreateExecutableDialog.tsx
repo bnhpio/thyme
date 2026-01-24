@@ -43,6 +43,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerPopover } from '@/components/ui/time-picker-popover';
+import { useModal } from '@/hooks/use-modal';
 import { parseOpenAPISchema, type SchemaField } from './schema-utils';
 
 interface CreateExecutableDialogProps {
@@ -52,6 +53,14 @@ interface CreateExecutableDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+}
+
+interface CreateExecutableFormProps {
+  taskId: Id<'tasks'>;
+  storageId: Id<'_storage'>;
+  organizationId: Id<'organizations'>;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 function getChainName(chainId: number): string {
@@ -270,14 +279,14 @@ function renderSchemaField(
   }
 }
 
-export function CreateExecutableDialog({
+// Internal form component for reuse
+function CreateExecutableForm({
   taskId,
   storageId,
   organizationId,
-  isOpen,
-  onOpenChange,
   onSuccess,
-}: CreateExecutableDialogProps) {
+  onCancel,
+}: CreateExecutableFormProps) {
   const createExecutable = useAction(api.action.executable.createExecutable);
   const getTaskSchema = useAction(api.action.task.getTaskSchema);
   const chains = useQuery(api.query.chain.getAllChains, {});
@@ -407,9 +416,8 @@ export function CreateExecutableDialog({
         });
 
         toast.success('Executable task created successfully');
-        onOpenChange(false);
         form.reset();
-        onSuccess();
+        onSuccess?.();
       } catch (error) {
         toast.error(
           error instanceof Error
@@ -420,9 +428,9 @@ export function CreateExecutableDialog({
     },
   });
 
-  // Fetch schema when dialog opens
+  // Fetch schema when component mounts
   useEffect(() => {
-    if (isOpen && storageId) {
+    if (storageId) {
       setIsLoadingSchema(true);
       getTaskSchema({ storageId })
         .then((schemaJson) => {
@@ -442,25 +450,596 @@ export function CreateExecutableDialog({
           setIsLoadingSchema(false);
         });
     }
-  }, [isOpen, storageId, getTaskSchema]);
+  }, [storageId, getTaskSchema]);
 
   useEffect(() => {
-    if (isOpen) {
-      form.reset();
-      form.setFieldValue('intervalStartDate', getDefaultDate());
-      form.setFieldValue('intervalStartTime', getDefaultTime());
-      form.setFieldValue('intervalSeconds', 60);
-      form.setFieldValue('cronUntilDate', undefined);
-      form.setFieldValue('cronUntilTime', '');
-      form.setFieldValue('args', getInitialArgs());
-    }
-  }, [isOpen, form, schemaFields]);
+    form.reset();
+    form.setFieldValue('intervalStartDate', getDefaultDate());
+    form.setFieldValue('intervalStartTime', getDefaultTime());
+    form.setFieldValue('intervalSeconds', 60);
+    form.setFieldValue('cronUntilDate', undefined);
+    form.setFieldValue('cronUntilTime', '');
+    form.setFieldValue('args', getInitialArgs());
+  }, [form, schemaFields]);
 
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.handleSubmit();
+      }}
+    >
+      <div className="space-y-6 py-4">
+        {/* Name Field */}
+        <form.Field
+          name="name"
+          validators={{
+            onChange: ({ value }) => {
+              if (!value || !value.trim()) {
+                return 'Task name is required';
+              }
+              return undefined;
+            },
+          }}
+        >
+          {(field) => (
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium">
+                Task Name
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <Input
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+                placeholder="e.g., Daily Price Check"
+                className="h-10"
+              />
+              {field.state.meta.errors && (
+                <p className="text-xs text-destructive">
+                  {field.state.meta.errors[0]}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Give this executable task a descriptive name
+              </p>
+            </div>
+          )}
+        </form.Field>
+
+        <Separator />
+
+        {/* Trigger Type Cards */}
+        <form.Field name="triggerType">
+          {(field) => (
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium">Trigger Type</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Card
+                  className={'transition-all opacity-50 cursor-not-allowed'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="h-5 w-5" />
+                      <CardTitle className="text-base">Interval</CardTitle>
+                      <Badge variant="secondary" className="ml-auto text-xs">
+                        Coming soon
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-xs">
+                      Execute the function at regular intervals
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card
+                  className={`cursor-pointer transition-all hover:border-primary ${
+                    field.state.value === 'cron'
+                      ? 'border-primary bg-primary/5'
+                      : ''
+                  }`}
+                  onClick={() => field.handleChange('cron')}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-5 w-5" />
+                      <CardTitle className="text-base">Cron Schedule</CardTitle>
+                    </div>
+                    <CardDescription className="text-xs">
+                      Execute the function on a recurring schedule
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </div>
+          )}
+        </form.Field>
+
+        {/* Trigger Configuration */}
+        <form.Subscribe selector={(state) => state.values.triggerType}>
+          {(triggerType) =>
+            triggerType === 'interval' ? (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                <h3 className="text-sm font-semibold">
+                  Interval Configuration
+                </h3>
+                <form.Field name="intervalSeconds">
+                  {(field) => (
+                    <div className="space-y-2.5">
+                      <Label className="text-sm font-medium">
+                        Interval (seconds)
+                        <span className="text-destructive ml-1">*</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={field.state.value}
+                        onChange={(e) =>
+                          field.handleChange(
+                            Number.parseInt(e.target.value, 10) || 1,
+                          )
+                        }
+                        placeholder="e.g., 60 (every minute)"
+                        className="h-10"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        How often the function should execute (in seconds)
+                      </p>
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="intervalStartDate">
+                  {(field) => (
+                    <form.Field name="intervalStartTime">
+                      {(timeField) => {
+                        const isPast = isDateTimeInPast(
+                          field.state.value,
+                          timeField.state.value,
+                        );
+                        return (
+                          <div className="space-y-2.5">
+                            <Label className="text-sm font-medium">
+                              Start Date (optional)
+                            </Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="w-full justify-start text-left font-normal h-10"
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {field.state.value &&
+                                  field.state.value instanceof Date &&
+                                  !Number.isNaN(field.state.value.getTime()) ? (
+                                    format(field.state.value, 'PPP')
+                                  ) : (
+                                    <span>Pick a date (optional)</span>
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={
+                                    field.state.value &&
+                                    field.state.value instanceof Date &&
+                                    !Number.isNaN(field.state.value.getTime())
+                                      ? field.state.value
+                                      : undefined
+                                  }
+                                  onSelect={(date) => {
+                                    field.handleChange(date);
+                                    // Check if combined date+time is in past
+                                    if (
+                                      date &&
+                                      timeField.state.value &&
+                                      isDateTimeInPast(
+                                        date,
+                                        timeField.state.value,
+                                      )
+                                    ) {
+                                      toast.error(
+                                        'The selected date and time must be in the future',
+                                      );
+                                    }
+                                  }}
+                                  disabled={(date) => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    return date < today;
+                                  }}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            {isPast && (
+                              <p className="text-xs text-destructive">
+                                The selected date and time is in the past
+                              </p>
+                            )}
+                          </div>
+                        );
+                      }}
+                    </form.Field>
+                  )}
+                </form.Field>
+                <form.Field name="intervalStartDate">
+                  {(dateField) => (
+                    <form.Field name="intervalStartTime">
+                      {(field) => {
+                        const localTimeDisplay = getLocalTimeFromUTC(
+                          dateField.state.value,
+                          field.state.value,
+                        );
+                        const isPast = isDateTimeInPast(
+                          dateField.state.value,
+                          field.state.value,
+                        );
+                        return (
+                          <div className="space-y-2.5">
+                            <Label className="text-sm font-medium">
+                              Start Time (UTC) (optional)
+                            </Label>
+                            <TimePickerPopover
+                              value={field.state.value}
+                              onChange={(value) => {
+                                field.handleChange(value);
+                                // Check if combined date+time is in past
+                                if (
+                                  dateField.state.value &&
+                                  value &&
+                                  isDateTimeInPast(dateField.state.value, value)
+                                ) {
+                                  toast.error(
+                                    'The selected date and time must be in the future',
+                                  );
+                                }
+                              }}
+                              placeholder="Pick a time (optional)"
+                            />
+                            {localTimeDisplay && (
+                              <p className="text-xs text-muted-foreground">
+                                {localTimeDisplay}
+                              </p>
+                            )}
+                            {isPast && (
+                              <p className="text-xs text-destructive">
+                                The selected date and time is in the past
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Leave empty to start immediately
+                            </p>
+                          </div>
+                        );
+                      }}
+                    </form.Field>
+                  )}
+                </form.Field>
+              </div>
+            ) : (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                <h3 className="text-sm font-semibold">
+                  Cron Schedule Configuration
+                </h3>
+                <form.Field name="cronSchedule">
+                  {(field) => {
+                    const humanReadable = formatCronSchedule(field.state.value);
+                    return (
+                      <div className="space-y-2.5">
+                        <Label className="text-sm font-medium">
+                          Cron Schedule
+                        </Label>
+                        <Input
+                          placeholder="e.g., 0 0 * * * (daily at midnight)"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          className="h-10"
+                        />
+                        {humanReadable ? (
+                          <p className="text-xs text-primary font-medium">
+                            {humanReadable}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Use standard cron format: minute hour day month
+                            weekday
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }}
+                </form.Field>
+              </div>
+            )
+          }
+        </form.Subscribe>
+
+        <Separator />
+
+        {/* Chain and Profile */}
+        <form.Subscribe selector={(state) => state.values.selectedChainId}>
+          {(selectedChainId) => {
+            const filteredProfiles = profiles
+              ? selectedChainId
+                ? profiles.filter(
+                    (profile) => profile.chain === selectedChainId,
+                  )
+                : profiles
+              : [];
+
+            return (
+              <div className="grid grid-cols-2 gap-4">
+                <form.Field name="selectedChainId">
+                  {(field) => (
+                    <div className="space-y-2.5">
+                      <Label className="text-sm font-medium">Chain</Label>
+                      {chains === undefined ? (
+                        <div className="h-10 flex items-center text-sm text-muted-foreground">
+                          Loading chains...
+                        </div>
+                      ) : chains.length === 0 ? (
+                        <div className="h-10 flex items-center text-sm text-muted-foreground">
+                          No chains available
+                        </div>
+                      ) : (
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(value) => {
+                            field.handleChange(value as Id<'chains'>);
+                            // Clear profile if it doesn't match the new chain
+                            const currentProfileId =
+                              form.getFieldValue('selectedProfileId');
+                            if (currentProfileId) {
+                              const currentProfile = profiles?.find(
+                                (p) => p._id === currentProfileId,
+                              );
+                              if (
+                                currentProfile &&
+                                currentProfile.chain !== value
+                              ) {
+                                form.setFieldValue('selectedProfileId', '');
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full h-10">
+                            <SelectValue placeholder="Select a chain" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {chains
+                              .sort((a, b) => a.chainId - b.chainId)
+                              .map((chain) => (
+                                <SelectItem key={chain._id} value={chain._id}>
+                                  {getChainName(chain.chainId)} ({chain.chainId}
+                                  )
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  )}
+                </form.Field>
+
+                <form.Field name="selectedProfileId">
+                  {(field) => {
+                    const selectedProfile = profiles?.find(
+                      (p) => p._id === field.state.value,
+                    );
+                    return (
+                      <div className="space-y-2.5">
+                        <Label className="text-sm font-medium">Profile</Label>
+                        {profiles === undefined ? (
+                          <div className="h-10 flex items-center text-sm text-muted-foreground">
+                            Loading profiles...
+                          </div>
+                        ) : filteredProfiles.length === 0 ? (
+                          <div className="h-10 flex items-center text-sm text-muted-foreground">
+                            {selectedChainId
+                              ? 'No profiles available for selected chain'
+                              : 'No profiles available'}
+                          </div>
+                        ) : (
+                          <Select
+                            value={field.state.value}
+                            onValueChange={(value) => {
+                              field.handleChange(value as Id<'profiles'>);
+                              // Auto-fill chain when profile is selected
+                              const profile = profiles?.find(
+                                (p) => p._id === value,
+                              );
+                              if (profile) {
+                                form.setFieldValue(
+                                  'selectedChainId',
+                                  profile.chain,
+                                );
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-full h-10">
+                              <SelectValue placeholder="Select a profile" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {filteredProfiles.map((profile) => (
+                                <SelectItem
+                                  key={profile._id}
+                                  value={profile._id}
+                                >
+                                  {profile.alias} (Chain {profile.chainId})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                        {selectedProfile?.customRpcUrl && (
+                          <p className="text-xs text-muted-foreground">
+                            Custom RPC:{' '}
+                            <span className="font-mono">
+                              {selectedProfile.customRpcUrl.length > 50
+                                ? `${selectedProfile.customRpcUrl.substring(0, 50)}...`
+                                : selectedProfile.customRpcUrl}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }}
+                </form.Field>
+              </div>
+            );
+          }}
+        </form.Subscribe>
+
+        <Separator />
+
+        {/* Schema-based Arguments */}
+        {isLoadingSchema ? (
+          <div className="p-4 border rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              Loading function schema...
+            </p>
+          </div>
+        ) : schemaFields.length > 0 ? (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Function Arguments</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Configure the parameters for this function
+              </p>
+            </div>
+            <form.Field name="args">
+              {(field) => (
+                <div className="space-y-4">
+                  {schemaFields.map((schemaField) => (
+                    <div key={schemaField.name} className="space-y-2.5">
+                      <Label className="text-sm font-medium">
+                        {schemaField.name}
+                        {schemaField.required && (
+                          <span className="text-destructive ml-1">*</span>
+                        )}
+                      </Label>
+                      {schemaField.description && (
+                        <p className="text-xs text-muted-foreground">
+                          {schemaField.description}
+                        </p>
+                      )}
+                      {renderSchemaField(
+                        schemaField,
+                        (field.state.value as Record<string, unknown>)?.[
+                          schemaField.name
+                        ],
+                        (value) => {
+                          const currentArgs = {
+                            ...(field.state.value as Record<string, unknown>),
+                          };
+                          currentArgs[schemaField.name] = value;
+                          field.handleChange(currentArgs);
+                        },
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </form.Field>
+          </div>
+        ) : (
+          <div className="p-4 border rounded-lg bg-muted/30">
+            <p className="text-sm text-muted-foreground">
+              No schema available. Arguments will be passed as empty object.
+            </p>
+          </div>
+        )}
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <form.Subscribe
+          selector={(state) => ({
+            isSubmitting: state.isSubmitting,
+            name: state.values.name,
+            selectedChainId: state.values.selectedChainId,
+            selectedProfileId: state.values.selectedProfileId,
+            triggerType: state.values.triggerType,
+            intervalSeconds: state.values.intervalSeconds,
+            cronSchedule: state.values.cronSchedule,
+          })}
+        >
+          {({
+            isSubmitting,
+            name,
+            selectedChainId,
+            selectedProfileId,
+            triggerType,
+            intervalSeconds,
+            cronSchedule,
+          }) => (
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting ||
+                !name ||
+                !name.trim() ||
+                !selectedChainId ||
+                !selectedProfileId ||
+                (triggerType === 'interval' &&
+                  (!intervalSeconds || intervalSeconds <= 0)) ||
+                (triggerType === 'cron' &&
+                  (!cronSchedule || !cronSchedule.trim()))
+              }
+            >
+              {isSubmitting ? 'Creating...' : 'Create Executable'}
+            </Button>
+          )}
+        </form.Subscribe>
+      </DialogFooter>
+    </form>
+  );
+}
+
+// Wrapper for useModal pattern
+export function CreateExecutableModalContent({
+  taskId,
+  storageId,
+  organizationId,
+  onSuccess,
+}: Omit<CreateExecutableFormProps, 'onCancel'>) {
+  const { close } = useModal();
+
+  return (
+    <CreateExecutableForm
+      taskId={taskId}
+      storageId={storageId}
+      organizationId={organizationId}
+      onSuccess={() => {
+        onSuccess?.();
+        close();
+      }}
+      onCancel={close}
+    />
+  );
+}
+
+// Maintain backward compatibility with controlled Dialog
+export function CreateExecutableDialog({
+  taskId,
+  storageId,
+  organizationId,
+  isOpen,
+  onOpenChange,
+  onSuccess,
+}: CreateExecutableDialogProps) {
   const handleOpenChange = (open: boolean) => {
     onOpenChange(open);
-    if (!open) {
-      form.reset();
-    }
   };
 
   return (
@@ -472,576 +1051,16 @@ export function CreateExecutableDialog({
             Configure when and how this function should be executed
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
+        <CreateExecutableForm
+          taskId={taskId}
+          storageId={storageId}
+          organizationId={organizationId}
+          onSuccess={() => {
+            onSuccess();
+            onOpenChange(false);
           }}
-        >
-          <div className="space-y-6 py-4">
-            {/* Name Field */}
-            <form.Field
-              name="name"
-              validators={{
-                onChange: ({ value }) => {
-                  if (!value || !value.trim()) {
-                    return 'Task name is required';
-                  }
-                  return undefined;
-                },
-              }}
-            >
-              {(field) => (
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-medium">
-                    Task Name
-                    <span className="text-destructive ml-1">*</span>
-                  </Label>
-                  <Input
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                    placeholder="e.g., Daily Price Check"
-                    className="h-10"
-                  />
-                  {field.state.meta.errors && (
-                    <p className="text-xs text-destructive">
-                      {field.state.meta.errors[0]}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Give this executable task a descriptive name
-                  </p>
-                </div>
-              )}
-            </form.Field>
-
-            <Separator />
-
-            {/* Trigger Type Cards */}
-            <form.Field name="triggerType">
-              {(field) => (
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-medium">Trigger Type</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card
-                      className={'transition-all opacity-50 cursor-not-allowed'}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center gap-2">
-                          <Repeat className="h-5 w-5" />
-                          <CardTitle className="text-base">Interval</CardTitle>
-                          <Badge
-                            variant="secondary"
-                            className="ml-auto text-xs"
-                          >
-                            Coming soon
-                          </Badge>
-                        </div>
-                        <CardDescription className="text-xs">
-                          Execute the function at regular intervals
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                    <Card
-                      className={`cursor-pointer transition-all hover:border-primary ${
-                        field.state.value === 'cron'
-                          ? 'border-primary bg-primary/5'
-                          : ''
-                      }`}
-                      onClick={() => field.handleChange('cron')}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="h-5 w-5" />
-                          <CardTitle className="text-base">
-                            Cron Schedule
-                          </CardTitle>
-                        </div>
-                        <CardDescription className="text-xs">
-                          Execute the function on a recurring schedule
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  </div>
-                </div>
-              )}
-            </form.Field>
-
-            {/* Trigger Configuration */}
-            <form.Subscribe selector={(state) => state.values.triggerType}>
-              {(triggerType) =>
-                triggerType === 'interval' ? (
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                    <h3 className="text-sm font-semibold">
-                      Interval Configuration
-                    </h3>
-                    <form.Field name="intervalSeconds">
-                      {(field) => (
-                        <div className="space-y-2.5">
-                          <Label className="text-sm font-medium">
-                            Interval (seconds)
-                            <span className="text-destructive ml-1">*</span>
-                          </Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={field.state.value}
-                            onChange={(e) =>
-                              field.handleChange(
-                                Number.parseInt(e.target.value, 10) || 1,
-                              )
-                            }
-                            placeholder="e.g., 60 (every minute)"
-                            className="h-10"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            How often the function should execute (in seconds)
-                          </p>
-                        </div>
-                      )}
-                    </form.Field>
-                    <form.Field name="intervalStartDate">
-                      {(field) => (
-                        <form.Field name="intervalStartTime">
-                          {(timeField) => {
-                            const isPast = isDateTimeInPast(
-                              field.state.value,
-                              timeField.state.value,
-                            );
-                            return (
-                              <div className="space-y-2.5">
-                                <Label className="text-sm font-medium">
-                                  Start Date (optional)
-                                </Label>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      className="w-full justify-start text-left font-normal h-10"
-                                    >
-                                      <CalendarIcon className="mr-2 h-4 w-4" />
-                                      {field.state.value &&
-                                      field.state.value instanceof Date &&
-                                      !Number.isNaN(
-                                        field.state.value.getTime(),
-                                      ) ? (
-                                        format(field.state.value, 'PPP')
-                                      ) : (
-                                        <span>Pick a date (optional)</span>
-                                      )}
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent
-                                    className="w-auto p-0"
-                                    align="start"
-                                  >
-                                    <Calendar
-                                      mode="single"
-                                      selected={
-                                        field.state.value &&
-                                        field.state.value instanceof Date &&
-                                        !Number.isNaN(
-                                          field.state.value.getTime(),
-                                        )
-                                          ? field.state.value
-                                          : undefined
-                                      }
-                                      onSelect={(date) => {
-                                        field.handleChange(date);
-                                        // Check if combined date+time is in past
-                                        if (
-                                          date &&
-                                          timeField.state.value &&
-                                          isDateTimeInPast(
-                                            date,
-                                            timeField.state.value,
-                                          )
-                                        ) {
-                                          toast.error(
-                                            'The selected date and time must be in the future',
-                                          );
-                                        }
-                                      }}
-                                      disabled={(date) => {
-                                        const today = new Date();
-                                        today.setHours(0, 0, 0, 0);
-                                        return date < today;
-                                      }}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                                {isPast && (
-                                  <p className="text-xs text-destructive">
-                                    The selected date and time is in the past
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          }}
-                        </form.Field>
-                      )}
-                    </form.Field>
-                    <form.Field name="intervalStartDate">
-                      {(dateField) => (
-                        <form.Field name="intervalStartTime">
-                          {(field) => {
-                            const localTimeDisplay = getLocalTimeFromUTC(
-                              dateField.state.value,
-                              field.state.value,
-                            );
-                            const isPast = isDateTimeInPast(
-                              dateField.state.value,
-                              field.state.value,
-                            );
-                            return (
-                              <div className="space-y-2.5">
-                                <Label className="text-sm font-medium">
-                                  Start Time (UTC) (optional)
-                                </Label>
-                                <TimePickerPopover
-                                  value={field.state.value}
-                                  onChange={(value) => {
-                                    field.handleChange(value);
-                                    // Check if combined date+time is in past
-                                    if (
-                                      dateField.state.value &&
-                                      value &&
-                                      isDateTimeInPast(
-                                        dateField.state.value,
-                                        value,
-                                      )
-                                    ) {
-                                      toast.error(
-                                        'The selected date and time must be in the future',
-                                      );
-                                    }
-                                  }}
-                                  placeholder="Pick a time (optional)"
-                                />
-                                {localTimeDisplay && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {localTimeDisplay}
-                                  </p>
-                                )}
-                                {isPast && (
-                                  <p className="text-xs text-destructive">
-                                    The selected date and time is in the past
-                                  </p>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                  Leave empty to start immediately
-                                </p>
-                              </div>
-                            );
-                          }}
-                        </form.Field>
-                      )}
-                    </form.Field>
-                  </div>
-                ) : (
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                    <h3 className="text-sm font-semibold">
-                      Cron Schedule Configuration
-                    </h3>
-                    <form.Field name="cronSchedule">
-                      {(field) => {
-                        const humanReadable = formatCronSchedule(
-                          field.state.value,
-                        );
-                        return (
-                          <div className="space-y-2.5">
-                            <Label className="text-sm font-medium">
-                              Cron Schedule
-                            </Label>
-                            <Input
-                              placeholder="e.g., 0 0 * * * (daily at midnight)"
-                              value={field.state.value}
-                              onChange={(e) =>
-                                field.handleChange(e.target.value)
-                              }
-                              className="h-10"
-                            />
-                            {humanReadable ? (
-                              <p className="text-xs text-primary font-medium">
-                                {humanReadable}
-                              </p>
-                            ) : (
-                              <p className="text-xs text-muted-foreground">
-                                Use standard cron format: minute hour day month
-                                weekday
-                              </p>
-                            )}
-                          </div>
-                        );
-                      }}
-                    </form.Field>
-                  </div>
-                )
-              }
-            </form.Subscribe>
-
-            <Separator />
-
-            {/* Chain and Profile */}
-            <form.Subscribe selector={(state) => state.values.selectedChainId}>
-              {(selectedChainId) => {
-                const filteredProfiles = profiles
-                  ? selectedChainId
-                    ? profiles.filter(
-                        (profile) => profile.chain === selectedChainId,
-                      )
-                    : profiles
-                  : [];
-
-                return (
-                  <div className="grid grid-cols-2 gap-4">
-                    <form.Field name="selectedChainId">
-                      {(field) => (
-                        <div className="space-y-2.5">
-                          <Label className="text-sm font-medium">Chain</Label>
-                          {chains === undefined ? (
-                            <div className="h-10 flex items-center text-sm text-muted-foreground">
-                              Loading chains...
-                            </div>
-                          ) : chains.length === 0 ? (
-                            <div className="h-10 flex items-center text-sm text-muted-foreground">
-                              No chains available
-                            </div>
-                          ) : (
-                            <Select
-                              value={field.state.value}
-                              onValueChange={(value) => {
-                                field.handleChange(value as Id<'chains'>);
-                                // Clear profile if it doesn't match the new chain
-                                const currentProfileId =
-                                  form.getFieldValue('selectedProfileId');
-                                if (currentProfileId) {
-                                  const currentProfile = profiles?.find(
-                                    (p) => p._id === currentProfileId,
-                                  );
-                                  if (
-                                    currentProfile &&
-                                    currentProfile.chain !== value
-                                  ) {
-                                    form.setFieldValue('selectedProfileId', '');
-                                  }
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="w-full h-10">
-                                <SelectValue placeholder="Select a chain" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {chains
-                                  .sort((a, b) => a.chainId - b.chainId)
-                                  .map((chain) => (
-                                    <SelectItem
-                                      key={chain._id}
-                                      value={chain._id}
-                                    >
-                                      {getChainName(chain.chainId)} (
-                                      {chain.chainId})
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      )}
-                    </form.Field>
-
-                    <form.Field name="selectedProfileId">
-                      {(field) => {
-                        const selectedProfile = profiles?.find(
-                          (p) => p._id === field.state.value,
-                        );
-                        return (
-                          <div className="space-y-2.5">
-                            <Label className="text-sm font-medium">
-                              Profile
-                            </Label>
-                            {profiles === undefined ? (
-                              <div className="h-10 flex items-center text-sm text-muted-foreground">
-                                Loading profiles...
-                              </div>
-                            ) : filteredProfiles.length === 0 ? (
-                              <div className="h-10 flex items-center text-sm text-muted-foreground">
-                                {selectedChainId
-                                  ? 'No profiles available for selected chain'
-                                  : 'No profiles available'}
-                              </div>
-                            ) : (
-                              <Select
-                                value={field.state.value}
-                                onValueChange={(value) => {
-                                  field.handleChange(value as Id<'profiles'>);
-                                  // Auto-fill chain when profile is selected
-                                  const profile = profiles?.find(
-                                    (p) => p._id === value,
-                                  );
-                                  if (profile) {
-                                    form.setFieldValue(
-                                      'selectedChainId',
-                                      profile.chain,
-                                    );
-                                  }
-                                }}
-                              >
-                                <SelectTrigger className="w-full h-10">
-                                  <SelectValue placeholder="Select a profile" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {filteredProfiles.map((profile) => (
-                                    <SelectItem
-                                      key={profile._id}
-                                      value={profile._id}
-                                    >
-                                      {profile.alias} (Chain {profile.chainId})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                            {selectedProfile?.customRpcUrl && (
-                              <p className="text-xs text-muted-foreground">
-                                Custom RPC:{' '}
-                                <span className="font-mono">
-                                  {selectedProfile.customRpcUrl.length > 50
-                                    ? `${selectedProfile.customRpcUrl.substring(0, 50)}...`
-                                    : selectedProfile.customRpcUrl}
-                                </span>
-                              </p>
-                            )}
-                          </div>
-                        );
-                      }}
-                    </form.Field>
-                  </div>
-                );
-              }}
-            </form.Subscribe>
-
-            <Separator />
-
-            {/* Schema-based Arguments */}
-            {isLoadingSchema ? (
-              <div className="p-4 border rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Loading function schema...
-                </p>
-              </div>
-            ) : schemaFields.length > 0 ? (
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">
-                    Function Arguments
-                  </Label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Configure the parameters for this function
-                  </p>
-                </div>
-                <form.Field name="args">
-                  {(field) => (
-                    <div className="space-y-4">
-                      {schemaFields.map((schemaField) => (
-                        <div key={schemaField.name} className="space-y-2.5">
-                          <Label className="text-sm font-medium">
-                            {schemaField.name}
-                            {schemaField.required && (
-                              <span className="text-destructive ml-1">*</span>
-                            )}
-                          </Label>
-                          {schemaField.description && (
-                            <p className="text-xs text-muted-foreground">
-                              {schemaField.description}
-                            </p>
-                          )}
-                          {renderSchemaField(
-                            schemaField,
-                            (field.state.value as Record<string, unknown>)?.[
-                              schemaField.name
-                            ],
-                            (value) => {
-                              const currentArgs = {
-                                ...(field.state.value as Record<
-                                  string,
-                                  unknown
-                                >),
-                              };
-                              currentArgs[schemaField.name] = value;
-                              field.handleChange(currentArgs);
-                            },
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </form.Field>
-              </div>
-            ) : (
-              <div className="p-4 border rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground">
-                  No schema available. Arguments will be passed as empty object.
-                </p>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <form.Subscribe
-              selector={(state) => ({
-                isSubmitting: state.isSubmitting,
-                name: state.values.name,
-                selectedChainId: state.values.selectedChainId,
-                selectedProfileId: state.values.selectedProfileId,
-                triggerType: state.values.triggerType,
-                intervalSeconds: state.values.intervalSeconds,
-                cronSchedule: state.values.cronSchedule,
-              })}
-            >
-              {({
-                isSubmitting,
-                name,
-                selectedChainId,
-                selectedProfileId,
-                triggerType,
-                intervalSeconds,
-                cronSchedule,
-              }) => (
-                <Button
-                  type="submit"
-                  disabled={
-                    isSubmitting ||
-                    !name ||
-                    !name.trim() ||
-                    !selectedChainId ||
-                    !selectedProfileId ||
-                    (triggerType === 'interval' &&
-                      (!intervalSeconds || intervalSeconds <= 0)) ||
-                    (triggerType === 'cron' &&
-                      (!cronSchedule || !cronSchedule.trim()))
-                  }
-                >
-                  {isSubmitting ? 'Creating...' : 'Create Executable'}
-                </Button>
-              )}
-            </form.Subscribe>
-          </DialogFooter>
-        </form>
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );

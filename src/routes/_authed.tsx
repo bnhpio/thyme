@@ -5,7 +5,6 @@ export const Route = createFileRoute('/_authed')({
   component: RouteComponent,
 
   beforeLoad: async () => {
-    console.log('beforeLoad');
     const { isAuthenticated } = await import('@/lib/tanstack-auth/server');
     const authed = await isAuthenticated();
     if (!authed) {

@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router';
 import { ConvexReactClient } from 'convex/react';
 import { NotFound } from '@/components/base/NotFound/NotFound';
+import { ModalProvider } from '@/components/modal/modal-provider';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { AutumnWrapper } from '@/integrations/autumn/provider';
 import { ConvexAuthTanstackProvider } from '@/lib/tanstack-auth';
@@ -73,23 +74,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           refreshTokenAction={() => refreshTokenAction()}
           verbose
         >
-          {' '}
-          <ThemeProvider>
-            <AutumnWrapper>
-              {children}
-              {/* <TanStackDevtools
-              config={{
-                position: 'bottom-right',
-              }}
-              plugins={[
-                {
-                  name: 'Tanstack Router',
-                  render: <TanStackRouterDevtoolsPanel />,
-                },
-                TanStackQueryDevtools,
-              ]}
-            /> */}
-            </AutumnWrapper>
+          <ThemeProvider theme="dark">
+            <ModalProvider>
+              <AutumnWrapper>{children}</AutumnWrapper>
+            </ModalProvider>
           </ThemeProvider>
         </ConvexAuthTanstackProvider>
 

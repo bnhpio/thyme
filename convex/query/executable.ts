@@ -53,6 +53,8 @@ export const getExecutablesByOrganization = query({
           startAt: v.optional(v.number()),
         }),
       ),
+      runs: v.number(),
+      executions: v.number(),
     }),
   ),
   handler: async (ctx, args) => {
@@ -93,6 +95,21 @@ export const getExecutablesByOrganization = query({
         const chain = await ctx.db.get(executable.chain);
         const profile = await ctx.db.get(executable.profile);
         const task = await ctx.db.get(executable.taskId);
+
+        // Count executions for this executable
+        const executions = await ctx.db
+          .query('taskExecutions')
+          .withIndex('by_executable', (q) =>
+            q.eq('executableId', executable._id),
+          )
+          .collect();
+
+        // Runs = total executions, Executions = successful executions
+        const runs = executions.length;
+        const successfulExecutions = executions.filter(
+          (e) => e.status === 'success',
+        ).length;
+
         return {
           id: executable._id,
           taskId: executable.taskId,
@@ -119,6 +136,8 @@ export const getExecutablesByOrganization = query({
             address: profile?.address,
           },
           trigger: executable.trigger,
+          runs,
+          executions: successfulExecutions,
         };
       }),
     );

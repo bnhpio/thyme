@@ -1,6 +1,5 @@
 'use client';
 
-import { ConvexHttpClient } from 'convex/browser';
 import { ConvexProviderWithAuth, type ConvexReactClient } from 'convex/react';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import {

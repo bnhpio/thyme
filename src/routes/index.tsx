@@ -21,7 +21,9 @@ import { CHAINS } from '@/lib/chains';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { code?: string; error?: string } => ({
     code: search.code as string | undefined,
     error: search.error as string | undefined,
   }),

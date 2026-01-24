@@ -170,13 +170,9 @@ export interface FileRoutesByFullPath {
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
-<<<<<<< HEAD
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/docs': typeof DocsIndexRoute
-=======
   '/docs/': typeof DocsIndexRoute
->>>>>>> origin/main
   '/dashboard': typeof AuthedOrganizationDashboardRoute
   '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
@@ -248,13 +244,9 @@ export interface FileRouteTypes {
     | '/organization-setup'
     | '/privacy-policy'
     | '/support'
-<<<<<<< HEAD
     | '/auth/callback'
     | '/auth/signout'
-    | '/docs'
-=======
     | '/docs/'
->>>>>>> origin/main
     | '/dashboard'
     | '/executables'
     | '/profiles'

@@ -1,8 +1,7 @@
 'use node';
 
 import type { SmartWalletClient } from '@account-kit/wallet-client';
-import { simulateCalls } from '@bnhpio/thyme-sdk/onchain';
-import { sandbox } from '@bnhpio/thyme-sdk/sandbox';
+import { Sandbox } from '@deno/sandbox';
 import { v } from 'convex/values';
 import {
   type Address,
@@ -19,6 +18,7 @@ import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import { type ActionCtx, action, internalAction } from '../_generated/server';
 import { autumn } from '../autumn';
+import { simulateCalls } from '../utils/simulateCalls';
 import {
   type AlchemyOptions,
   createAlchemyClient,
@@ -100,6 +100,7 @@ export const _runTask = internalAction({
         taskId: executable.taskId,
         chain: executable.chain,
         profile: executable.profile,
+        organization: executable.organization,
         args: executable.args,
         executionId,
       });
@@ -452,6 +453,7 @@ async function executeTask(
     profile: Id<'profiles'>;
     executableId: Id<'executables'>;
     executionId: Id<'taskExecutions'>;
+    organization: Id<'organizations'>;
     args: string;
   },
 ) {
@@ -522,24 +524,169 @@ async function executeTask(
     throw new Error('PRIVATE_KEY environment variable is not set');
   }
 
-  const result = await sandbox({
-    file: taskCode,
-    context: {
-      userArgs: parsedArgs,
-      secrets: {},
+  // Get Deno Sandbox token
+  const denoToken = process.env.DENO_SANDBOX_TOKEN;
+  if (!denoToken) {
+    throw new Error('DENO_SANDBOX_TOKEN environment variable is not set');
+  }
+
+  // Get RPC URLs:
+  // - sandboxRpcUrl: Used for Deno sandbox and simulation (profile's custom RPC or default)
+  // - defaultRpcUrl: Used for actual on-chain transactions (always default chain RPC)
+  const defaultRpcUrl =
+    chain.rpcUrls.length > 0
+      ? chain.rpcUrls[0]
+      : (() => {
+          throw new Error(
+            `No default RPC URL found for chain ${chain.chainId}`,
+          );
+        })();
+
+  // Use profile's custom RPC for sandbox/simulation if available, otherwise use default
+  const sandboxRpcUrl = profile.customRpcUrl || defaultRpcUrl;
+
+  // Create Deno sandbox with profile's custom RPC (or default)
+  const sandbox = await Sandbox.create({
+    region: 'ams',
+    debug: true,
+    token: denoToken,
+    memoryMb: 1024,
+    env: {
+      RPC_URL: sandboxRpcUrl,
     },
   });
+
+  let result: { canExec: boolean; calls: Call[]; message?: string };
+  const logs: { type: string; message: string }[] = [];
+
+  try {
+    // Write bundled task code to sandbox
+    await sandbox.fs.writeTextFile('task.js', taskCode);
+
+    // Create execution wrapper with logger
+    const wrapperCode = `
+import task from './task.js';
+import { createPublicClient, http } from 'npm:viem@2.44.4';
+
+// BigInt-safe JSON.stringify - override globally so user code can use JSON.stringify with BigInt
+const originalStringify = JSON.stringify;
+JSON.stringify = (value, replacer, space) => {
+  const bigIntReplacer = (key, val) => typeof val === 'bigint' ? val.toString() : val;
+  const combinedReplacer = replacer 
+    ? (key, val) => bigIntReplacer(key, typeof replacer === 'function' ? replacer(key, val) : val)
+    : bigIntReplacer;
+  return originalStringify(value, combinedReplacer, space);
+};
+
+// Logger implementation that outputs with special prefix
+class Logger {
+  static LOG_PREFIX = '__THYME_LOG__';
+  
+  info(message) {
+    console.log(Logger.LOG_PREFIX + JSON.stringify({ type: 'info', message }));
+  }
+  
+  warn(message) {
+    console.log(Logger.LOG_PREFIX + JSON.stringify({ type: 'warn', message }));
+  }
+  
+  error(message) {
+    console.log(Logger.LOG_PREFIX + JSON.stringify({ type: 'error', message }));
+  }
+}
+
+const client = createPublicClient({
+  transport: http(Deno.env.get('RPC_URL'))
+});
+
+const context = {
+  args: ${JSON.stringify(parsedArgs)},
+  client,
+  logger: new Logger()
+};
+
+try {
+  const result = await task.run(context);
+  console.log('__THYME_RESULT__' + JSON.stringify(result));
+} catch (error) {
+  console.error('Task execution error:', error instanceof Error ? error.message : String(error));
+  Deno.exit(1);
+}
+`;
+
+    await sandbox.fs.writeTextFile('wrapper.js', wrapperCode);
+
+    // Execute task - write result to file since stdout capture seems unreliable
+    let stdoutText = '';
+    try {
+      await sandbox.sh`deno run --allow-read --allow-write --allow-net --allow-env wrapper.js > output.txt 2>&1`;
+      // Read output from file
+      stdoutText = await sandbox.fs.readTextFile('output.txt');
+    } catch (sandboxError) {
+      // Try to read output file even on failure to get error details
+      try {
+        stdoutText = await sandbox.fs.readTextFile('output.txt');
+      } catch {
+        // Output file doesn't exist
+      }
+      const errorMessage =
+        sandboxError instanceof Error
+          ? sandboxError.message
+          : String(sandboxError);
+      throw new Error(
+        `Sandbox execution failed: ${errorMessage}\nOutput:\n${stdoutText || '(no output captured)'}`,
+      );
+    }
+
+    const lines = stdoutText.trim().split('\n');
+    let resultLine: string | undefined;
+
+    const LOG_PREFIX = '__THYME_LOG__';
+    const RESULT_PREFIX = '__THYME_RESULT__';
+
+    for (const line of lines) {
+      if (line.startsWith(RESULT_PREFIX)) {
+        resultLine = line.substring(RESULT_PREFIX.length);
+      } else if (line.startsWith(LOG_PREFIX)) {
+        // Parse structured log entry from SDK logger
+        try {
+          const logEntry = JSON.parse(line.substring(LOG_PREFIX.length)) as {
+            type: string;
+            message: string;
+          };
+          logs.push(logEntry);
+        } catch {
+          // If parsing fails, store as info log
+          logs.push({
+            type: 'info',
+            message: line.substring(LOG_PREFIX.length),
+          });
+        }
+      }
+      // Ignore all other output (Deno downloads, etc.)
+    }
+
+    if (!resultLine) {
+      throw new Error(`No result found in task output\nOutput:\n${stdoutText}`);
+    }
+
+    result = JSON.parse(resultLine);
+  } finally {
+    await sandbox.close();
+  }
+
+  // Add logs to the execution
   try {
     await ctx.runMutation(internal.mutation.log.log, {
       executableId: executable.executableId,
       executionId: executable.executionId,
-      log: result.logs.reverse(),
+      log: logs.reverse(),
     });
   } catch (error) {
     console.error('Error adding logs to the execution:', error);
   }
-  // add logs to the execution
-  // start simulation
+
+  // Start simulation
   const simulationResult = await ctx.runMutation(
     internal.mutation.executable.startSimulation,
     {
@@ -550,13 +697,22 @@ async function executeTask(
     throw new Error('Failed to start simulation');
   }
 
-  // actual simulate
+  // Only simulate and execute if canExec is true and calls exist
+  if (!result.canExec || !result.calls || result.calls.length === 0) {
+    // Task decided not to execute - skip simulation
+    await ctx.runMutation(internal.mutation.executable.skipSimulation, {
+      executionId: executable.executionId,
+      errorReason: result.message || 'No calls to execute',
+    });
+    return;
+  }
 
+  // Simulate calls using sandbox RPC (profile's custom RPC or default)
   try {
     await simulateCalls({
-      calls: result.result.calls,
+      calls: result.calls,
       options: {
-        rpcUrl: chain.rpcUrls[0],
+        rpcUrl: sandboxRpcUrl,
         account: profile.address as Address,
       },
     });
@@ -569,94 +725,95 @@ async function executeTask(
     return;
   }
 
-  if (result.result.canExec) {
-    await ctx.runMutation(internal.mutation.executable.startSending, {
+  // canExec is true and simulation passed - proceed with sending
+  await ctx.runMutation(internal.mutation.executable.startSending, {
+    executionId: executable.executionId,
+  });
+  // Use default chain RPC for actual on-chain transactions (not custom RPC)
+  // Use executableId as nonceKey to enable parallel transactions for different executables
+  // sharing the same profile (7702 account). Each executable gets its own nonce lane.
+  // Nonce key must be <= 2^152, so we truncate the hash to 19 bytes (152 bits)
+  const fullHash = keccak256(toHex(executable.executableId));
+  const nonceKey = fullHash.slice(0, 2 + 38) as Hex; // 0x + 38 hex chars = 19 bytes = 152 bits
+  const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
+    calls: result.calls,
+    nonceKey,
+    options: {
+      privateKey: privateKey as Hex,
+      rpcUrl: defaultRpcUrl,
+      alchemyOptions: {
+        apiKey: alchemyApiKey,
+        policyId: alchemyPolicyId,
+        salt: keccak256(toHex(profile.salt)),
+        baseUrl: chain.baseUrl || '',
+      },
+    },
+  });
+  const gasPrice = await publicClient.getGasPrice();
+  await ctx.runMutation(internal.mutation.executable.startValidating, {
+    executionId: executable.executionId,
+  });
+
+  const callsStatuses = await Promise.all(
+    preparedCallIds.map(async (preparedCallId) => {
+      return client.waitForCallsStatus({
+        id: preparedCallId,
+      });
+    }),
+  );
+  const hashes: Hex[] = [];
+  for (const callStatus of callsStatuses) {
+    hashes.push(
+      ...(callStatus.receipts?.map((receipt) => receipt.transactionHash) ?? []),
+    );
+  }
+  const isFailed = callsStatuses.some(
+    (callStatus) => callStatus.status === 'failure',
+  );
+  const executionCoef = parseUnits('1', 18); // @todo
+  const gasUsed = callsStatuses.reduce(
+    (acc, callStatus) =>
+      acc +
+      (callStatus.receipts?.reduce(
+        (acc, receipt) => acc + receipt.gasUsed,
+        0n,
+      ) ?? 0n),
+    0n,
+  );
+  if (isFailed) {
+    await ctx.runMutation(internal.mutation.executable.failSending, {
       executionId: executable.executionId,
-    });
-    const { preparedCallIds, client, publicClient } = await sendAlchemyCalls({
-      calls: result.result.calls,
-      options: {
-        privateKey: privateKey as Hex,
-        rpcUrl: chain.rpcUrls[0],
-        alchemyOptions: {
-          apiKey: alchemyApiKey,
-          policyId: alchemyPolicyId,
-          salt: keccak256(toHex(profile.salt)),
-          baseUrl: chain.baseUrl || '',
-        },
+      transactionHashes: hashes,
+      cost: {
+        gas: gasUsed.toString(),
+        gasPrice: gasPrice.toString(),
+        price: (gasUsed * gasPrice).toString(),
+        userPrice: (
+          (gasUsed * gasPrice * executionCoef) /
+          parseUnits('1', 18)
+        ).toString(),
       },
     });
-    const gasPrice = await publicClient.getGasPrice();
-    await ctx.runMutation(internal.mutation.executable.startValidating, {
-      executionId: executable.executionId,
-    });
-
-    const callsStatuses = await Promise.all(
-      preparedCallIds.map(async (preparedCallId) => {
-        return client.waitForCallsStatus({
-          id: preparedCallId,
-        });
-      }),
-    );
-    const hashes: Hex[] = [];
-    for (const callStatus of callsStatuses) {
-      hashes.push(
-        ...(callStatus.receipts?.map((receipt) => receipt.transactionHash) ??
-          []),
-      );
-    }
-    const isFailed = callsStatuses.some(
-      (callStatus) => callStatus.status === 'failure',
-    );
-    const executionCoef = parseUnits('1', 18); // @todo
-    const gasUsed = callsStatuses.reduce(
-      (acc, callStatus) =>
-        acc +
-        (callStatus.receipts?.reduce(
-          (acc, receipt) => acc + receipt.gasUsed,
-          0n,
-        ) ?? 0n),
-      0n,
-    );
-    if (isFailed) {
-      await ctx.runMutation(internal.mutation.executable.failSending, {
-        executionId: executable.executionId,
-        transactionHashes: hashes,
-        cost: {
-          gas: gasUsed.toString(),
-          gasPrice: gasPrice.toString(),
-          price: (gasUsed * gasPrice).toString(),
-          userPrice: (
-            (gasUsed * gasPrice * executionCoef) /
-            parseUnits('1', 18)
-          ).toString(),
-        },
-      });
-    } else {
-      await ctx.runMutation(internal.mutation.executable.successSending, {
-        executionId: executable.executionId,
-        transactionHashes: hashes,
-        cost: {
-          gas: gasUsed.toString(),
-          gasPrice: gasPrice.toString(),
-          price: (gasUsed * gasPrice).toString(),
-          userPrice: (
-            (gasUsed * gasPrice * executionCoef) /
-            parseUnits('1', 18)
-          ).toString(),
-        },
-      });
-    }
   } else {
-    await ctx.runMutation(internal.mutation.executable.skipSimulation, {
+    await ctx.runMutation(internal.mutation.executable.successSending, {
       executionId: executable.executionId,
-      errorReason: result.result.message || 'Simulation skipped',
+      transactionHashes: hashes,
+      cost: {
+        gas: gasUsed.toString(),
+        gasPrice: gasPrice.toString(),
+        price: (gasUsed * gasPrice).toString(),
+        userPrice: (
+          (gasUsed * gasPrice * executionCoef) /
+          parseUnits('1', 18)
+        ).toString(),
+      },
     });
   }
 }
 
 export interface SendCallsAlchemyOptions {
   calls: Call[];
+  nonceKey: Hex;
   options: {
     privateKey: Hex;
     rpcUrl: string;
@@ -683,11 +840,13 @@ export async function sendAlchemyCalls(args: SendCallsAlchemyOptions): Promise<{
       to: call.to,
       data: call.data,
     })),
-
     from: account,
     capabilities: {
       paymasterService: {
         policyId: args.options.alchemyOptions.policyId,
+      },
+      nonceOverride: {
+        nonceKey: args.nonceKey,
       },
     },
   });

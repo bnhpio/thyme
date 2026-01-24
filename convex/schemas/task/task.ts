@@ -6,4 +6,5 @@ export default defineTable({
   organizationId: v.optional(v.id('organizations')),
   creator: v.optional(v.id('users')),
   checkSum: v.string(),
+  schema: v.optional(v.string()), // JSON Schema for task arguments
 });

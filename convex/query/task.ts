@@ -83,3 +83,26 @@ export const getTaskById = internalQuery({
     };
   },
 });
+
+export const getTaskByHash = internalQuery({
+  args: {
+    hash: v.id('_storage'),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db
+      .query('tasks')
+      .filter((q) => q.eq(q.field('hash'), args.hash))
+      .first();
+    if (!task) {
+      return null;
+    }
+    return {
+      _id: task._id,
+      hash: task.hash,
+      checkSum: task.checkSum,
+      organizationId: task.organizationId,
+      creator: task.creator,
+      schema: task.schema,
+    };
+  },
+});

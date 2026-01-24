@@ -45,19 +45,15 @@ interface ExecutablesListProps {
 }
 
 function getChainName(chainId: number): string {
-  const chain = Object.values(viemChains).find(
-    (c: any) => c.id === chainId,
-  ) as any;
+  const chain = Object.values(viemChains).find((c: any) => c.id === chainId);
   return chain?.name || `Chain ${chainId}`;
 }
 
 function isMainnet(chainId: number): boolean {
-  const chain = Object.values(viemChains).find(
-    (c: any) => c.id === chainId,
-  ) as any;
+  const chain = Object.values(viemChains).find((c: any) => c.id === chainId);
   // viem chains have a `testnet` property that is false for mainnet chains
   // If testnet is undefined or false, it's mainnet
-  return chain && chain.testnet !== true;
+  return Boolean(chain && chain.testnet !== true);
 }
 
 function formatDate(timestamp: number): string {

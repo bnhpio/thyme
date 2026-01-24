@@ -170,9 +170,13 @@ export interface FileRoutesByFullPath {
   '/organization-setup': typeof OrganizationSetupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
+<<<<<<< HEAD
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/docs': typeof DocsIndexRoute
+=======
+  '/docs/': typeof DocsIndexRoute
+>>>>>>> origin/main
   '/dashboard': typeof AuthedOrganizationDashboardRoute
   '/executables': typeof AuthedOrganizationExecutablesRouteWithChildren
   '/profiles': typeof AuthedOrganizationProfilesRoute
@@ -244,9 +248,13 @@ export interface FileRouteTypes {
     | '/organization-setup'
     | '/privacy-policy'
     | '/support'
+<<<<<<< HEAD
     | '/auth/callback'
     | '/auth/signout'
     | '/docs'
+=======
+    | '/docs/'
+>>>>>>> origin/main
     | '/dashboard'
     | '/executables'
     | '/profiles'
@@ -363,7 +371,7 @@ declare module '@tanstack/react-router' {
     '/_authed': {
       id: '/_authed'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -377,7 +385,7 @@ declare module '@tanstack/react-router' {
     '/docs/': {
       id: '/docs/'
       path: '/docs'
-      fullPath: '/docs'
+      fullPath: '/docs/'
       preLoaderRoute: typeof DocsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -398,14 +406,14 @@ declare module '@tanstack/react-router' {
     '/_authed/_settings': {
       id: '/_authed/_settings'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthedSettingsRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/_organization': {
       id: '/_authed/_organization'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthedOrganizationRouteImport
       parentRoute: typeof AuthedRoute
     }

@@ -67,12 +67,42 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
   }
 
   // Check for active subscription (paid plan) from customer subscriptions
-  const subscriptions =
-    customer && 'subscriptions' in customer
-      ? (customer.subscriptions as any[])
+  interface Subscription {
+    status?: string;
+    product?: {
+      name?: string;
+      description?: string;
+    };
+    name?: string;
+    description?: string;
+    display?: {
+      description?: string;
+    };
+    items?: Array<{
+      price?: {
+        unit_amount?: number;
+        currency?: string;
+        recurring?: {
+          interval?: string;
+        };
+      };
+      display?: {
+        primary_text?: string;
+        secondary_text?: string;
+      };
+    }>;
+    cancel_at_period_end?: boolean;
+    current_period_end?: string | number | Date;
+  }
+
+  const subscriptions: Subscription[] =
+    customer &&
+    'subscriptions' in customer &&
+    Array.isArray(customer.subscriptions)
+      ? (customer.subscriptions as Subscription[])
       : [];
   const hasActivePaidSubscription = subscriptions.length > 0;
-  const activeSubscription = hasActivePaidSubscription
+  const activeSubscription: Subscription | null = hasActivePaidSubscription
     ? subscriptions[0]
     : null;
 
@@ -144,9 +174,9 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
                   </h3>
                   <Badge variant="secondary">Free</Badge>
                 </div>
-                {(currentPlan.data as any)?.display?.description && (
+                {currentPlan.data?.display?.description && (
                   <p className="text-sm text-muted-foreground">
-                    {(currentPlan.data as any).display.description}
+                    {currentPlan.data.display.description}
                   </p>
                 )}
               </div>
@@ -167,39 +197,43 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
                   <h3 className="text-lg font-semibold">
                     {currentPlan.source === 'pricing_table'
                       ? currentPlan.data.name
-                      : (currentPlan.data as any)?.product?.name ||
-                        (currentPlan.data as any)?.name ||
-                        'Unknown Plan'}
+                      : currentPlan.source === 'subscription'
+                        ? currentPlan.data?.product?.name ||
+                          currentPlan.data?.name ||
+                          'Unknown Plan'
+                        : 'Unknown Plan'}
                   </h3>
                   {currentPlan.source === 'pricing_table' ? (
                     <Badge variant="default">Active</Badge>
-                  ) : (currentPlan.data as any)?.status ? (
+                  ) : currentPlan.source === 'subscription' &&
+                    currentPlan.data?.status ? (
                     <Badge
                       variant={
-                        (currentPlan.data as any).status === 'active'
+                        currentPlan.data.status === 'active'
                           ? 'default'
-                          : (currentPlan.data as any).status === 'trialing'
+                          : currentPlan.data.status === 'trialing'
                             ? 'secondary'
                             : 'outline'
                       }
                     >
-                      {(currentPlan.data as any).status}
+                      {currentPlan.data.status}
                     </Badge>
                   ) : null}
                 </div>
                 {currentPlan.source === 'pricing_table'
-                  ? (currentPlan.data as any)?.display?.description && (
+                  ? currentPlan.data?.display?.description && (
                       <p className="text-sm text-muted-foreground">
-                        {(currentPlan.data as any).display.description}
+                        {currentPlan.data.display.description}
                       </p>
                     )
-                  : ((currentPlan.data as any)?.product?.description ||
-                      (currentPlan.data as any)?.description ||
-                      (currentPlan.data as any)?.display?.description) && (
+                  : currentPlan.source === 'subscription' &&
+                    (currentPlan.data?.product?.description ||
+                      currentPlan.data?.description ||
+                      currentPlan.data?.display?.description) && (
                       <p className="text-sm text-muted-foreground">
-                        {(currentPlan.data as any)?.product?.description ||
-                          (currentPlan.data as any)?.description ||
-                          (currentPlan.data as any)?.display?.description}
+                        {currentPlan.data?.product?.description ||
+                          currentPlan.data?.description ||
+                          currentPlan.data?.display?.description}
                       </p>
                     )}
               </div>
@@ -208,55 +242,48 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
             <Separator />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {currentPlan.source === 'pricing_table'
-                ? (currentPlan.data as any)?.items?.[0]?.display && (
-                    <div className="flex items-start gap-3">
-                      <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Current Price</p>
-                        <p className="text-sm text-muted-foreground">
-                          {(currentPlan.data as any).items[0].display
-                            .primary_text || 'Free'}{' '}
-                          {(currentPlan.data as any).items[0].display
-                            .secondary_text &&
-                            (currentPlan.data as any).items[0].display
-                              .secondary_text}
-                        </p>
-                      </div>
+              {currentPlan.source === 'pricing_table' &&
+                currentPlan.data?.items?.[0]?.display && (
+                  <div className="flex items-start gap-3">
+                    <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Current Price</p>
+                      <p className="text-sm text-muted-foreground">
+                        {currentPlan.data.items[0].display.primary_text ||
+                          'Free'}{' '}
+                        {currentPlan.data.items[0].display.secondary_text &&
+                          currentPlan.data.items[0].display.secondary_text}
+                      </p>
                     </div>
-                  )
-                : (currentPlan.data as any)?.current_period_end && (
-                    <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Next Billing Date</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(
-                            (currentPlan.data as any).current_period_end,
-                          )}
-                        </p>
-                      </div>
+                  </div>
+                )}
+              {currentPlan.source === 'subscription' &&
+                currentPlan.data?.current_period_end && (
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Next Billing Date</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(currentPlan.data.current_period_end)}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
 
               {currentPlan.source === 'subscription' &&
-                (currentPlan.data as any)?.items?.[0]?.price && (
+                currentPlan.data?.items?.[0]?.price && (
                   <div className="flex items-start gap-3">
                     <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm font-medium">Current Price</p>
                       <p className="text-sm text-muted-foreground">
                         {formatCurrency(
-                          (currentPlan.data as any).items[0].price
-                            .unit_amount || 0,
-                          (currentPlan.data as any).items[0].price.currency ||
-                            'USD',
+                          currentPlan.data.items[0].price.unit_amount || 0,
+                          currentPlan.data.items[0].price.currency || 'USD',
                         )}{' '}
-                        {(currentPlan.data as any).items[0].price.recurring
-                          ?.interval &&
+                        {currentPlan.data.items[0].price.recurring?.interval &&
                           `per ${
-                            (currentPlan.data as any).items[0].price.recurring
-                              .interval
+                            currentPlan.data.items[0].price.recurring.interval
                           }`}
                       </p>
                     </div>
@@ -264,16 +291,17 @@ export function CurrentPlanCard({ organizationId }: CurrentPlanCardProps) {
                 )}
             </div>
 
-            {(currentPlan.data as any)?.cancel_at_period_end && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
-                <p className="text-sm text-destructive font-medium">
-                  Plan will cancel on{' '}
-                  {(currentPlan.data as any)?.current_period_end
-                    ? formatDate((currentPlan.data as any).current_period_end)
-                    : 'end of billing period'}
-                </p>
-              </div>
-            )}
+            {currentPlan.source === 'subscription' &&
+              currentPlan.data?.cancel_at_period_end && (
+                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+                  <p className="text-sm text-destructive font-medium">
+                    Plan will cancel on{' '}
+                    {currentPlan.data?.current_period_end
+                      ? formatDate(currentPlan.data.current_period_end)
+                      : 'end of billing period'}
+                  </p>
+                </div>
+              )}
           </div>
         )}
       </CardContent>

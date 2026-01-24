@@ -55,6 +55,7 @@ export const getProfilesByOrganization = query({
         return {
           ...profile,
           chainId: chain?.chainId,
+          customRpcUrl: profile.customRpcUrl,
         };
       }),
     );
@@ -80,6 +81,7 @@ export const getProfileById = internalQuery({
       chain: profile.chain,
       salt: profile.salt,
       createdBy: profile.createdBy,
+      customRpcUrl: profile.customRpcUrl,
     };
   },
 });

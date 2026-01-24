@@ -1,6 +1,42 @@
 import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
-import { query } from '../_generated/server';
+import { internalQuery, query } from '../_generated/server';
+
+// Internal query to get user by ID
+export const _getUserById = internalQuery({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
+// Internal query to get user's organizations
+export const _getUserOrganizations = internalQuery({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const memberships = await ctx.db
+      .query('organizationMembers')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    const organizations = [];
+    for (const membership of memberships) {
+      const org = await ctx.db.get(membership.organizationId);
+      // Filter out deleted organizations
+      if (org) {
+        organizations.push({
+          ...org,
+          role: membership.role,
+          joinedAt: membership.joinedAt,
+        });
+      }
+    }
+
+    return organizations;
+  },
+});
+
 // Get current authenticated user info
 export const getCurrentUser = query({
   args: {},

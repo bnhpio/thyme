@@ -29,11 +29,16 @@ interface Profile {
   createdBy: Id<'users'>;
   chain: Id<'chains'>;
   chainId?: number;
+  customRpcUrl?: string;
 }
 
 interface ProfileListProps {
   profiles: Profile[];
   onDelete: (profileId: Id<'profiles'>) => void;
+  onUpdate: (
+    profileId: Id<'profiles'>,
+    customRpcUrl: string | undefined,
+  ) => void;
   onRefresh?: () => void;
   organizationId?: Id<'organizations'>;
 }
@@ -64,6 +69,7 @@ function getChainName(chainId: number): string {
 export function ProfileList({
   profiles,
   onDelete,
+  onUpdate,
   onRefresh,
   organizationId,
 }: ProfileListProps) {
@@ -155,6 +161,7 @@ export function ProfileList({
                     key={profile._id}
                     profile={profile}
                     onDelete={onDelete}
+                    onUpdate={onUpdate}
                   />
                 ))}
               </div>

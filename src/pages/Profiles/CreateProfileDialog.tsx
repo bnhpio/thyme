@@ -63,6 +63,7 @@ export function CreateProfileDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [alias, setAlias] = useState('');
   const [selectedChainId, setSelectedChainId] = useState<Id<'chains'> | ''>('');
+  const [customRpcUrl, setCustomRpcUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async () => {
@@ -76,16 +77,28 @@ export function CreateProfileDialog({
       return;
     }
 
+    // Validate RPC URL if provided
+    if (customRpcUrl.trim()) {
+      try {
+        new URL(customRpcUrl.trim());
+      } catch {
+        toast.error('Please enter a valid RPC URL');
+        return;
+      }
+    }
+
     setIsCreating(true);
     try {
       await createProfile({
         organizationId,
         alias: alias.trim(),
         chain: selectedChainId as Id<'chains'>,
+        customRpcUrl: customRpcUrl.trim() || undefined,
       });
       setIsOpen(false);
       setAlias('');
       setSelectedChainId('');
+      setCustomRpcUrl('');
       toast.success('Profile created successfully');
       onSuccess();
     } catch (error) {
@@ -102,6 +115,7 @@ export function CreateProfileDialog({
     if (!open) {
       setAlias('');
       setSelectedChainId('');
+      setCustomRpcUrl('');
     }
   };
 
@@ -169,6 +183,24 @@ export function CreateProfileDialog({
                 </SelectContent>
               </Select>
             )}
+          </div>
+          <div className="space-y-2.5">
+            <Label className="text-sm font-medium">
+              Custom RPC URL{' '}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Input
+              placeholder="https://eth-mainnet.g.alchemy.com/v2/..."
+              value={customRpcUrl}
+              onChange={(e) => setCustomRpcUrl(e.target.value)}
+              className="h-10 font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Custom RPC URL for sandbox execution and simulation. Leave empty
+              to use the default chain RPC.
+            </p>
           </div>
         </div>
         <DialogFooter>

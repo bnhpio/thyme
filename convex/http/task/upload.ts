@@ -6,7 +6,7 @@ import { createJsonResponse, extractUserIdFromRequest } from '../utils';
 async function extractUploadData(
   request: Request,
 ): Promise<
-  | { organizationId?: string; checkSum?: string; blob: Blob }
+  | { organizationId?: string; checkSum?: string; schema?: string; blob: Blob }
   | { error: Response }
 > {
   const formData = await request.formData();
@@ -21,7 +21,7 @@ async function extractUploadData(
     };
   }
 
-  let data: { organizationId?: string; checkSum?: string };
+  let data: { organizationId?: string; checkSum?: string; schema?: string };
   try {
     data = JSON.parse(dataField);
   } catch {
@@ -43,6 +43,7 @@ async function extractUploadData(
   return {
     organizationId: data.organizationId,
     checkSum: data.checkSum ?? '',
+    schema: data.schema,
     blob: blobField as Blob,
   };
 }
@@ -55,7 +56,7 @@ export const uploadTask = httpAction(async (ctx, request) => {
   // Step 2: Extract and validate multipart body
   const uploadData = await extractUploadData(request);
   if ('error' in uploadData) return uploadData.error;
-  const { organizationId, checkSum, blob } = uploadData;
+  const { organizationId, checkSum, schema, blob } = uploadData;
 
   const hasWriteAccess = await ctx.runQuery(
     internal.query.organization.hasWriteAccessToOrganization,
@@ -73,24 +74,28 @@ export const uploadTask = httpAction(async (ctx, request) => {
   // Step 3: Store the blob
   let storageId: Id<'_storage'>;
   try {
-    storageId = await ctx.storage.store(blob, { sha256: checkSum });
+    // Don't pass sha256 option - let Convex compute it
+    // The checkSum from client is just a simple hash, not a proper SHA-256
+    storageId = await ctx.storage.store(blob);
   } catch {
     return createJsonResponse({ error: 'Failed to store blob' }, 500);
   }
   // Step 4: Record the task in DB
+  let taskId: Id<'tasks'>;
   try {
-    await ctx.runMutation(internal.mutation.task.createTask, {
+    taskId = await ctx.runMutation(internal.mutation.task.createTask, {
       storageId,
       checkSum: checkSum ?? '',
       userId,
       organizationId: organizationId
         ? (organizationId as Id<'organizations'>)
         : undefined,
+      schema: schema,
     });
   } catch (error) {
     console.error(error);
     return createJsonResponse({ error: 'Failed to save task' }, 401);
   }
   // Step 5: Return by CORS response
-  return createJsonResponse({ success: true, hash: storageId }, 200);
+  return createJsonResponse({ success: true, taskId: taskId }, 200);
 });

@@ -107,14 +107,14 @@ export const getExecutablesByOrganization = query({
             : undefined,
           status: executable.status,
           chain: {
-            id: chain?._id ?? (executable.chain as any),
+            id: chain?._id ?? executable.chain,
             chainId: chain?.chainId ?? 0,
             explorerUrl: chain?.explorerUrl,
           },
           args: executable.args,
           taskStorageId: task?.hash,
           profile: {
-            id: profile?._id ?? (executable.profile as any),
+            id: profile?._id ?? executable.profile,
             alias: profile?.alias ?? 'Unknown',
             address: profile?.address,
           },
@@ -249,14 +249,14 @@ export const getExecutableById = query({
         : undefined,
       status: executable.status,
       chain: {
-        id: chain?._id ?? (executable.chain as any),
+        id: chain?._id ?? executable.chain,
         chainId: chain?.chainId ?? 0,
         explorerUrl: chain?.explorerUrl,
       },
       args: executable.args,
       taskStorageId: task?.hash,
       profile: {
-        id: profile?._id ?? (executable.profile as any),
+        id: profile?._id ?? executable.profile,
         alias: profile?.alias ?? 'Unknown',
         address: profile?.address,
       },

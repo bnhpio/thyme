@@ -8,6 +8,7 @@ export const createProfile = action({
     organizationId: v.id('organizations'),
     alias: v.string(),
     chain: v.id('chains'),
+    customRpcUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -19,6 +20,7 @@ export const createProfile = action({
       organizationId: args.organizationId,
       alias: args.alias,
       chain: args.chain,
+      customRpcUrl: args.customRpcUrl,
     });
   },
 });
@@ -29,6 +31,7 @@ export const _createProfile = internalAction({
     alias: v.string(),
     userId: v.id('users'),
     chain: v.id('chains'),
+    customRpcUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existingProfileWithSameAlias = await ctx.runQuery(
@@ -61,6 +64,7 @@ export const _createProfile = internalAction({
       alias: args.alias,
       address: address,
       createdBy: args.userId,
+      customRpcUrl: args.customRpcUrl,
     });
   },
 });

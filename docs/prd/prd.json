@@ -36,7 +36,7 @@
       "Define updatedAt (number), updatedBy (optional user reference)",
       "Add index by_key on key"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "schema",

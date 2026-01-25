@@ -61,3 +61,30 @@ Indexes: by_organization, by_org_chain (composite on organizationId + chainId)
 3. To run the dev server: start `npx convex dev` in one terminal, then `bun dev` in another.
 4. Next priority: Implement "Create platformConfig table schema" or "Create isRootAdmin helper function" (both are foundational for the root admin feature set).
 5. The platform schema directory now has globalChains and organizationChains - additional platform tables (platformConfig, featureFlags, organizationFeatureOverrides) should be added there.
+
+## 2026-01-25 - platformConfig Schema Implementation
+
+### Completed
+- Created `convex/schemas/platform/platformConfig.ts` with the platformConfig table schema
+- Updated `convex/schemas/platform/index.ts` to export the new table
+
+### Files Created/Modified
+- `convex/schemas/platform/platformConfig.ts` (new)
+- `convex/schemas/platform/index.ts` (modified - added platformConfigTable import and export)
+- `docs/prd/prd.json` (updated - marked platformConfig schema as passing)
+
+### Schema Details
+The platformConfig table includes:
+- key (string) - unique configuration key identifier
+- value (string) - configuration value
+- updatedAt (number) - timestamp of last update
+- updatedBy (optional v.id('users')) - reference to user who made the update
+
+Indexes: by_key
+
+### Notes for Next Developer
+1. The test suite has no actual test files (only node_modules tests), so `npm run test` fails. This is a pre-existing issue.
+2. Use `bun run build` to verify TypeScript compilation.
+3. To run the dev server: start `npx convex dev` in one terminal, then `bun dev` in another.
+4. Next priority: Implement "Create featureFlags table schema" or "Create isRootAdmin helper function" (both are foundational for the root admin feature set).
+5. The platform schema directory now has globalChains, organizationChains, and platformConfig - remaining platform tables (featureFlags, organizationFeatureOverrides) should be added there.

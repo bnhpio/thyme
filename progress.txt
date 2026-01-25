@@ -33,3 +33,31 @@ Indexes: by_chain_id, by_enabled
 3. To run the dev server: start `npx convex dev` in one terminal, then `bun dev` in another.
 4. Next priority: Implement "Create organizationChains table schema" to allow organizations to override chain settings.
 5. The platform schema directory is now set up - additional platform tables (platformConfig, featureFlags, organizationFeatureOverrides) should be added there.
+
+## 2026-01-25 - organizationChains Schema Implementation
+
+### Completed
+- Created `convex/schemas/platform/organizationChain.ts` with the organizationChains table schema
+- Updated `convex/schemas/platform/index.ts` to export the new table
+
+### Files Created/Modified
+- `convex/schemas/platform/organizationChain.ts` (new)
+- `convex/schemas/platform/index.ts` (modified - added organizationChainTable import and export)
+- `docs/prd/prd.json` (updated - marked organizationChains schema as passing)
+
+### Schema Details
+The organizationChains table includes:
+- organizationId (v.id('organizations')) - reference to the organization
+- chainId (number) - identifier for the blockchain (matches globalChains.chainId)
+- rpcUrls (array of strings) - organization-specific RPC endpoint URLs
+- isEnabled (boolean) - whether this chain is enabled for the organization
+- priority (optional number) - organization-specific display/selection priority
+
+Indexes: by_organization, by_org_chain (composite on organizationId + chainId)
+
+### Notes for Next Developer
+1. The test suite has no actual test files (only node_modules tests), so `bun run test` fails. This is a pre-existing issue.
+2. Use `bun run build` to verify TypeScript compilation.
+3. To run the dev server: start `npx convex dev` in one terminal, then `bun dev` in another.
+4. Next priority: Implement "Create platformConfig table schema" or "Create isRootAdmin helper function" (both are foundational for the root admin feature set).
+5. The platform schema directory now has globalChains and organizationChains - additional platform tables (platformConfig, featureFlags, organizationFeatureOverrides) should be added there.

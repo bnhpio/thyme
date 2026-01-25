@@ -28,7 +28,8 @@ The globalChains table includes:
 Indexes: by_chain_id, by_enabled
 
 ### Notes for Next Developer
-1. The test suite has no actual test files (only node_modules tests), so `npm run test` fails. This is a pre-existing issue.
+1. The test suite has no actual test files (only node_modules tests), so `bun run test` fails. This is a pre-existing issue.
 2. Use `bun run build` to verify TypeScript compilation.
-3. Next priority: Implement "Create organizationChains table schema" to allow organizations to override chain settings.
-4. The platform schema directory is now set up - additional platform tables (platformConfig, featureFlags, organizationFeatureOverrides) should be added there.
+3. To run the dev server: start `npx convex dev` in one terminal, then `bun dev` in another.
+4. Next priority: Implement "Create organizationChains table schema" to allow organizations to override chain settings.
+5. The platform schema directory is now set up - additional platform tables (platformConfig, featureFlags, organizationFeatureOverrides) should be added there.

@@ -13,7 +13,11 @@ Thyme is a full-stack Web3 automation platform built with TanStack Start (React 
 
 ## Quick Reference
 
-- **Dev**: `bun run dev` - Start dev server on port 3000
+**Starting Development (two terminals required):**
+1. `npx convex dev` - Start Convex backend (Terminal 1)
+2. `bun dev` - Start frontend dev server on port 3000 (Terminal 2)
+
+**Commands:**
 - **Build**: `bun run build` - Production build via Vite
 - **Test**: `bun run test` - Run Vitest tests
 - **Lint**: `bun run lint` - Biome linter
@@ -147,7 +151,9 @@ export const getServerData = createServerFn().handler(async () => {
 1. Write code changes
 2. Run `bun run check` - fixes formatting and linting
 3. Run `bun run build` - verify no TypeScript/build errors
-4. Test in dev server: `bun run dev`
+4. Test in dev server:
+   - Terminal 1: `npx convex dev` (start Convex backend)
+   - Terminal 2: `bun dev` (start frontend)
 5. Only then present the changes
 
 ## Authentication

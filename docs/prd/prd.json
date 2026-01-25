@@ -12,7 +12,7 @@
       "Add index by_chain_id on chainId",
       "Add index by_enabled on isEnabled"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "schema",
@@ -70,7 +70,7 @@
       "Export all platform tables",
       "Import in main schema.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "schema",

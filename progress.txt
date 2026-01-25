@@ -1,0 +1,34 @@
+# Development Progress Log
+
+## 2026-01-25 - globalChains Schema Implementation
+
+### Completed
+- Created `convex/schemas/platform/globalChain.ts` with the globalChains table schema
+- Created `convex/schemas/platform/index.ts` to export platform schemas
+- Updated `convex/schema.ts` to import and include the platform schema
+
+### Files Created/Modified
+- `convex/schemas/platform/globalChain.ts` (new)
+- `convex/schemas/platform/index.ts` (new)
+- `convex/schema.ts` (modified - added platformSchema import and spread)
+- `docs/prd/prd.json` (updated - marked globalChains schema and platform index as passing)
+
+### Schema Details
+The globalChains table includes:
+- chainId (number) - unique identifier for the blockchain
+- name (string) - human-readable chain name
+- rpcUrls (array of strings) - RPC endpoint URLs
+- explorerUrl (optional string) - block explorer URL
+- nativeCurrency (object: name, symbol, decimals) - native token info
+- isTestnet (boolean) - whether this is a test network
+- isEnabled (boolean) - whether the chain is active
+- priority (number) - display/selection priority
+- createdAt, updatedAt (numbers) - timestamps
+
+Indexes: by_chain_id, by_enabled
+
+### Notes for Next Developer
+1. The test suite has no actual test files (only node_modules tests), so `npm run test` fails. This is a pre-existing issue.
+2. Use `bun run build` to verify TypeScript compilation.
+3. Next priority: Implement "Create organizationChains table schema" to allow organizations to override chain settings.
+4. The platform schema directory is now set up - additional platform tables (platformConfig, featureFlags, organizationFeatureOverrides) should be added there.

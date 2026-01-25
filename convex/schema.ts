@@ -2,6 +2,7 @@ import { authTables } from '@convex-dev/auth/server';
 import { defineSchema } from 'convex/server';
 import { chainSchema } from './schemas/chain';
 import { organizationSchema } from './schemas/organization';
+import { platformSchema } from './schemas/platform';
 import { profileSchema } from './schemas/profile';
 import { taskSchema } from './schemas/task';
 import userCustomTokensTable from './schemas/user/userCustomToken';
@@ -15,4 +16,5 @@ export default defineSchema({
   ...taskSchema,
   ...profileSchema,
   ...chainSchema,
+  ...platformSchema,
 });

@@ -1,0 +1,1492 @@
+[
+  {
+    "category": "schema",
+    "description": "Create globalChains table schema",
+    "steps": [
+      "Create convex/schemas/platform/globalChain.ts",
+      "Define chainId (number), name (string), rpcUrls (array)",
+      "Define explorerUrl (optional string)",
+      "Define nativeCurrency object (name, symbol, decimals)",
+      "Define isTestnet (boolean), isEnabled (boolean), priority (number)",
+      "Define createdAt, updatedAt timestamps",
+      "Add index by_chain_id on chainId",
+      "Add index by_enabled on isEnabled"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Create organizationChains table schema",
+    "steps": [
+      "Create convex/schemas/platform/organizationChain.ts",
+      "Define organizationId (reference to organizations)",
+      "Define chainId (number), rpcUrls (array), isEnabled (boolean)",
+      "Define priority (optional number)",
+      "Add index by_organization on organizationId",
+      "Add index by_org_chain on organizationId and chainId"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Create platformConfig table schema",
+    "steps": [
+      "Create convex/schemas/platform/platformConfig.ts",
+      "Define key (string), value (string)",
+      "Define updatedAt (number), updatedBy (optional user reference)",
+      "Add index by_key on key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Create featureFlags table schema",
+    "steps": [
+      "Create convex/schemas/platform/featureFlag.ts",
+      "Define key (string), name (string), description (optional)",
+      "Define defaultValue (string), valueType (boolean|number|string)",
+      "Define isEnabled (boolean), createdAt (number)",
+      "Add index by_key on key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Create organizationFeatureOverrides table schema",
+    "steps": [
+      "Create convex/schemas/platform/organizationFeatureOverride.ts",
+      "Define organizationId, featureFlagId references",
+      "Define value (string), updatedAt, updatedBy",
+      "Add index by_organization",
+      "Add index by_flag"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Create platform schema index file",
+    "steps": [
+      "Create convex/schemas/platform/index.ts",
+      "Export all platform tables",
+      "Import in main schema.ts"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Add status field to organizations table",
+    "steps": [
+      "Modify convex/schemas/organization/organization.ts",
+      "Add status field (active|suspended|deleted)",
+      "Add suspendedAt (optional number)",
+      "Add suspendedBy (optional user reference)",
+      "Add suspendReason (optional string)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "schema",
+    "description": "Add status field to users table",
+    "steps": [
+      "Create convex/schemas/user/userStatus.ts or modify existing",
+      "Add status field (active|suspended)",
+      "Add suspendedAt (optional number)",
+      "Add suspendedBy (optional user reference)",
+      "Add suspendReason (optional string)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "Create isRootAdmin helper function",
+    "steps": [
+      "Create convex/lib/rootAdmin.ts",
+      "Read ROOT_ADMIN_EMAILS from environment variable",
+      "Parse comma-separated emails to array",
+      "Trim whitespace and convert to lowercase",
+      "Implement isRootAdmin(ctx, userId) function",
+      "Fetch user by ID and check email against list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "Create requireRootAdmin guard function",
+    "steps": [
+      "Add requireRootAdmin(ctx, userId) to rootAdmin.ts",
+      "Call isRootAdmin internally",
+      "Throw error if not root admin"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "Create getRootAdminStatus query",
+    "steps": [
+      "Create convex/query/rootAdmin.ts",
+      "Implement getRootAdminStatus query",
+      "Get authenticated user ID",
+      "Return { isRootAdmin: boolean }"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "isRootAdmin returns true for email in env var",
+    "steps": [
+      "Set ROOT_ADMIN_EMAILS with test email",
+      "Call isRootAdmin with matching user",
+      "Verify returns true"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "isRootAdmin returns false for email not in env var",
+    "steps": [
+      "Set ROOT_ADMIN_EMAILS with different email",
+      "Call isRootAdmin with non-matching user",
+      "Verify returns false"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "isRootAdmin is case insensitive",
+    "steps": [
+      "Set ROOT_ADMIN_EMAILS with lowercase email",
+      "Call isRootAdmin with user having mixed case email",
+      "Verify returns true"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "isRootAdmin handles empty env var",
+    "steps": [
+      "Unset ROOT_ADMIN_EMAILS",
+      "Call isRootAdmin with any user",
+      "Verify returns false without error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "requireRootAdmin throws for non-admin",
+    "steps": [
+      "Call requireRootAdmin with non-admin user",
+      "Verify error is thrown",
+      "Verify error message is appropriate"
+    ],
+    "passes": false
+  },
+  {
+    "category": "authorization",
+    "description": "requireRootAdmin passes for admin",
+    "steps": [
+      "Call requireRootAdmin with admin user",
+      "Verify no error is thrown"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create listGlobalChains query",
+    "steps": [
+      "Create convex/query/rootAdmin/chains.ts",
+      "Implement listGlobalChains query",
+      "Require root admin authentication",
+      "Return all chains from globalChains table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getChainById query",
+    "steps": [
+      "Add getChainById to chains.ts",
+      "Accept chainId parameter",
+      "Require root admin authentication",
+      "Return single chain or null"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create createChain mutation",
+    "steps": [
+      "Create convex/mutation/rootAdmin/chains.ts",
+      "Implement createChain mutation",
+      "Require root admin authentication",
+      "Validate chainId is unique",
+      "Insert into globalChains table",
+      "Return created chain ID"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create updateChain mutation",
+    "steps": [
+      "Add updateChain to chains.ts",
+      "Accept chain ID and update fields",
+      "Require root admin authentication",
+      "Update chain in globalChains table",
+      "Set updatedAt timestamp"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create deleteChain mutation",
+    "steps": [
+      "Add deleteChain to chains.ts",
+      "Accept chain ID parameter",
+      "Require root admin authentication",
+      "Delete from globalChains table",
+      "Delete related organizationChains entries"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create listAllUsers query",
+    "steps": [
+      "Create convex/query/rootAdmin/users.ts",
+      "Implement listAllUsers query",
+      "Require root admin authentication",
+      "Return all users with basic info"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getUserDetails query",
+    "steps": [
+      "Add getUserDetails to users.ts",
+      "Accept userId parameter",
+      "Require root admin authentication",
+      "Return user info with organization memberships"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create suspendUser mutation",
+    "steps": [
+      "Create convex/mutation/rootAdmin/users.ts",
+      "Implement suspendUser mutation",
+      "Accept userId and reason",
+      "Require root admin authentication",
+      "Update user status to suspended"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create unsuspendUser mutation",
+    "steps": [
+      "Add unsuspendUser to users.ts",
+      "Accept userId parameter",
+      "Require root admin authentication",
+      "Update user status to active"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create listAllOrganizations query",
+    "steps": [
+      "Create convex/query/rootAdmin/organizations.ts",
+      "Implement listAllOrganizations query",
+      "Require root admin authentication",
+      "Return all orgs with member count and status"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getOrgDetails query",
+    "steps": [
+      "Add getOrgDetails to organizations.ts",
+      "Accept organizationId parameter",
+      "Require root admin authentication",
+      "Return org info with members list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create suspendOrg mutation",
+    "steps": [
+      "Create convex/mutation/rootAdmin/organizations.ts",
+      "Implement suspendOrg mutation",
+      "Accept organizationId and reason",
+      "Require root admin authentication",
+      "Update org status to suspended"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create unsuspendOrg mutation",
+    "steps": [
+      "Add unsuspendOrg to organizations.ts",
+      "Accept organizationId parameter",
+      "Require root admin authentication",
+      "Update org status to active"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create deleteOrg mutation",
+    "steps": [
+      "Add deleteOrg to organizations.ts",
+      "Accept organizationId parameter",
+      "Require root admin authentication",
+      "Mark org status as deleted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create listFeatureFlags query",
+    "steps": [
+      "Create convex/query/rootAdmin/featureFlags.ts",
+      "Implement listFeatureFlags query",
+      "Require root admin authentication",
+      "Return all feature flags"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getFlagOverrides query",
+    "steps": [
+      "Add getFlagOverrides to featureFlags.ts",
+      "Accept flagId parameter",
+      "Require root admin authentication",
+      "Return all overrides for flag with org details"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create createFlag mutation",
+    "steps": [
+      "Create convex/mutation/rootAdmin/featureFlags.ts",
+      "Implement createFlag mutation",
+      "Require root admin authentication",
+      "Validate key is unique",
+      "Insert into featureFlags table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create updateFlag mutation",
+    "steps": [
+      "Add updateFlag to featureFlags.ts",
+      "Accept flagId and update fields",
+      "Require root admin authentication",
+      "Update flag in featureFlags table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create deleteFlag mutation",
+    "steps": [
+      "Add deleteFlag to featureFlags.ts",
+      "Accept flagId parameter",
+      "Require root admin authentication",
+      "Delete flag and related overrides"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create setOrgOverride mutation",
+    "steps": [
+      "Add setOrgOverride to featureFlags.ts",
+      "Accept flagId, organizationId, value",
+      "Require root admin authentication",
+      "Upsert into organizationFeatureOverrides"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create removeOrgOverride mutation",
+    "steps": [
+      "Add removeOrgOverride to featureFlags.ts",
+      "Accept flagId and organizationId",
+      "Require root admin authentication",
+      "Delete from organizationFeatureOverrides"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getPlatformConfig query",
+    "steps": [
+      "Create convex/query/rootAdmin/platform.ts",
+      "Implement getPlatformConfig query",
+      "Require root admin authentication",
+      "Return all platform config key-values"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create updatePlatformConfig mutation",
+    "steps": [
+      "Create convex/mutation/rootAdmin/platform.ts",
+      "Implement updatePlatformConfig mutation",
+      "Accept key and value",
+      "Require root admin authentication",
+      "Upsert into platformConfig table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getStats query",
+    "steps": [
+      "Add getStats to platform.ts",
+      "Require root admin authentication",
+      "Count total users",
+      "Count total organizations",
+      "Count active chains",
+      "Return stats object"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create getEffectiveChains helper",
+    "steps": [
+      "Create convex/lib/chains.ts",
+      "Implement getEffectiveChains(ctx, organizationId?)",
+      "Query all enabled global chains",
+      "If no orgId, return sorted by priority"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "getEffectiveChains merges org overrides",
+    "steps": [
+      "Query organizationChains for given org",
+      "Build override map by chainId",
+      "Merge global chains with overrides",
+      "Apply org RPC URLs if provided",
+      "Apply org priority if provided"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "getEffectiveChains excludes org-disabled chains",
+    "steps": [
+      "Check override.isEnabled for each chain",
+      "Exclude chains where org disabled them",
+      "Return filtered list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "getEffectiveChains sorts by priority",
+    "steps": [
+      "Sort merged chains by priority ascending",
+      "Verify lowest priority appears first"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create org chain override mutation",
+    "steps": [
+      "Create convex/mutation/organizations/chains.ts",
+      "Implement setChainOverride mutation",
+      "Require org admin authentication",
+      "Upsert into organizationChains table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "api",
+    "description": "Create org chain disable mutation",
+    "steps": [
+      "Add disableChain to organizations/chains.ts",
+      "Require org admin authentication",
+      "Set isEnabled false in organizationChains"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create role-selector route",
+    "steps": [
+      "Create src/routes/role-selector.tsx",
+      "Add beforeLoad auth check",
+      "Redirect to login if not authenticated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create RoleSelectorPage component",
+    "steps": [
+      "Implement RoleSelectorPage in role-selector.tsx",
+      "Query isRootAdmin status",
+      "Redirect to dashboard if not root admin",
+      "Display two option cards"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Role selector Dashboard option navigates to dashboard",
+    "steps": [
+      "Add Dashboard button to role selector",
+      "On click navigate to /dashboard"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Role selector Root Admin option navigates to admin panel",
+    "steps": [
+      "Add Root Admin button to role selector",
+      "On click navigate to /_root-admin"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin layout route",
+    "steps": [
+      "Create src/routes/_root-admin.tsx",
+      "Add beforeLoad auth check",
+      "Redirect to login if not authenticated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Root admin layout checks isRootAdmin",
+    "steps": [
+      "Query isRootAdmin in layout component",
+      "Show loading spinner while checking",
+      "Redirect to dashboard if not root admin"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Root admin layout renders sidebar and outlet",
+    "steps": [
+      "Render RootAdminSidebar component",
+      "Render Outlet for child routes",
+      "Apply flex layout"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/index.tsx dashboard route",
+    "steps": [
+      "Create src/routes/_root-admin/index.tsx",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/chains.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/chains.tsx",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/users.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/users.tsx",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/users.$userId.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/users.$userId.tsx",
+      "Extract userId from params",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/organizations.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/organizations.tsx",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/organizations.$orgId.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/organizations.$orgId.tsx",
+      "Extract orgId from params",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/feature-flags.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/feature-flags.tsx",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Create _root-admin/settings.tsx route",
+    "steps": [
+      "Create src/routes/_root-admin/settings.tsx",
+      "Export route component"
+    ],
+    "passes": false
+  },
+  {
+    "category": "route",
+    "description": "Modify auth callback to redirect root admin to role selector",
+    "steps": [
+      "Modify src/routes/auth/callback.tsx",
+      "After token exchange, check isRootAdmin",
+      "If root admin, redirect to /role-selector",
+      "If regular user, redirect to /dashboard"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create RootAdminSidebar component",
+    "steps": [
+      "Create src/components/root-admin/RootAdminSidebar.tsx",
+      "Add navigation links for all admin routes",
+      "Highlight active route",
+      "Add Back to Dashboard link at bottom"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create RootAdminHeader component",
+    "steps": [
+      "Create src/components/root-admin/RootAdminHeader.tsx",
+      "Display page title",
+      "Add breadcrumb navigation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create ChainList component",
+    "steps": [
+      "Create src/components/root-admin/ChainList.tsx",
+      "Display chains in table format",
+      "Show chainId, name, status, priority",
+      "Add edit and delete actions per row"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create ChainForm component",
+    "steps": [
+      "Create src/components/root-admin/ChainForm.tsx",
+      "Add fields for chainId, name, rpcUrls",
+      "Add fields for explorerUrl, isTestnet",
+      "Add nativeCurrency fields (name, symbol, decimals)",
+      "Add isEnabled toggle, priority input"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "ChainForm validates chainId is number",
+    "steps": [
+      "Add validation for chainId field",
+      "Show error if not a number"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "ChainForm validates rpcUrls are valid URLs",
+    "steps": [
+      "Add validation for rpcUrls field",
+      "Show error if any URL is invalid"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "ChainForm supports adding multiple RPC URLs",
+    "steps": [
+      "Add button to add another RPC URL",
+      "Display list of RPC URL inputs",
+      "Add remove button per URL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create UserTable component",
+    "steps": [
+      "Create src/components/root-admin/UserTable.tsx",
+      "Display users in table format",
+      "Show email, name, status, created date",
+      "Add link to user detail page"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create OrganizationTable component",
+    "steps": [
+      "Create src/components/root-admin/OrganizationTable.tsx",
+      "Display orgs in table format",
+      "Show name, slug, member count, status",
+      "Add link to org detail page"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create FeatureFlagEditor component",
+    "steps": [
+      "Create src/components/root-admin/FeatureFlagEditor.tsx",
+      "Display flags in list with edit forms",
+      "Show key, name, default value, type",
+      "Add enable/disable toggle"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create FeatureFlagForm component",
+    "steps": [
+      "Create src/components/root-admin/FeatureFlagForm.tsx",
+      "Add fields for key, name, description",
+      "Add defaultValue and valueType selector",
+      "Add isEnabled toggle"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create FeatureFlagOverrideList component",
+    "steps": [
+      "Create src/components/root-admin/FeatureFlagOverrideList.tsx",
+      "Display org overrides for a flag",
+      "Show org name, override value",
+      "Add remove override button"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create AddOverrideDialog component",
+    "steps": [
+      "Create src/components/root-admin/AddOverrideDialog.tsx",
+      "Add organization selector dropdown",
+      "Add value input field based on flag valueType",
+      "Call setOrgOverride mutation on submit"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create PlatformStats component",
+    "steps": [
+      "Create src/components/root-admin/PlatformStats.tsx",
+      "Display total users count",
+      "Display total organizations count",
+      "Display active chains count"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create SuspendDialog component",
+    "steps": [
+      "Create src/components/root-admin/SuspendDialog.tsx",
+      "Accept entity type (user/org) and ID",
+      "Show confirmation dialog",
+      "Include reason input field",
+      "Call appropriate suspend mutation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Create DeleteConfirmDialog component",
+    "steps": [
+      "Create src/components/root-admin/DeleteConfirmDialog.tsx",
+      "Require typing entity name to confirm",
+      "Show warning message",
+      "Call appropriate delete mutation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "component",
+    "description": "Add Root Admin button to dashboard header",
+    "steps": [
+      "Modify dashboard header component",
+      "Query isRootAdmin status",
+      "Conditionally show Root Admin button",
+      "Link to /_root-admin"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement root admin dashboard page",
+    "steps": [
+      "Add PlatformStats component to index.tsx",
+      "Display welcome message",
+      "Show quick links to admin sections"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement chains management page",
+    "steps": [
+      "Query listGlobalChains in chains.tsx",
+      "Display ChainList component",
+      "Add Create Chain button",
+      "Show ChainForm in dialog on create/edit"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement users list page",
+    "steps": [
+      "Query listAllUsers in users.tsx",
+      "Display UserTable component",
+      "Add search/filter functionality"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement user detail page",
+    "steps": [
+      "Query getUserDetails in users.$userId.tsx",
+      "Display user info",
+      "List organization memberships",
+      "Add suspend/unsuspend buttons"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement organizations list page",
+    "steps": [
+      "Query listAllOrganizations in organizations.tsx",
+      "Display OrganizationTable component",
+      "Add search/filter functionality"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement organization detail page",
+    "steps": [
+      "Query getOrgDetails in organizations.$orgId.tsx",
+      "Display org info and settings",
+      "List members",
+      "Add suspend/unsuspend/delete buttons"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement feature flags page",
+    "steps": [
+      "Query listFeatureFlags in feature-flags.tsx",
+      "Display FeatureFlagEditor component",
+      "Add Create Flag button",
+      "Show form dialog on create/edit"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement feature flag detail view with overrides",
+    "steps": [
+      "Add expandable/detail view for each flag",
+      "Display FeatureFlagOverrideList component",
+      "Add AddOverrideDialog trigger button",
+      "Wire remove override to mutation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "page",
+    "description": "Implement platform settings page",
+    "steps": [
+      "Query getPlatformConfig in settings.tsx",
+      "Display settings in form",
+      "Save changes on submit"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add loading state to chain list",
+    "steps": [
+      "Show skeleton loader while fetching",
+      "Display actual data when loaded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add empty state to chain list",
+    "steps": [
+      "Show empty message when no chains",
+      "Include call to action to create first chain"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add loading state to user table",
+    "steps": [
+      "Show skeleton loader while fetching",
+      "Display actual data when loaded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add empty state to user table",
+    "steps": [
+      "Show empty message when no users"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add loading state to organization table",
+    "steps": [
+      "Show skeleton loader while fetching",
+      "Display actual data when loaded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add empty state to organization table",
+    "steps": [
+      "Show empty message when no organizations"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add loading state to feature flags list",
+    "steps": [
+      "Show skeleton loader while fetching",
+      "Display actual data when loaded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add empty state to feature flags list",
+    "steps": [
+      "Show empty message when no flags",
+      "Include call to action to create first flag"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add loading state to override list",
+    "steps": [
+      "Show skeleton loader while fetching overrides",
+      "Display actual data when loaded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add empty state to override list",
+    "steps": [
+      "Show message when no overrides for flag",
+      "Include call to action to add first override"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add error handling to chain mutations",
+    "steps": [
+      "Catch mutation errors",
+      "Display error toast message",
+      "Keep form data on error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "ui",
+    "description": "Add success feedback to chain mutations",
+    "steps": [
+      "Show success toast on create",
+      "Show success toast on update",
+      "Show success toast on delete"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Root admin sees role selector after login",
+    "steps": [
+      "Sign in as root admin",
+      "Verify redirect to /role-selector"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Role selector displays two options",
+    "steps": [
+      "Navigate to /role-selector as root admin",
+      "Verify Dashboard option is displayed",
+      "Verify Root Admin Panel option is displayed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Regular user bypasses role selector",
+    "steps": [
+      "Sign in as non-root-admin user",
+      "Verify redirect directly to dashboard"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Non-root-admin cannot access /_root-admin",
+    "steps": [
+      "Sign in as non-root-admin user",
+      "Navigate to /_root-admin directly",
+      "Verify redirect to dashboard"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Root admin can switch to admin panel from dashboard",
+    "steps": [
+      "Sign in as root admin",
+      "Navigate to dashboard",
+      "Click Root Admin button in header",
+      "Verify navigation to /_root-admin"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Root admin can switch back to dashboard from admin panel",
+    "steps": [
+      "Navigate to /_root-admin",
+      "Click Back to Dashboard in sidebar",
+      "Verify navigation to dashboard"
+    ],
+    "passes": false
+  },
+  {
+    "category": "navigation",
+    "description": "Admin sidebar highlights active route",
+    "steps": [
+      "Navigate to /_root-admin/chains",
+      "Verify Chains link is highlighted",
+      "Navigate to /_root-admin/users",
+      "Verify Users link is highlighted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin creates a global chain",
+    "steps": [
+      "Navigate to /_root-admin/chains",
+      "Click Add Chain",
+      "Fill in chain details",
+      "Submit form",
+      "Verify chain appears in list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin edits a global chain",
+    "steps": [
+      "Navigate to /_root-admin/chains",
+      "Click edit on existing chain",
+      "Modify RPC URLs",
+      "Save changes",
+      "Verify changes are persisted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin disables a global chain",
+    "steps": [
+      "Navigate to /_root-admin/chains",
+      "Toggle isEnabled to false",
+      "Verify chain is marked disabled"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Disabled chain not returned to organizations",
+    "steps": [
+      "Disable a global chain",
+      "Query effective chains for an organization",
+      "Verify disabled chain is not in results"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin deletes a global chain",
+    "steps": [
+      "Navigate to /_root-admin/chains",
+      "Click delete on existing chain",
+      "Confirm deletion",
+      "Verify chain is removed from list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin suspends a user",
+    "steps": [
+      "Navigate to user detail page",
+      "Click Suspend User",
+      "Enter reason",
+      "Confirm suspension",
+      "Verify status changes to suspended"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Suspended user cannot access application",
+    "steps": [
+      "Suspend a user",
+      "Attempt to access app as suspended user",
+      "Verify access is denied"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin unsuspends a user",
+    "steps": [
+      "Navigate to suspended user detail page",
+      "Click Unsuspend User",
+      "Confirm unsuspension",
+      "Verify status changes to active"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin suspends an organization",
+    "steps": [
+      "Navigate to org detail page",
+      "Click Suspend Organization",
+      "Enter reason",
+      "Confirm suspension",
+      "Verify status changes to suspended"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Suspended org members cannot access org",
+    "steps": [
+      "Suspend an organization",
+      "Attempt to access org as member",
+      "Verify access is denied"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin unsuspends an organization",
+    "steps": [
+      "Navigate to suspended org detail page",
+      "Click Unsuspend Organization",
+      "Confirm unsuspension",
+      "Verify status changes to active"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin deletes an organization",
+    "steps": [
+      "Navigate to org detail page",
+      "Click Delete Organization",
+      "Type org name to confirm",
+      "Verify org is removed from list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin creates a feature flag",
+    "steps": [
+      "Navigate to /_root-admin/feature-flags",
+      "Click Add Feature Flag",
+      "Fill in flag details",
+      "Submit form",
+      "Verify flag appears in list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin edits a feature flag",
+    "steps": [
+      "Navigate to /_root-admin/feature-flags",
+      "Click edit on existing flag",
+      "Modify default value",
+      "Save changes",
+      "Verify changes are persisted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin toggles feature flag enabled",
+    "steps": [
+      "Navigate to /_root-admin/feature-flags",
+      "Toggle isEnabled for a flag",
+      "Verify flag enabled state changes"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin deletes a feature flag",
+    "steps": [
+      "Navigate to /_root-admin/feature-flags",
+      "Click delete on existing flag",
+      "Confirm deletion",
+      "Verify flag is removed from list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin sets feature flag override for org",
+    "steps": [
+      "Navigate to feature flag detail",
+      "Click Add Override",
+      "Select an organization",
+      "Enter override value",
+      "Save override",
+      "Verify override appears in list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin removes feature flag override",
+    "steps": [
+      "Navigate to feature flag with override",
+      "Click remove on override",
+      "Confirm removal",
+      "Verify override is removed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Organization receives overridden flag value",
+    "steps": [
+      "Set override for org on a flag",
+      "Query flag value for that org",
+      "Verify override value is returned"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin updates platform setting",
+    "steps": [
+      "Navigate to /_root-admin/settings",
+      "Modify a setting value",
+      "Save changes",
+      "Verify setting is persisted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Platform stats show accurate counts",
+    "steps": [
+      "Navigate to /_root-admin",
+      "Verify users count matches actual",
+      "Verify orgs count matches actual",
+      "Verify chains count matches actual"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Organization admin overrides chain RPC URLs",
+    "steps": [
+      "Sign in as org admin",
+      "Navigate to org chain settings",
+      "Enter custom RPC URLs for a chain",
+      "Save changes",
+      "Verify org uses custom RPCs"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Organization admin disables a chain",
+    "steps": [
+      "Sign in as org admin",
+      "Navigate to org chain settings",
+      "Disable a chain",
+      "Verify chain not available in org"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin can use app as regular user",
+    "steps": [
+      "Sign in as root admin",
+      "Select Dashboard from role selector",
+      "Navigate to organization",
+      "Perform regular user action",
+      "Verify action succeeds"
+    ],
+    "passes": false
+  },
+  {
+    "category": "functional",
+    "description": "Root admin can join organizations",
+    "steps": [
+      "Sign in as root admin",
+      "Accept organization invite",
+      "Verify membership is created",
+      "Verify can access organization"
+    ],
+    "passes": false
+  },
+  {
+    "category": "self-hosting",
+    "description": "Platform works with ROOT_ADMIN_EMAILS set",
+    "steps": [
+      "Deploy with ROOT_ADMIN_EMAILS configured",
+      "Sign in with admin email",
+      "Verify admin panel accessible"
+    ],
+    "passes": false
+  },
+  {
+    "category": "self-hosting",
+    "description": "Platform works without ROOT_ADMIN_EMAILS",
+    "steps": [
+      "Deploy without ROOT_ADMIN_EMAILS",
+      "Sign in as any user",
+      "Verify regular flow works",
+      "Verify no admin access for anyone"
+    ],
+    "passes": false
+  },
+  {
+    "category": "self-hosting",
+    "description": "Multiple root admin emails supported",
+    "steps": [
+      "Set ROOT_ADMIN_EMAILS with comma-separated list",
+      "Sign in with first email",
+      "Verify root admin access",
+      "Sign in with second email",
+      "Verify root admin access"
+    ],
+    "passes": false
+  },
+  {
+    "category": "self-hosting",
+    "description": "Whitespace in ROOT_ADMIN_EMAILS is trimmed",
+    "steps": [
+      "Set ROOT_ADMIN_EMAILS with spaces around emails",
+      "Sign in with email",
+      "Verify root admin access"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Migrate existing chains to globalChains",
+    "steps": [
+      "Read data from existing chains table",
+      "Transform to globalChains format",
+      "Insert into globalChains table",
+      "Set default values for new fields"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Update app to use globalChains",
+    "steps": [
+      "Update queries to read from globalChains",
+      "Update mutations to write to globalChains",
+      "Verify app uses new table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Add default status to existing organizations",
+    "steps": [
+      "Run migration to add status field",
+      "Set status to active for all existing orgs",
+      "Verify all orgs have status"
+    ],
+    "passes": false
+  }
+]

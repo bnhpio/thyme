@@ -48,6 +48,10 @@ import type * as schemas_organization_index from "../schemas/organization/index.
 import type * as schemas_organization_organization from "../schemas/organization/organization.js";
 import type * as schemas_organization_organizationInvite from "../schemas/organization/organizationInvite.js";
 import type * as schemas_organization_organizationMember from "../schemas/organization/organizationMember.js";
+import type * as schemas_platform_globalChain from "../schemas/platform/globalChain.js";
+import type * as schemas_platform_index from "../schemas/platform/index.js";
+import type * as schemas_platform_organizationChain from "../schemas/platform/organizationChain.js";
+import type * as schemas_platform_platformConfig from "../schemas/platform/platformConfig.js";
 import type * as schemas_profile_index from "../schemas/profile/index.js";
 import type * as schemas_profile_profile from "../schemas/profile/profile.js";
 import type * as schemas_task_executable from "../schemas/task/executable.js";
@@ -108,6 +112,10 @@ declare const fullApi: ApiFromModules<{
   "schemas/organization/organization": typeof schemas_organization_organization;
   "schemas/organization/organizationInvite": typeof schemas_organization_organizationInvite;
   "schemas/organization/organizationMember": typeof schemas_organization_organizationMember;
+  "schemas/platform/globalChain": typeof schemas_platform_globalChain;
+  "schemas/platform/index": typeof schemas_platform_index;
+  "schemas/platform/organizationChain": typeof schemas_platform_organizationChain;
+  "schemas/platform/platformConfig": typeof schemas_platform_platformConfig;
   "schemas/profile/index": typeof schemas_profile_index;
   "schemas/profile/profile": typeof schemas_profile_profile;
   "schemas/task/executable": typeof schemas_task_executable;

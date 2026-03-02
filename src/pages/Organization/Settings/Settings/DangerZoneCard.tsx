@@ -5,17 +5,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useConfirm } from '@/hooks/use-confirm';
 import { getErrorMessage } from '@/lib/utils';
 
 interface DangerZoneCardProps {
@@ -47,11 +37,25 @@ export function DangerZoneCard({
     api.query.user.getUserOrganizations,
     currentUser?.id ? { userId: currentUser.id } : 'skip',
   );
+  const confirm = useConfirm();
 
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     if (!isAdmin) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: 'Are you absolutely sure?',
+      description:
+        'This action cannot be undone. This will permanently delete the organization and all associated data.',
+      confirmText: 'Delete Organization',
+      cancelText: 'Cancel',
+      variant: 'destructive',
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -94,33 +98,14 @@ export function DangerZoneCard({
         <CardDescription>Irreversible and destructive actions</CardDescription>
       </CardHeader>
       <CardContent>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" disabled={isDeleting}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Organization
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                organization and all associated data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-white hover:bg-destructive/90"
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete Organization'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="destructive"
+          disabled={isDeleting}
+          onClick={handleDeleteClick}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          {isDeleting ? 'Deleting...' : 'Delete Organization'}
+        </Button>
       </CardContent>
     </Card>
   );

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -11,9 +12,11 @@ import { cn } from '@/lib/utils';
 
 interface ModalConfig {
   title: React.ReactNode;
+  description?: React.ReactNode;
   content: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
+  preventClose?: boolean;
 }
 
 interface ModalInstance {
@@ -48,22 +51,38 @@ function ModalItem({
 }) {
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open) {
+      if (!open && !modal.config.preventClose) {
         onClose();
       }
     },
-    [onClose],
+    [onClose, modal.config.preventClose],
   );
+
+  const isFlexLayout = modal.config.className?.includes('flex');
+  const contentWrapperClassName = isFlexLayout
+    ? 'flex-1 min-h-0 overflow-y-auto'
+    : '';
 
   return (
     <Dialog open={modal.isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className={cn(`!z-[${zIndex}]`, modal.config.className)}>
-        <DialogHeader>
+      <DialogContent
+        className={cn(
+          `!z-[${zIndex}]`,
+          isFlexLayout && 'flex flex-col max-h-[90vh]',
+          modal.config.className,
+        )}
+      >
+        <DialogHeader className={isFlexLayout ? 'shrink-0' : ''}>
           <DialogTitle>{modal.config.title}</DialogTitle>
+          {modal.config.description && (
+            <DialogDescription>{modal.config.description}</DialogDescription>
+          )}
         </DialogHeader>
-        <div>{modal.config.content}</div>
+        <div className={contentWrapperClassName}>{modal.config.content}</div>
         {modal.config.actions && (
-          <DialogFooter>{modal.config.actions}</DialogFooter>
+          <DialogFooter className={isFlexLayout ? 'shrink-0' : ''}>
+            {modal.config.actions}
+          </DialogFooter>
         )}
       </DialogContent>
     </Dialog>

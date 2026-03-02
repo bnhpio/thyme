@@ -1,11 +1,9 @@
 import { useMutation, useQuery } from 'convex/react';
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { ApiKeyList } from './ApiKeyList';
 import { CreateApiKeyDialog } from './CreateApiKeyDialog';
-import { TokenDisplayModal } from './TokenDisplayModal';
 import type { ApiKey } from './types';
 
 export function ApiKeys() {
@@ -13,11 +11,6 @@ export function ApiKeys() {
     | ApiKey[]
     | undefined;
 
-  const [createdToken, setCreatedToken] = useState<string>('');
-
-  const handleTokenModalClose = () => {
-    setCreatedToken('');
-  };
   const deleteToken = useMutation(api.mutation.customToken.deleteCustomToken);
 
   const handleDeleteKey = async (keyId: Id<'userCustomTokens'>) => {
@@ -41,19 +34,18 @@ export function ApiKeys() {
           </p>
         </div>
         <CreateApiKeyDialog
-          onSetCreatedToken={(token) => setCreatedToken(token)}
+          onSetCreatedToken={() => {
+            // Token display is now handled internally by CreateApiKeyModalContent
+          }}
         />
       </div>
 
       <ApiKeyList
-        onSetCreatedToken={(token) => setCreatedToken(token)}
+        onSetCreatedToken={() => {
+          // Token display is now handled internally by CreateApiKeyModalContent
+        }}
         apiKeys={apiKeys || []}
         onDelete={handleDeleteKey}
-      />
-      <TokenDisplayModal
-        token={createdToken}
-        isOpen={!!createdToken}
-        onClose={handleTokenModalClose}
       />
     </div>
   );

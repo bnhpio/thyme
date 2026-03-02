@@ -9,20 +9,10 @@ import {
   Settings,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useConfirm } from '@/hooks/use-confirm';
 import { getErrorMessage } from '@/lib/utils';
 import { AddOrganizationModal } from './AddOrganizationModal';
 
@@ -56,8 +47,7 @@ export function OrganizationSwitcher() {
   );
   const acceptInvite = useMutation(api.mutation.organizations.acceptInvite);
   const declineInvite = useAction(api.action.organizations.declineInvite);
-  const [declineInviteId, setDeclineInviteId] =
-    useState<Id<'organizationInvites'> | null>(null);
+  const confirm = useConfirm();
 
   const currentOrganization = organizations?.find(
     (org) => org._id === currentOrganizationId,
@@ -100,10 +90,22 @@ export function OrganizationSwitcher() {
 
   const handleDeclineInvite = useCallback(
     async (inviteId: Id<'organizationInvites'>) => {
+      const confirmed = await confirm({
+        title: 'Decline Invitation?',
+        description:
+          'Are you sure you want to decline this invitation? You can be invited again later if needed.',
+        confirmText: 'Decline',
+        cancelText: 'Cancel',
+        variant: 'destructive',
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
       try {
         await declineInvite({ inviteId });
         // Tracking happens automatically on the backend via scheduler
-        setDeclineInviteId(null);
         toast.success('Invitation declined');
         // The query will automatically refetch after mutation
       } catch (error) {
@@ -116,7 +118,7 @@ export function OrganizationSwitcher() {
         );
       }
     },
-    [declineInvite],
+    [declineInvite, confirm],
   );
 
   // Auto-select first org if current org is invalid but orgs exist
@@ -219,7 +221,7 @@ export function OrganizationSwitcher() {
                         className="h-7 px-2 text-destructive hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setDeclineInviteId(invite._id);
+                          handleDeclineInvite(invite._id);
                         }}
                       >
                         <X className="h-3 w-3" />
@@ -231,39 +233,6 @@ export function OrganizationSwitcher() {
               <DropdownMenuSeparator />
             </>
           )}
-
-          {/* Decline Invite Confirmation Dialog */}
-          <AlertDialog
-            open={declineInviteId !== null}
-            onOpenChange={(open) => {
-              if (!open) {
-                setDeclineInviteId(null);
-              }
-            }}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Decline Invitation?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to decline this invitation? You can be
-                  invited again later if needed.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    if (declineInviteId) {
-                      handleDeclineInvite(declineInviteId);
-                    }
-                  }}
-                  className="bg-destructive  hover:bg-destructive/90"
-                >
-                  Decline
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
 
           {organizations?.map((org, index) => (
             <div key={org._id} className="flex items-center group">

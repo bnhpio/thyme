@@ -17,14 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -45,15 +38,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { TimePickerPopover } from '@/components/ui/time-picker-popover';
 import { useModal } from '@/hooks/use-modal';
 import { parseOpenAPISchema, type SchemaField } from './schema-utils';
-
-interface CreateExecutableDialogProps {
-  taskId: Id<'tasks'>;
-  storageId: Id<'_storage'>;
-  organizationId: Id<'organizations'>;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-}
 
 interface CreateExecutableFormProps {
   taskId: Id<'tasks'>;
@@ -1026,42 +1010,5 @@ export function CreateExecutableModalContent({
       }}
       onCancel={close}
     />
-  );
-}
-
-// Maintain backward compatibility with controlled Dialog
-export function CreateExecutableDialog({
-  taskId,
-  storageId,
-  organizationId,
-  isOpen,
-  onOpenChange,
-  onSuccess,
-}: CreateExecutableDialogProps) {
-  const handleOpenChange = (open: boolean) => {
-    onOpenChange(open);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create Executable Task</DialogTitle>
-          <DialogDescription>
-            Configure when and how this function should be executed
-          </DialogDescription>
-        </DialogHeader>
-        <CreateExecutableForm
-          taskId={taskId}
-          storageId={storageId}
-          organizationId={organizationId}
-          onSuccess={() => {
-            onSuccess();
-            onOpenChange(false);
-          }}
-          onCancel={() => onOpenChange(false)}
-        />
-      </DialogContent>
-    </Dialog>
   );
 }

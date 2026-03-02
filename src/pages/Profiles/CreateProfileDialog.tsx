@@ -5,15 +5,6 @@ import { toast } from 'sonner';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,12 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-interface CreateProfileDialogProps {
-  organizationId: Id<'organizations'>;
-  onSuccess: () => void;
-  trigger?: React.ReactNode;
-}
+import { useModal } from '@/hooks/use-modal';
 
 function getChainName(chainId: number): string {
   const chainNames: Record<number, string> = {
@@ -53,14 +39,20 @@ function getChainName(chainId: number): string {
   return chainNames[chainId] || `Chain ${chainId}`;
 }
 
-export function CreateProfileDialog({
+interface CreateProfileFormProps {
+  organizationId: Id<'organizations'>;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+// Internal form component
+function CreateProfileForm({
   organizationId,
   onSuccess,
-  trigger,
-}: CreateProfileDialogProps) {
+  onCancel,
+}: CreateProfileFormProps) {
   const createProfile = useAction(api.action.profile.createProfile);
   const chains = useQuery(api.query.chain.getAllChains);
-  const [isOpen, setIsOpen] = useState(false);
   const [alias, setAlias] = useState('');
   const [selectedChainId, setSelectedChainId] = useState<Id<'chains'> | ''>('');
   const [customRpcUrl, setCustomRpcUrl] = useState('');
@@ -95,12 +87,11 @@ export function CreateProfileDialog({
         chain: selectedChainId as Id<'chains'>,
         customRpcUrl: customRpcUrl.trim() || undefined,
       });
-      setIsOpen(false);
       setAlias('');
       setSelectedChainId('');
       setCustomRpcUrl('');
       toast.success('Profile created successfully');
-      onSuccess();
+      onSuccess?.();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Failed to create profile',
@@ -110,111 +101,155 @@ export function CreateProfileDialog({
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      setAlias('');
-      setSelectedChainId('');
-      setCustomRpcUrl('');
-    }
+  const handleCancel = () => {
+    setAlias('');
+    setSelectedChainId('');
+    setCustomRpcUrl('');
+    onCancel?.();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Profile
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Create New Profile</DialogTitle>
-          <DialogDescription>
-            Create a new profile with a unique alias. A new wallet address will
-            be generated for this profile.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-5 py-4">
-          <div className="space-y-2.5">
-            <Label className="text-sm font-medium">Alias</Label>
-            <Input
-              placeholder="e.g., Main Profile, Trading Profile"
-              value={alias}
-              onChange={(e) => setAlias(e.target.value)}
-              className="h-10"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isCreating) {
-                  handleCreate();
-                }
-              }}
-            />
-          </div>
-          <div className="space-y-2.5">
-            <Label className="text-sm font-medium">Chain</Label>
-            {chains === undefined ? (
-              <div className="h-10 flex items-center text-sm text-muted-foreground">
-                Loading chains...
-              </div>
-            ) : chains.length === 0 ? (
-              <div className="h-10 flex items-center text-sm text-muted-foreground">
-                No chains available
-              </div>
-            ) : (
-              <Select
-                value={selectedChainId}
-                onValueChange={(value) =>
-                  setSelectedChainId(value as Id<'chains'>)
-                }
-              >
-                <SelectTrigger className="w-full h-10">
-                  <SelectValue placeholder="Select a chain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {chains
-                    .sort((a, b) => a.chainId - b.chainId)
-                    .map((chain) => (
-                      <SelectItem key={chain._id} value={chain._id}>
-                        {getChainName(chain.chainId)} ({chain.chainId})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          <div className="space-y-2.5">
-            <Label className="text-sm font-medium">
-              Custom RPC URL{' '}
-              <span className="text-muted-foreground font-normal">
-                (optional)
-              </span>
-            </Label>
-            <Input
-              placeholder="https://eth-mainnet.g.alchemy.com/v2/..."
-              value={customRpcUrl}
-              onChange={(e) => setCustomRpcUrl(e.target.value)}
-              className="h-10 font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Custom RPC URL for sandbox execution and simulation. Leave empty
-              to use the default chain RPC.
-            </p>
-          </div>
+    <>
+      <div className="space-y-5 py-4">
+        <div className="space-y-2.5">
+          <Label className="text-sm font-medium">Alias</Label>
+          <Input
+            placeholder="e.g., Main Profile, Trading Profile"
+            value={alias}
+            onChange={(e) => setAlias(e.target.value)}
+            className="h-10"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isCreating) {
+                handleCreate();
+              }
+            }}
+          />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreate}
-            disabled={isCreating || !alias.trim() || !selectedChainId}
-          >
-            {isCreating ? 'Creating...' : 'Create Profile'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-2.5">
+          <Label className="text-sm font-medium">Chain</Label>
+          {chains === undefined ? (
+            <div className="h-10 flex items-center text-sm text-muted-foreground">
+              Loading chains...
+            </div>
+          ) : chains.length === 0 ? (
+            <div className="h-10 flex items-center text-sm text-muted-foreground">
+              No chains available
+            </div>
+          ) : (
+            <Select
+              value={selectedChainId}
+              onValueChange={(value) =>
+                setSelectedChainId(value as Id<'chains'>)
+              }
+            >
+              <SelectTrigger className="w-full h-10">
+                <SelectValue placeholder="Select a chain" />
+              </SelectTrigger>
+              <SelectContent>
+                {chains
+                  .sort((a, b) => a.chainId - b.chainId)
+                  .map((chain) => (
+                    <SelectItem key={chain._id} value={chain._id}>
+                      {getChainName(chain.chainId)} ({chain.chainId})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <div className="space-y-2.5">
+          <Label className="text-sm font-medium">
+            Custom RPC URL{' '}
+            <span className="text-muted-foreground font-normal">
+              (optional)
+            </span>
+          </Label>
+          <Input
+            placeholder="https://eth-mainnet.g.alchemy.com/v2/..."
+            value={customRpcUrl}
+            onChange={(e) => setCustomRpcUrl(e.target.value)}
+            className="h-10 font-mono text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Custom RPC URL for sandbox execution and simulation. Leave empty to
+            use the default chain RPC.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={handleCancel} disabled={isCreating}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleCreate}
+          disabled={isCreating || !alias.trim() || !selectedChainId}
+        >
+          {isCreating ? 'Creating...' : 'Create Profile'}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+// Modal content wrapper using useModal
+export function CreateProfileModalContent({
+  organizationId,
+  onSuccess,
+}: {
+  organizationId: Id<'organizations'>;
+  onSuccess?: () => void;
+}) {
+  const { close } = useModal();
+
+  return (
+    <CreateProfileForm
+      organizationId={organizationId}
+      onSuccess={() => {
+        onSuccess?.();
+        close();
+      }}
+      onCancel={close}
+    />
+  );
+}
+
+// Trigger component for backward compatibility
+interface CreateProfileDialogProps {
+  organizationId: Id<'organizations'>;
+  onSuccess: () => void;
+  trigger?: React.ReactNode;
+}
+
+export function CreateProfileDialog({
+  organizationId,
+  onSuccess,
+  trigger,
+}: CreateProfileDialogProps) {
+  const { open } = useModal();
+
+  const handleClick = () => {
+    open({
+      title: 'Create New Profile',
+      description:
+        'Create a new profile with a unique alias. A new wallet address will be generated for this profile.',
+      content: (
+        <CreateProfileModalContent
+          organizationId={organizationId}
+          onSuccess={onSuccess}
+        />
+      ),
+      className: 'sm:max-w-[520px]',
+    });
+  };
+
+  if (trigger) {
+    return <div onClick={handleClick}>{trigger}</div>;
+  }
+
+  return (
+    <Button onClick={handleClick}>
+      <Plus className="h-4 w-4 mr-2" />
+      Create Profile
+    </Button>
   );
 }
